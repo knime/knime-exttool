@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 1.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode type="Other" icon="./extTool16x16.gif">
+	<name>External Tool</name>
+	<shortDescription>
+		 Executes an external tool.
+	</shortDescription>
+	
+	<fullDescription>
+	<intro>Allows running an external program on the data. It will write out 
+	the incoming datatable into a temporary file which can be used as an input to
+	an external tool. After the tool finishes the node will read in an output
+	file the tool has (hopefully) created.<br />
+	NOTE: Running an external executable takes the control out of our hands. 
+	There will be no progress, no failure message, exceptions will not be caught,
+	it may even cause the entire KNIME platform to fail and you loose any unsaved
+	data, etc. Especially, if a shell script (or .bat file) creates sub processes (by
+	calling other programs), these sub processes will continue living even if 
+	the node gets canceled. Furthermore, their output will not be fetched,
+	causing them (possibly) to block (not finishing their job) and to exist 
+	until you kill them off manually.<br />
+	Highlighting will not work across this node. 
+	Colors are lost (the Color Manager node must be
+	inserted in the flow to re-generate colors). <br />
+	The output of the external tool is caught and can be seen
+	in the node's views (the last 500 lines only, full output
+	is logged to KNIME's log file - if the log level is set to DEBUG, which is the
+	default).
+    </intro>
+    <option name="Input Data File">Enter a file path and name. Before calling the
+        external tool the data from the input port will be written into this file - 
+        with the column separator specified and with or without column names and row 
+        IDs, depending on the corresponding checkmarks.
+	</option>		
+    <option name="External Tool">Specify an existing and executable file that 
+    will be called with the specified command line arguments. Before executing 
+    this external tool, the current working directory is set to the specified
+    directory. The input file is NOT automatically transfered into the external
+    tool. You need to specify appropriate command line arguments to read this
+    file with your external tool. The tool also needs to write its output into
+    the specified location, in order for the node to pick it up from there.
+	</option>		
+    <option name="Output Data File">Specify the file that is created by the
+    external tool with its output data. The node reads the content of this file
+    and provides it at its output port. Also specify the separation character
+    used in the file and if the file contains column names and row IDs.
+	</option>		
+	</fullDescription>
+	
+	<ports>
+		<dataIn index="0" name="External Input">Input data for the external tool</dataIn>
+		<dataOut index="0" name="External Output">Data read from the output file of the tool</dataOut>
+	</ports>	
+	<views>
+		<view index="0" name="Tool output">
+			The text sent to standard out during the execution of the external tool.
+			(If it appears in gray, it's the output of a previously failing run
+			which is preserved for your trouble shooting.)<br />
+			NOTE: Keeping the view open may slow down the process significantly,
+			if it produces a lot of output in a short amount of time.
+	    </view>
+		<view index="1" name="Tool error output">
+			The text sent to standard error output during the execution of the external tool.
+			(If it appears in gray, it's the output of a previously failing run
+			which is preserved for your trouble shooting.)
+	    </view>
+	</views>
+</knimeNode>
