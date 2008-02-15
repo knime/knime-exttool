@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ExtToolNode for KNIME Base Nodes
-Bundle-SymbolicName: org.knime.ext.extTool;singleton:=true
+Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
 Bundle-Version: 2.0.0.0014633
 Bundle-Vendor: Chair for Bioinformatics and Information Mining, University of Konstanz, Germany
 Bundle-ClassPath: knime-extTool.jar
