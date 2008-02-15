@@ -21,7 +21,7 @@
  * History
  *   12.10.2006 (ohl): created
  */
-package org.knime.ext.externaltool;
+package org.knime.ext.exttool;
 
 import org.knime.base.node.util.exttool.ExtToolStderrNodeView;
 import org.knime.base.node.util.exttool.ExtToolStdoutNodeView;

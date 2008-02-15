@@ -21,7 +21,7 @@
  * History
  *   12.10.2006 (ohl): created
  */
-package org.knime.ext.externaltool;
+package org.knime.ext.exttool;
 
 import java.io.File;
 import java.io.FileWriter;

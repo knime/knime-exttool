@@ -11,5 +11,5 @@ Require-Bundle: org.knime.base,
  org.knime.workbench.repository
 Eclipse-LazyStart: false
 Provide-Package: org.knime.base.node,
- org.knime.ext.externaltool
-Export-Package: org.knime.ext.externaltool
+ org.knime.ext.exttool
+Export-Package: org.knime.ext.exttool
