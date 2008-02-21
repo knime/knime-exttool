@@ -306,7 +306,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
         settings.setQuoteUserSet(true);
         settings.setWhiteSpaceUserSet(true);
 
-        settings = FileAnalyzer.analyze(settings);
+        settings = FileAnalyzer.analyze(settings, null);
         SettingsStatus status = settings.getStatusOfSettings();
         if (status.getNumOfErrors() > 0) {
             throw new IllegalStateException(status.getErrorMessage(0));
