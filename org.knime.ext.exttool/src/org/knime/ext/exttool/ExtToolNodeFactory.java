@@ -23,12 +23,11 @@
  */
 package org.knime.ext.exttool;
 
+import org.knime.base.node.util.exttool.ExtToolOutputNodeView;
 import org.knime.base.node.util.exttool.ExtToolStderrNodeView;
 import org.knime.base.node.util.exttool.ExtToolStdoutNodeView;
+import org.knime.core.node.GenericNodeFactory;
 import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeView;
 
 /**
  * Factory for the node that launches an external executable. It reuses the
@@ -36,7 +35,8 @@ import org.knime.core.node.NodeView;
  *
  * @author ohl, University of Konstanz
  */
-public class ExtToolNodeFactory extends NodeFactory {
+public class ExtToolNodeFactory extends
+        GenericNodeFactory<ExtToolNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -50,7 +50,7 @@ public class ExtToolNodeFactory extends NodeFactory {
      * {@inheritDoc}
      */
     @Override
-    public NodeModel createNodeModel() {
+    public ExtToolNodeModel createNodeModel() {
         return new ExtToolNodeModel();
     }
 
@@ -58,12 +58,12 @@ public class ExtToolNodeFactory extends NodeFactory {
      * {@inheritDoc}
      */
     @Override
-    public NodeView createNodeView(final int viewIndex,
-            final NodeModel nodeModel) {
+    public ExtToolOutputNodeView<ExtToolNodeModel> createNodeView(
+            final int viewIndex, final ExtToolNodeModel nodeModel) {
         if (viewIndex == 0) {
-            return new ExtToolStdoutNodeView(nodeModel);
+            return new ExtToolStdoutNodeView<ExtToolNodeModel>(nodeModel);
         } else if (viewIndex == 1) {
-            return new ExtToolStderrNodeView(nodeModel);
+            return new ExtToolStderrNodeView<ExtToolNodeModel>(nodeModel);
         } else {
             return null;
         }

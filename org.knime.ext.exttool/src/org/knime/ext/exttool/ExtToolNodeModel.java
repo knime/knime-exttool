@@ -48,6 +48,9 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.PortObject;
+import org.knime.core.node.PortObjectSpec;
+import org.knime.core.node.PortType;
 import org.knime.core.node.property.hilite.DefaultHiLiteHandler;
 import org.knime.core.node.property.hilite.HiLiteHandler;
 
@@ -153,14 +156,15 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * A constructor to construct a new instance.
      */
     public ExtToolNodeModel() {
-        super(1, 1);
+        super(new PortType[]{BufferedDataTable.TYPE},
+                new PortType[]{BufferedDataTable.TYPE});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
 
         // we assume that if the file is not null it is good to use.
@@ -202,7 +206,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
+    protected PortObject[] execute(final PortObject[] inData,
             final ExecutionContext exec) throws Exception {
 
         // blow away the output of any previous (failed) runs
@@ -241,7 +245,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
 
         CSVWriter csvWriter = new CSVWriter(new FileWriter(m_inFile), settings);
 
-        csvWriter.write(inData[0], exec);
+        csvWriter.write((BufferedDataTable)inData[0], exec);
         csvWriter.close();
 
         String cmdString = m_extExecutable.getAbsolutePath();
@@ -338,7 +342,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
     }
 
     /**
-     * @see org.knime.core.node.NodeModel#reset()
+     * {@inheritDoc}
      */
     @Override
     protected void reset() {
