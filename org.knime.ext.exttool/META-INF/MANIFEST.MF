@@ -4,12 +4,12 @@ Bundle-Name: ExtToolNode for KNIME Base Nodes
 Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
 Bundle-Version: 2.0.0.0016392
 Bundle-Vendor: Chair for Bioinformatics and Information Mining, University of Konstanz, Germany
-Bundle-ClassPath: knime-extTool.jar
-Bundle-Localization: plugin
+Bundle-ClassPath: knime-extTool-patches.jar,
+ knime-extTool.jar
 Require-Bundle: org.knime.base,
  org.eclipse.core.runtime,
  org.knime.workbench.repository
-Eclipse-LazyStart: false
+Eclipse-LazyStart: true
 Provide-Package: org.knime.base.node,
  org.knime.ext.exttool
 Export-Package: org.knime.ext.exttool
