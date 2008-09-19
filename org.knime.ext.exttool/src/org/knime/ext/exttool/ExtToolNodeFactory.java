@@ -26,8 +26,8 @@ package org.knime.ext.exttool;
 import org.knime.base.node.util.exttool.ExtToolOutputNodeView;
 import org.knime.base.node.util.exttool.ExtToolStderrNodeView;
 import org.knime.base.node.util.exttool.ExtToolStdoutNodeView;
-import org.knime.core.node.GenericNodeFactory;
 import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
 
 /**
  * Factory for the node that launches an external executable. It reuses the
@@ -35,8 +35,7 @@ import org.knime.core.node.NodeDialogPane;
  *
  * @author ohl, University of Konstanz
  */
-public class ExtToolNodeFactory extends
-        GenericNodeFactory<ExtToolNodeModel> {
+public class ExtToolNodeFactory extends NodeFactory<ExtToolNodeModel> {
 
     /**
      * {@inheritDoc}
