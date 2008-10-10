@@ -52,14 +52,14 @@
 		<dataOut index="0" name="External Output">Data read from the output file of the tool</dataOut>
 	</ports>	
 	<views>
-		<view index="0" name="Tool output">
+		<view index="0" name="Tool Output">
 			The text sent to standard out during the execution of the external tool.
 			(If it appears in gray, it's the output of a previously failing run
 			which is preserved for your trouble shooting.)<br />
 			NOTE: Keeping the view open may slow down the process significantly,
 			if it produces a lot of output in a short amount of time.
 	    </view>
-		<view index="1" name="Tool error output">
+		<view index="1" name="Tool Error Output">
 			The text sent to standard error output during the execution of the external tool.
 			(If it appears in gray, it's the output of a previously failing run
 			which is preserved for your trouble shooting.)
