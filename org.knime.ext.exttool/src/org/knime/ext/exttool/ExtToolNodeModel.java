@@ -51,7 +51,6 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.property.hilite.DefaultHiLiteHandler;
 import org.knime.core.node.property.hilite.HiLiteHandler;
 
 /**
@@ -150,7 +149,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
 
     private String m_extExecArgs;
 
-    private final HiLiteHandler m_hiliter = new DefaultHiLiteHandler();
+    private final HiLiteHandler m_hiliter = new HiLiteHandler();
 
     /**
      * A constructor to construct a new instance.
