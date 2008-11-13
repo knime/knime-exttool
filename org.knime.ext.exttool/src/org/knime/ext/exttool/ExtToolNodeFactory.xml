@@ -48,8 +48,8 @@
 	</fullDescription>
 	
 	<ports>
-		<dataIn index="0" name="External Input">Input data for the external tool</dataIn>
-		<dataOut index="0" name="External Output">Data read from the output file of the tool</dataOut>
+		<inPort index="0" name="External Input">Input data for the external tool</inPort>
+		<outPort index="0" name="External Output">Data read from the output file of the tool</outPort>
 	</ports>	
 	<views>
 		<view index="0" name="Tool Output">

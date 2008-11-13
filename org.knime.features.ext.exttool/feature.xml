@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<feature id="org.knime.features.ext.exttool" label="External Tool Node Feature" provider-name="Chair for Bioinformatics and Information Mining, Prof. Berthold, University of Konstanz, Germany" version="2.1.0.0018128">
+<feature
+      id="org.knime.features.ext.exttool"
+      label="External Tool Node Feature"
+      version="2.1.0.0018128"
+      provider-name="Chair for Bioinformatics and Information Mining, Prof. Berthold, University of Konstanz, Germany">
 
    <description>
       This feature contains the external tool node.
