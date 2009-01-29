@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<feature id="org.knime.features.ext.exttool" label="External Tool Node Feature" provider-name="Chair for Bioinformatics and Information Mining, Prof. Berthold, University of Konstanz, Germany" version="2.0.0.0019487">
+<feature id="org.knime.features.ext.exttool" label="External Tool Node Feature" provider-name="Chair for Bioinformatics and Information Mining, Prof. Berthold, University of Konstanz, Germany" version="2.0.1.0019867">
 
    <description>
       This feature contains the external tool node.
    </description>
 
    <copyright>
-      Copyright, 2003 - 2008
+      Copyright, 2003 - 2009
 University of Konstanz, Germany
 Chair for Bioinformatics and Information Mining (Prof. M. Berthold)
 and KNIME GmbH, Konstanz, Germany
