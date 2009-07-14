@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Ext SSH Node Plug-in
+Bundle-SymbolicName: org.knime.ext.ssh;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
+Bundle-Vendor: KNIME GmbH
+Require-Bundle: org.eclipse.core.runtime,
+ com.jcraft.jsch;bundle-version="0.1.37",
+ org.knime.workbench.repository;bundle-version="2.1.0",
+ org.eclipse.jsch.core;bundle-version="1.1.100",
+ org.eclipse.jsch.ui;bundle-version="1.1.100",
+ org.knime.base;bundle-version="2.1.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Export-Package: org.knime.ext.ssh,
+ org.knime.ext.ssh.node
+Bundle-ClassPath: knime-sshnode.jar

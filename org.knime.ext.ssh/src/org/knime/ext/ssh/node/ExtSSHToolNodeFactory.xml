@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode type="Other" icon="./extSSHTool16x16.png">
+    <name>External SSH Tool</name>
+    <shortDescription>
+         Executes an external tool on a remote machine via SSH.
+    </shortDescription>
+    
+    <fullDescription>
+    <intro>Allows running an external program on another machine on the input data.
+    The node creates an SSH connection to a remote host, transfers the input data
+    via sftp (as comma separated values), executes the specified command and transfers
+    back the result file, assuming that the command generated a file with comma separated values.
+    <br />
+    NOTE: Running an external executable takes the control out of our hands. 
+    There will be no progress, no failure message, exceptions will not be caught,
+    it may even cause the entire KNIME platform to fail and you loose any unsaved
+    data, etc. 
+    Highlighting will not work across this node. 
+    Colors are lost (the Color Manager node must be
+    inserted in the flow to re-generate colors). <br />
+    For additional SSH settings, please refer to the preference page 
+    "General" - "Network Connections" - "SSH2". There the directory with the
+    known_hosts file and the private key file can be specified.
+    </intro>
+    <option name="Remote Execution Host">Name or IP address of the computer the 
+    command should be executed on. This host must be in the list of known hosts
+    (see SSH2 preference page).
+    </option>       
+    <option name="Port">The port number used for the ssh connection. Leave empty
+    for the default port no. 22. 
+    </option>       
+    <option name="Timeout">Enter the number of seconds after any try to connect 
+    should time out. Leave empty for the default of 50 seconds.
+    </option>       
+    <option name="Username">Specify the user name for the ssh connection. Leave
+    empty for the current user.
+    </option>
+    <option name="Password">Enter the password for the ssh connection. Leave empty
+    if you use your private key file or no password is required.
+    </option>
+    <option name="Passphrase">If your private key file requires a passphrase, enter
+    it here.
+    </option>       
+    <option name="Remote Command">Specify the command that is executed on the
+    remote host. It must be found in the remote environment. You can specify 
+    arguments (space separated). Use the placeholders &quot;$inFile&quot; and
+    &quot;$outFile&quot; for the remote input file and remote output file.
+    </option>       
+    <option name="Temporary Remote Input File">Specify the name of the file where
+    the input data is stored. Specify the full remote path. Not existing 
+    directories will be created. The file contains the node's input table as
+    comma separated values, with column headers and row IDs in the first column.
+    The file is deleted after execution.   
+    </option>       
+    <option name="Temporary Remote Output File">Specify the name of the file where
+    the remote command writes the output data to. Specify the full remote path. 
+    The file must contain the output data as
+    comma, tab, or space separated values. The file is deleted after execution.   
+    </option>       
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="External Input">Input data for the external tool</inPort>
+        <outPort index="0" name="External Output">Data read from the output file of the tool</outPort>
+    </ports>    
+</knimeNode>
