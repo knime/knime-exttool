@@ -81,7 +81,7 @@ public class ExtSSHToolSettings {
         m_user = "";
         m_encryptKeyPassphrase = "";
         m_encryptPassword = "";
-        m_timeout = 50;
+        m_timeout = 0;
         m_portNumber = DEFAULT_SSH_PORT;
         m_command = "";
         m_remoteInputFile = "";
@@ -320,7 +320,6 @@ public class ExtSSHToolSettings {
         m_remoteOutputFile = remoteOutputFile;
     }
 
-
     /**
      * pattern in the string that will be replaced by the current user name (see
      * {@link #replaceUserVariable(String)}).
@@ -399,6 +398,37 @@ public class ExtSSHToolSettings {
         }
 
         return result.toString();
+    }
+
+    /**
+     * pattern in the string that will be replaced by the value of the remote
+     * input file in the settings.
+     */
+    public static final String IN_FILE_PATTERN = "$inFile";
+
+    /**
+     * pattern in the string that will be replaced by the value of the remote
+     * input file in the settings.
+     */
+    public static final String OUT_FILE_PATTERN = "$outFile";
+
+    /**
+     * Replaces occurrences of the IN_FILE_PATTERN and the OUT_FILE_PATTERN in
+     * the cmd string.
+     *
+     * @param cmd the string in which to place all occurrences of the patterns
+     * @param settings contains the value to replace the patterns with
+     * @return the string with the replacements
+     */
+    public static String replaceTempFileVariables(final String cmd,
+            final ExtSSHToolSettings settings) {
+        String result =
+                cmd.replace(IN_FILE_PATTERN, settings.getRemoteInputFile());
+        result =
+                result
+                        .replace(OUT_FILE_PATTERN, settings
+                                .getRemoteOutputFile());
+        return result;
     }
 
     private class SettingsUserInfo implements UserInfo {

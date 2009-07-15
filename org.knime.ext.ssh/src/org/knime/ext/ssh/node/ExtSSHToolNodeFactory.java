@@ -69,8 +69,7 @@ public class ExtSSHToolNodeFactory extends NodeFactory<ExtSSHToolNodeModel> {
      */
     @Override
     protected boolean hasDialog() {
-        // TODO: create a dialog. Later.
-        return false;
+        return true;
     }
 
 }

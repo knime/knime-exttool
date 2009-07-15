@@ -33,6 +33,7 @@ import org.knime.base.node.io.filereader.FileAnalyzer;
 import org.knime.base.node.io.filereader.FileReaderNodeSettings;
 import org.knime.base.node.io.filereader.FileTable;
 import org.knime.core.data.DataTable;
+import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -170,7 +171,9 @@ public class ExtSSHToolNodeModel extends NodeModel {
             try {
                 String cmd = m_settings.getCommand();
                 // replace $inFile and $outFile with paths
-                cmd = replaceVariables(cmd, m_settings);
+                cmd =
+                        ExtSSHToolSettings.replaceTempFileVariables(cmd,
+                                m_settings);
                 execChannel.setCommand(cmd);
                 execChannel.setErrStream(System.err);
                 execChannel.setOutputStream(System.out);
@@ -238,13 +241,6 @@ public class ExtSSHToolNodeModel extends NodeModel {
 
     }
 
-    private static String replaceVariables(final String cmd,
-            final ExtSSHToolSettings settings) {
-        String result = cmd.replace("$inFile", settings.getRemoteInputFile());
-        result = cmd.replace("$outFile", settings.getRemoteOutputFile());
-        return result;
-    }
-
     private FileWriterSettings createFileWriterSettings() {
         FileWriterSettings fws = new FileWriterSettings();
         fws.setColSeparator(",");
@@ -262,6 +258,20 @@ public class ExtSSHToolNodeModel extends NodeModel {
         FileReaderNodeSettings frs = new FileReaderNodeSettings();
         frs.setDataFileLocationAndUpdateTableName(f.toURI().toURL());
         return frs;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
+            throws InvalidSettingsException {
+        String msg = m_settings.getStatusMsg();
+        if (msg != null) {
+            throw new InvalidSettingsException(msg);
+        }
+        // we never know what is coming back from the external tool
+        return new DataTableSpec[] {null};
     }
 
     /**

@@ -15,29 +15,66 @@
  * website: www.knime.org
  * email: contact@knime.org
  * ---------------------------------------------------------------------
- * 
+ *
  * History
  *   Jul 13, 2009 (ohl): created
  */
 package org.knime.ext.ssh.node;
 
+import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 
 /**
- * 
+ *
  * @author Peter Ohl, KNIME.com, Zurich, Switzerland
  */
 public class ExtSSHToolNodeDialogPane extends NodeDialogPane {
 
+    private final ExtSSHToolSettingsPanel m_panel =
+            new ExtSSHToolSettingsPanel();
+
+    /**
+     * The constructor of this class with no arguments and a very long java doc
+     * comment.
+     */
+    public ExtSSHToolNodeDialogPane() {
+        addTab("Ext SSH Tool Settings", m_panel);
+    }
+
     /**
      * {@inheritDoc}
      */
-    protected void saveSettingsTo(NodeSettingsWO settings)
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        // TODO Auto-generated method stub
-
+        ExtSSHToolSettings s = new ExtSSHToolSettings();
+        m_panel.saveSettings(s);
+        String msg = s.getStatusMsg();
+        if (msg != null) {
+            throw new InvalidSettingsException(msg);
+        }
+        s.save(settings);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings,
+            final DataTableSpec[] specs) throws NotConfigurableException {
+        ExtSSHToolSettings s = new ExtSSHToolSettings();
+        try {
+            s = new ExtSSHToolSettings(settings);
+        } catch (InvalidSettingsException ise) {
+            // keep the empty defaults
+        }
+        m_panel.loadSettings(s);
+    }
+
+
 
 }
