@@ -143,11 +143,19 @@ public class ExtSSHToolNodeModel extends NodeModel {
                     File.createTempFile("ExtSSHNodeInputTable", ".txt");
             exec.checkCanceled();
 
-            exec.setMessage("Writing input table to (local) temp CSV file...");
-            FileWriterSettings fws = createFileWriterSettings();
-            FileWriter inTableWriter = new FileWriter(tmpInFile);
-            CSVWriter csvWriter = new CSVWriter(inTableWriter, fws);
-            csvWriter.write(inData[0], exec.createSubProgress(0));
+            CSVWriter csvWriter = null;
+            try {
+                exec
+                        .setMessage("Writing input table to (local) temp CSV file...");
+                FileWriterSettings fws = createFileWriterSettings();
+                FileWriter inTableWriter = new FileWriter(tmpInFile);
+                csvWriter = new CSVWriter(inTableWriter, fws);
+                csvWriter.write(inData[0], exec.createSubProgress(0));
+            } finally {
+                if (csvWriter != null) {
+                    csvWriter.close();
+                }
+            }
             LOGGER.debug("Wrote input table to " + tmpInFile.getAbsolutePath());
             exec.checkCanceled();
 
@@ -206,19 +214,34 @@ public class ExtSSHToolNodeModel extends NodeModel {
             exec.checkCanceled();
 
             exec.setMessage("Deleting remote data files...");
-            ftpChannel.rm(m_settings.getRemoteInputFile());
-            LOGGER.debug("ftp removed " + m_settings.getRemoteInputFile());
-            ftpChannel.rm(m_settings.getRemoteOutputFile());
-            LOGGER.debug("ftp removed " + m_settings.getRemoteOutputFile());
-
+            try {
+                ftpChannel.rm(m_settings.getRemoteInputFile());
+                LOGGER.debug("ftp removed " + m_settings.getRemoteInputFile());
+            } catch (Exception e) {
+                LOGGER.warn("Unable to delete remote input file.");
+            }
+            try {
+                if (!m_settings.getRemoteInputFile().equals(
+                        m_settings.getRemoteOutputFile())) {
+                    ftpChannel.rm(m_settings.getRemoteOutputFile());
+                    LOGGER.debug("ftp removed "
+                            + m_settings.getRemoteOutputFile());
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Unable to delete remote output file.");
+            }
             exec.setMessage("Analyzing result file...");
             FileReaderNodeSettings frns =
                     createFileReaderNodeSettings(outTableFile);
             frns = FileAnalyzer.analyze(frns, exec.createSubProgress(0));
 
+            DataTableSpec tSpec =
+                    new DataTableSpec("External SSH Tool output", frns
+                            .createDataTableSpec(), new DataTableSpec("empty"));
+
             FileTable ft =
-                    new FileTable(frns.createDataTableSpec(), frns, exec
-                            .createSubExecutionContext(0));
+                    new FileTable(tSpec, frns,
+                            exec.createSubExecutionContext(0));
             exec.checkCanceled();
 
             return exec.createBufferedDataTables(new DataTable[]{ft}, exec);
@@ -271,7 +294,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
             throw new InvalidSettingsException(msg);
         }
         // we never know what is coming back from the external tool
-        return new DataTableSpec[] {null};
+        return new DataTableSpec[]{null};
     }
 
     /**

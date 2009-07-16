@@ -23,6 +23,8 @@ package org.knime.ext.ssh;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 import org.eclipse.jsch.core.IJSchLocation;
@@ -138,22 +140,21 @@ public final class SSHUtil {
             throws SftpException, CanceledExecutionException {
         exec.checkCanceled();
 
-        File dstFile = new File(dest);
+        String destPath = linuxPath(dest);
 
         if (src.isFile()) {
-            ftpChannel.put(src.getAbsolutePath(), dest);
+            ftpChannel.put(src.getAbsolutePath(), destPath);
             return;
         }
         if (src.isDirectory()) {
-            ftpMkdirs(ftpChannel, dest);
+            ftpMkdirs(ftpChannel, destPath);
         }
 
         File[] files = src.listFiles();
         // if srcFiles is not readable this could be null
         if (files != null) {
             for (File f : files) {
-                String d = new File(dstFile, f.getName()).getAbsolutePath();
-                ftpPutRec(ftpChannel, f, d, exec);
+                ftpPutRec(ftpChannel, f, destPath + "/" + f.getName(), exec);
             }
         }
     }
@@ -175,17 +176,18 @@ public final class SSHUtil {
 
         exec.checkCanceled();
 
+        String srcPath = linuxPath(src);
+
         // see if the src is a directory
         try {
-            ftpChannel.cd(src);
+            ftpChannel.cd(srcPath);
         } catch (SftpException e) {
             // then treat it like a file
-            ftpChannel.get(src, dest.getAbsolutePath());
+            ftpChannel.get(srcPath, dest.getAbsolutePath());
             return;
         }
 
         // here src is a remote directory
-        // we just cd'ed into it (in the try block)
         if (dest.exists()) {
             if (!dest.isDirectory()) {
                 throw new IOException("FTP source is a directory, but "
@@ -198,7 +200,7 @@ public final class SSHUtil {
                         + "directory" + dest.getAbsolutePath());
             }
         }
-        Vector<LsEntry> files = ftpChannel.ls(src);
+        Vector<LsEntry> files = ftpChannel.ls(srcPath);
         for (LsEntry e : files) {
             if (e.getFilename().equals(".")) {
                 continue;
@@ -206,8 +208,8 @@ public final class SSHUtil {
             if (e.getFilename().equals("..")) {
                 continue;
             }
-            ftpGetRec(ftpChannel, new File(src, e.getFilename())
-                    .getAbsolutePath(), new File(dest, e.getFilename()), exec);
+            ftpGetRec(ftpChannel, srcPath + "/" + e.getFilename(),
+                    new File(dest, e.getFilename()), exec);
         }
 
     }
@@ -219,9 +221,13 @@ public final class SSHUtil {
      */
     public static void ftpMkdirs(final ChannelSftp ftpChannel,
             final String remoteDir) throws SftpException {
+
+        List<String> rmtSegm = splitPath(remoteDir);
+        String rmtPath = linuxPath(rmtSegm);
+
         try {
             // see if it already exists
-            SftpATTRS attr = ftpChannel.lstat(remoteDir);
+            SftpATTRS attr = ftpChannel.lstat(rmtPath);
             if (!attr.isDir()) {
                 throw new SftpException(0,
                         "Remote entry exists, but is not a directory");
@@ -229,13 +235,13 @@ public final class SSHUtil {
         } catch (SftpException e) {
             try {
                 // try creating it - works only if the parent exists
-                ftpChannel.mkdir(remoteDir);
+                ftpChannel.mkdir(rmtPath);
             } catch (SftpException s) {
-                File d = new File(remoteDir);
-                if (d.getParentFile() != null) {
-                    // try creating the parent dir then
-                    ftpMkdirs(ftpChannel, d.getParentFile().getAbsolutePath());
-                    ftpChannel.mkdir(remoteDir);
+                // try creating the parent dir then
+                if (rmtSegm.size() > 1) {
+                    rmtSegm.remove(0);
+                    ftpMkdirs(ftpChannel, linuxPath(rmtSegm));
+                    ftpChannel.mkdir(rmtPath);
                     return;
                 } else {
                     throw new SftpException(0,
@@ -243,6 +249,46 @@ public final class SSHUtil {
                 }
             }
         }
+    }
+
+    /**
+     * Splits a file/dir path into its segments.
+     *
+     * @return a list of path segments. If the argument denotes a file the first
+     *         list element (index 0) is the file name - all others are the
+     *         directories in the file's path. The highest index always contains
+     *         the directory located in the root of the file system (or the
+     *         drive letter (e. g. "C:") in some OS).
+     */
+    public static List<String> splitPath(final String filePath) {
+        if (filePath == null) {
+            return null;
+        }
+        LinkedList<String> segments = new LinkedList<String>();
+
+        String p = filePath;
+        while (p != null && !p.isEmpty() && !p.equals("\\") && !p.equals("/")) {
+            File f = new File(p);
+            segments.add(f.getName());
+            p = f.getParent();
+        }
+        return segments;
+    }
+
+    public static String linuxPath(final List<String> segments) {
+        if (segments == null) {
+            return null;
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = segments.size() - 1; i >= 0; i--) {
+            result.append("/").append(segments.get(i));
+        }
+        return result.toString();
+    }
+
+    public static String linuxPath(final String anyPath) {
+        return linuxPath(splitPath(anyPath));
+
     }
 
     /**
@@ -255,9 +301,10 @@ public final class SSHUtil {
      */
     public static void ftpDelRec(final ChannelSftp ftpChannel,
             final String remoteFile) throws SftpException {
-        SftpATTRS attr = ftpChannel.lstat(remoteFile);
+        String rmtPath = linuxPath(remoteFile);
+        SftpATTRS attr = ftpChannel.lstat(rmtPath);
         if (attr.isDir()) {
-            Vector<LsEntry> files = ftpChannel.ls(remoteFile);
+            Vector<LsEntry> files = ftpChannel.ls(rmtPath);
             for (LsEntry e : files) {
                 if (e.getFilename().equals(".")) {
                     continue;
@@ -265,12 +312,11 @@ public final class SSHUtil {
                 if (e.getFilename().equals("..")) {
                     continue;
                 }
-                ftpDelRec(ftpChannel, new File(remoteFile, e.getFilename())
-                        .getAbsolutePath());
+                ftpDelRec(ftpChannel, rmtPath + "/" + e.getFilename());
             }
-            ftpChannel.rmdir(remoteFile);
+            ftpChannel.rmdir(rmtPath);
         } else {
-            ftpChannel.rm(remoteFile);
+            ftpChannel.rm(rmtPath);
         }
     }
 

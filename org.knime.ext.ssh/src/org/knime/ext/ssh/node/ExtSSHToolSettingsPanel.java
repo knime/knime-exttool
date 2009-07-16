@@ -248,11 +248,11 @@ public class ExtSSHToolSettingsPanel extends JPanel {
     private void transferComponentsValuesIntoSettings(
             final ExtSSHToolSettings settings) throws InvalidSettingsException {
 
-        settings.setRemoteHost(m_host.getText());
+        settings.setRemoteHost(m_host.getText().trim());
 
         try {
-            String portnumber = m_port.getText();
-            if (!portnumber.trim().isEmpty()) {
+            String portnumber = m_port.getText().trim();
+            if (!portnumber.isEmpty()) {
                 int portNr = Integer.parseInt(portnumber);
                 settings.setPortNumber(portNr);
             } else {
@@ -264,8 +264,8 @@ public class ExtSSHToolSettingsPanel extends JPanel {
         }
 
         try {
-            String timeout = m_timeout.getText();
-            if (!timeout.trim().isEmpty()) {
+            String timeout = m_timeout.getText().trim();
+            if (!timeout.isEmpty()) {
                 int t = Integer.parseInt(timeout);
                 settings.setTimeout(t);
             } else {
@@ -276,7 +276,7 @@ public class ExtSSHToolSettingsPanel extends JPanel {
                     "Invalid timeout (please enter a number).");
         }
 
-        settings.setUser(m_user.getText());
+        settings.setUser(m_user.getText().trim());
         if (!m_passwordChanged) {
             String pass =
                     m_password.getPassword().length == 0 ? null : new String(
