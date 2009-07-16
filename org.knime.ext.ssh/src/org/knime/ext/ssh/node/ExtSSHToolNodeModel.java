@@ -145,8 +145,8 @@ public class ExtSSHToolNodeModel extends NodeModel {
 
             CSVWriter csvWriter = null;
             try {
-                exec
-                        .setMessage("Writing input table to (local) temp CSV file...");
+                exec.setMessage("Writing input table to "
+                        + "(local) temp CSV file...");
                 FileWriterSettings fws = createFileWriterSettings();
                 FileWriter inTableWriter = new FileWriter(tmpInFile);
                 csvWriter = new CSVWriter(inTableWriter, fws);
@@ -171,6 +171,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
             ftpChannel.put(tmpInFile.getAbsolutePath(), m_settings
                     .getRemoteInputFile());
             LOGGER.debug("ftp put done.");
+            tmpInFile.delete();
             exec.checkCanceled();
 
             exec.setMessage("Preparing for execution...");
@@ -240,11 +241,20 @@ public class ExtSSHToolNodeModel extends NodeModel {
                             .createDataTableSpec(), new DataTableSpec("empty"));
 
             FileTable ft =
-                    new FileTable(tSpec, frns,
-                            exec.createSubExecutionContext(0));
-            exec.checkCanceled();
+                    new FileTable(tSpec, frns, exec
+                            .createSubExecutionContext(0));
+            BufferedDataTable[] result = null;
+            try {
+                exec.checkCanceled();
+                result =
+                        exec
+                                .createBufferedDataTables(new DataTable[]{ft},
+                                        exec);
 
-            return exec.createBufferedDataTables(new DataTable[]{ft}, exec);
+            } finally {
+                outTableFile.delete();
+            }
+            return result;
 
         } catch (Exception e) {
             if ((!(e instanceof CanceledExecutionException))
