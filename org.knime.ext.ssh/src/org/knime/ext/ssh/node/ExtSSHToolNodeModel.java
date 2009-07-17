@@ -209,6 +209,10 @@ public class ExtSSHToolNodeModel extends NodeModel {
             LOGGER.debug("ftp getting result file "
                     + m_settings.getRemoteOutputFile() + " to "
                     + outTableFile.getAbsolutePath());
+            // fixes problem of delayed appearance of output file 
+            // (noted specifically when accessing (very) remote machines)
+            ftpChannel.disconnect();
+            ftpChannel = SSHUtil.createNewSFTPChannel(m_settings, session);
             ftpChannel.get(m_settings.getRemoteOutputFile(), outTableFile
                     .getAbsolutePath());
             LOGGER.debug("ftp get done.");

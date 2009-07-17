@@ -12,10 +12,8 @@
     via sftp (as comma separated values), executes the specified command and transfers
     back the result file, assuming that the command generated a file with comma separated values.
     <br />
-    NOTE: Running an external executable takes the control out of our hands. 
-    There will be no progress, no failure message, exceptions will not be caught,
-    it may even cause the entire KNIME platform to fail and you loose any unsaved
-    data, etc. 
+    NOTE: KNIME has no control over the execution of the external tool. 
+    There will be no progress, no failure message, and exceptions will not be caught. 
     Highlighting will not work across this node. 
     Colors are lost (the Color Manager node must be
     inserted in the flow to re-generate colors). <br />
