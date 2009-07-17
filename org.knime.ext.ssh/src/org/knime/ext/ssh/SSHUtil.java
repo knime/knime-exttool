@@ -27,7 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
-import org.eclipse.jsch.core.IJSchLocation;
 import org.eclipse.jsch.core.IJSchService;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
@@ -69,12 +68,12 @@ public final class SSHUtil {
 
         IJSchService service =
                 ExtSSHNodeActivator.getDefault().getIJSchService();
-        IJSchLocation location = service.getLocation(user, remoteHost, port);
         UserInfo userInfo = s.createJSchUserInfo();
 
         Session session = null;
         try {
-            session = service.createSession(location, userInfo);
+            session = service.createSession(remoteHost, port, user);
+            session.setUserInfo(userInfo);
             session.connect(s.getTimeoutMilliSec());
 
             return session;

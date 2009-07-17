@@ -28,7 +28,6 @@ import java.net.MalformedURLException;
 
 import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
-import org.knime.base.node.io.csvwriter.FileWriterSettings.quoteMode;
 import org.knime.base.node.io.filereader.FileAnalyzer;
 import org.knime.base.node.io.filereader.FileReaderNodeSettings;
 import org.knime.base.node.io.filereader.FileTable;
@@ -284,7 +283,6 @@ public class ExtSSHToolNodeModel extends NodeModel {
         fws.setMissValuePattern("");
         fws.setQuoteBegin("\"");
         fws.setQuoteEnd("\"");
-        fws.setQuoteMode(quoteMode.IF_NEEDED);
         fws.setWriteColumnHeader(true);
         fws.setWriteRowID(true);
         return fws;
