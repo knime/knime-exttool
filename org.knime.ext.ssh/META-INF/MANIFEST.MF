@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Ext SSH Node Plug-in
 Bundle-SymbolicName: org.knime.ext.ssh;singleton:=true
-Bundle-Version: 1.0.0
+Bundle-Version: 2.1.0.0021700
 Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
 Bundle-Vendor: KNIME GmbH
 Require-Bundle: org.knime.base,
