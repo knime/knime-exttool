@@ -36,7 +36,6 @@ import org.knime.base.node.io.filereader.FileAnalyzer;
 import org.knime.base.node.io.filereader.FileReaderNodeSettings;
 import org.knime.base.node.io.filereader.FileReaderSettings;
 import org.knime.base.node.io.filereader.FileTable;
-import org.knime.base.node.io.filetokenizer.SettingsStatus;
 import org.knime.base.node.util.exttool.CommandExecution;
 import org.knime.base.node.util.exttool.ExtToolOutputNodeModel;
 import org.knime.base.node.util.exttool.ViewUpdateNotice;
@@ -52,6 +51,7 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.property.hilite.HiLiteHandler;
+import org.knime.core.util.tokenizer.SettingsStatus;
 
 /**
  * Implements a node that launches an external executable. Most of its
