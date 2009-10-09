@@ -36,7 +36,7 @@ import org.knime.base.node.io.filereader.FileAnalyzer;
 import org.knime.base.node.io.filereader.FileReaderNodeSettings;
 import org.knime.base.node.io.filereader.FileReaderSettings;
 import org.knime.base.node.io.filereader.FileTable;
-import org.knime.base.node.io.filereader.SettingsStatus;
+import org.knime.base.node.io.filetokenizer.SettingsStatus;
 import org.knime.base.node.util.exttool.CommandExecution;
 import org.knime.base.node.util.exttool.ExtToolOutputNodeModel;
 import org.knime.base.node.util.exttool.ViewUpdateNotice;
