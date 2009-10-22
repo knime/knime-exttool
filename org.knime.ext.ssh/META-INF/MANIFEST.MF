@@ -4,7 +4,7 @@ Bundle-Name: Ext SSH Node Plug-in
 Bundle-SymbolicName: org.knime.ext.ssh;singleton:=true
 Bundle-Version: 2.1.0.0022922
 Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
-Bundle-Vendor: KNIME GmbH
+Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Require-Bundle: org.knime.base,
  org.eclipse.core.runtime,
  com.jcraft.jsch,
