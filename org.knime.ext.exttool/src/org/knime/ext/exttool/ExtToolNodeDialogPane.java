@@ -53,7 +53,6 @@ package org.knime.ext.exttool;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -64,7 +63,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
@@ -72,6 +70,8 @@ import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.util.InvocationTargetRuntimeException;
+import org.knime.core.node.util.ViewUtils;
 import org.knime.core.util.FilelistAccessory;
 import org.knime.core.util.MutableBoolean;
 
@@ -212,7 +212,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
      */
     private void loadInportDataFile(final NodeSettingsRO settings) {
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ViewUtils.invokeAndWaitInEDT(new Runnable() {
                 public void run() {
                     m_inFileName.setText(settings.getString(
                             ExtToolNodeModel.CFGKEY_INFILENAME, ""));
@@ -224,9 +224,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
                             ExtToolNodeModel.CFGKEY_INCLROWHDR, false));
                 }
             });
-        } catch (InterruptedException e) {
-            // Empty
-        } catch (InvocationTargetException e) {
+        } catch (InvocationTargetRuntimeException e) {
             // Empty
         }
 
@@ -240,7 +238,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         final MutableBoolean inclRowHdr = new MutableBoolean(false);
 
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ViewUtils.invokeAndWaitInEDT(new Runnable() {
                 public void run() {
                     filename.append(m_inFileName.getText());
                     separator.append(m_inSeparator.getText());
@@ -248,9 +246,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
                     inclRowHdr.setValue(m_includeRowHdr.isSelected());
                 }
             });
-        } catch (InterruptedException e) {
-            throw new InvalidSettingsException(e);
-        } catch (InvocationTargetException e) {
+        } catch (InvocationTargetRuntimeException e) {
             throw new InvalidSettingsException(e);
         }
 
@@ -344,7 +340,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
     private void loadExternalTool(final NodeSettingsRO settings) {
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ViewUtils.invokeAndWaitInEDT(new Runnable() {
                 public void run() {
                     m_toolPath.setText(settings.getString(
                             ExtToolNodeModel.CFGKEY_EXTTOOLPATH, ""));
@@ -354,9 +350,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
                             ExtToolNodeModel.CFGKEY_EXTTOOLARGS, ""));
                 }
             });
-        } catch (InterruptedException e) {
-            // Empty
-        } catch (InvocationTargetException e) {
+        } catch (InvocationTargetRuntimeException e) {
             // Empty
         }
 
@@ -369,16 +363,14 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         final StringBuilder args = new StringBuilder();
 
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ViewUtils.invokeAndWaitInEDT(new Runnable() {
                 public void run() {
                     filename.append(m_toolPath.getText());
                     cwd.append(m_toolCwd.getText());
                     args.append(m_toolArgs.getText());
                 }
             });
-        } catch (InterruptedException e) {
-            throw new InvalidSettingsException(e);
-        } catch (InvocationTargetException e) {
+        } catch (InvocationTargetRuntimeException e) {
             throw new InvalidSettingsException(e);
         }
 
@@ -479,7 +471,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
     private void loadOutportDataFile(final NodeSettingsRO settings) {
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ViewUtils.invokeAndWaitInEDT(new Runnable() {
                 public void run() {
                     m_outFileName.setText(settings.getString(
                             ExtToolNodeModel.CFGKEY_OUTFILENAME, ""));
@@ -491,9 +483,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
                             ExtToolNodeModel.CFGKEY_HASROWHDR, false));
                 }
             });
-        } catch (InterruptedException e) {
-            // Empty
-        } catch (InvocationTargetException e) {
+        } catch (InvocationTargetRuntimeException e) {
             // Empty
         }
 
@@ -507,7 +497,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         final MutableBoolean hasRowHdr = new MutableBoolean(false);
 
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ViewUtils.invokeAndWaitInEDT(new Runnable() {
                 public void run() {
                     filename.append(m_outFileName.getText());
                     separator.append(m_outSeparator.getText());
@@ -515,9 +505,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
                     hasRowHdr.setValue(m_containsRowHdr.isSelected());
                 }
             });
-        } catch (InterruptedException e) {
-            throw new InvalidSettingsException(e);
-        } catch (InvocationTargetException e) {
+        } catch (InvocationTargetRuntimeException e) {
             throw new InvalidSettingsException(e);
         }
 
