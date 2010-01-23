@@ -222,6 +222,11 @@ public class ExtSSHToolNodeModel extends NodeModel {
                         + m_settings.getRemoteHost());
                 LOGGER.debug("Executing remotely command: '" + cmd + "'");
                 execChannel.connect(m_settings.getTimeoutMilliSec());
+                exec.setMessage("Waiting for remote command to finish");
+                while (!execChannel.isClosed()) {
+                    exec.checkCanceled();
+                    Thread.sleep(500);
+                }
                 LOGGER.debug("SSH execution finished.");
                 exec.checkCanceled();
 
@@ -237,7 +242,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
             LOGGER.debug("ftp getting result file "
                     + m_settings.getRemoteOutputFile() + " to "
                     + outTableFile.getAbsolutePath());
-            // fixes problem of delayed appearance of output file 
+            // fixes problem of delayed appearance of output file
             // (noted specifically when accessing (very) remote machines)
             ftpChannel.disconnect();
             ftpChannel = SSHUtil.createNewSFTPChannel(m_settings, session);
