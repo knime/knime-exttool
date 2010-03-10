@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="" type="Other">
+	<name>External Tool (BI)</name>
+	<shortDescription>
+		Process the input data using an external application.  
+	</shortDescription>
+	
+	<fullDescription>
+		<intro>
+		  Process the input data using an external application.  
+		  The documentation to this node is currently pending as the node is still under development.  
+		</intro>
+
+	</fullDescription>
+	
+	<ports>
+		<inPort index="0" name="Input Data">Table provided as input to the external application.</inPort>
+        <outPort index="0" name="Output Data">Table containing result from the external application.</outPort>
+	</ports>	
+</knimeNode>
