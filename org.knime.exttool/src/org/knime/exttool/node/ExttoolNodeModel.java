@@ -48,7 +48,7 @@
  * History
  *   Jan 19, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.node;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,8 +62,12 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.exttool.executor.Execution;
 
-/**
+/** Default node model for the external tool model. It mostly just delegates
+ * to the executor and settings that are created by the
+ * {@link ExttoolCustomizer}.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class ExttoolNodeModel extends NodeModel {
@@ -71,9 +75,8 @@ public class ExttoolNodeModel extends NodeModel {
     private final ExttoolCustomizer m_customizer;
     private ExttoolSettings m_settings;
 
-    /**
-     * @param customizer
-     *
+    /** Create new model, using in/out count as in the customizer.
+     * @param customizer The configuration object.
      */
     protected ExttoolNodeModel(final ExttoolCustomizer customizer) {
         super(customizer.getNrInputs(), customizer.getNrOutputs());

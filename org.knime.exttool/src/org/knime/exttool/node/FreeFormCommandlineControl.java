@@ -46,89 +46,78 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Jan 18, 2010 (wiswedel): created
+ *   Jan 20, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.node;
+
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 
-/**
- *
+/** Controller to {@link FreeFormCommandlineSettings} with just a text area.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public class ExttoolNodeDialogPane extends NodeDialogPane {
+public class FreeFormCommandlineControl extends AbstractCommandlineControl {
 
-    private final ExttoolCustomizer m_dialogCustomizer;
-    private ExternalToolPanel m_externalToolPanel;
-    private InputFilePanel m_inputFilePanel;
-    private OutputFilePanel m_outputFilePanel;
+    private JTextArea m_commandlineTextArea;
 
-    /** */
-    public ExttoolNodeDialogPane(
-            final ExttoolCustomizer dialogCustomizer) {
-        if (dialogCustomizer == null) {
-            throw new NullPointerException("Argument must not be null");
-        }
-        m_dialogCustomizer = dialogCustomizer;
-    }
-
-
-    protected void initLayout() {
-        m_externalToolPanel = createExternalToolPanel();
-        m_externalToolPanel.initLayout();
-        m_inputFilePanel = createInputFilePanel();
-        m_inputFilePanel.initLayout();
-        m_externalToolPanel.addListenerToInputPanel(m_inputFilePanel);
-        m_outputFilePanel = createOutputFilePanel();
-        m_outputFilePanel.initLayout();
-        addTab("External Tool", m_externalToolPanel);
-        if (m_dialogCustomizer.isShowTabInputFile()) {
-            addTab("Input File", m_inputFilePanel);
-        }
-        if (m_dialogCustomizer.isShowTabOutputFile()) {
-            addTab("Output File", m_outputFilePanel);
-        }
-    }
-
-    protected ExternalToolPanel createExternalToolPanel() {
-        return new ExternalToolPanel(m_dialogCustomizer);
-    }
-
-    protected InputFilePanel createInputFilePanel() {
-        return new InputFilePanel(m_dialogCustomizer);
-    }
-
-    protected OutputFilePanel createOutputFilePanel() {
-        return new OutputFilePanel(m_dialogCustomizer);
+    /** {@inheritDoc} */
+    @Override
+    protected void registerPanel(final JPanel parent) {
+        throw new IllegalStateException(
+                "Not to be called as second method is overridden");
     }
 
     /** {@inheritDoc} */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final DataTableSpec[] inSpecs) throws NotConfigurableException {
-        ExttoolSettings exttoolSettings =
-            m_dialogCustomizer.createExttoolSettings();
-        exttoolSettings.loadSettingsFrom(settings, inSpecs);
-        m_inputFilePanel.loadSettingsFrom(exttoolSettings, inSpecs);
-        m_outputFilePanel.loadSettingsFrom(exttoolSettings, inSpecs);
-        m_externalToolPanel.loadSettingsFrom(exttoolSettings, inSpecs);
+    protected void registerPanel(
+            final JPanel parent, final GridBagConstraints gbc) {
+        StringBuilder helpText = new StringBuilder("<html><body>");
+        helpText.append("Enter command line here, use placeholder ");
+        helpText.append("<i>%inFile%</i> and <i>%outFile%</i>");
+        helpText.append(", which<br />");
+        helpText.append("will be replaced by the full path to the in-");
+        helpText.append("and output file upon execution</body></html>");
+        JLabel helpLabel = new JLabel(helpText.toString());
+        Insets oldInsets = gbc.insets;
+        gbc.insets = new Insets(15, 5, 5, 5);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        parent.add(helpLabel, gbc);
+
+        gbc.gridwidth = 1;
+        gbc.insets = oldInsets;
+        JLabel descLabel = new JLabel("Command line");
+        parent.add(descLabel, gbc);
+
+        m_commandlineTextArea = new JTextArea(8, 20);
+        gbc.gridx = GridBagConstraints.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        parent.add(new JScrollPane(m_commandlineTextArea), gbc);
     }
 
     /** {@inheritDoc} */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        ExttoolSettings exttoolSettings =
-            m_dialogCustomizer.createExttoolSettings();
-        m_inputFilePanel.saveSettingsTo(exttoolSettings);
-        m_outputFilePanel.saveSettingsTo(exttoolSettings);
-        m_externalToolPanel.saveSettingsTo(exttoolSettings);
-        exttoolSettings.saveSettingsTo(settings);
+    protected void loadSettings(final AbstractCommandlineSettings settings,
+            final DataTableSpec[] spec) throws NotConfigurableException {
+        FreeFormCommandlineSettings set = (FreeFormCommandlineSettings)settings;
+        String cmdLine = set.getCommandline();
+        m_commandlineTextArea.setText(cmdLine == null ? "" : cmdLine);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected void saveSettings(final AbstractCommandlineSettings settings)
+        throws InvalidSettingsException {
+        FreeFormCommandlineSettings set = (FreeFormCommandlineSettings)settings;
+        set.setCommandline(m_commandlineTextArea.getText());
     }
 
 }

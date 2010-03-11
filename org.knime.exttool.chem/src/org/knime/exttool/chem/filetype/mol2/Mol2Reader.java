@@ -88,10 +88,15 @@ import org.knime.core.node.InvalidSettingsException;
  */
 public class Mol2Reader {
 
-    private static final DataColumnSpec MOLECULE_COL_SPEC =
+    /** Record start identifier. */
+    static final String TRIPOS_MOLECULE = "@<TRIPOS>MOLECULE";
+
+    /** Column spec for the structure column. */
+    public static final DataColumnSpec MOLECULE_COL_SPEC =
             new DataColumnSpecCreator("Molecule", Mol2Cell.TYPE).createSpec();
 
-    private static final DataColumnSpec MOLECULE_COLNAME_SPEC =
+    /** Column spec for name column (if {@link #isExtractMolName()}). */
+    public static final DataColumnSpec MOLECULE_COLNAME_SPEC =
         new DataColumnSpecCreator("Molecule Name",
                 StringCell.TYPE).createSpec();
 
@@ -210,7 +215,7 @@ public class Mol2Reader {
         while ((line = in.readLine()) != null) {
             exec.checkCanceled();
 
-            if (line.startsWith("@<TRIPOS>MOLECULE")) {
+            if (line.startsWith(TRIPOS_MOLECULE)) {
                 if (stringBufferContainsMolecule) {
                     addMol(buf, title, molName, cont);
                     count++;

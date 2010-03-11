@@ -61,9 +61,10 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.exttool.chem.filetype.mol2.Mol2FileTypeFactory;
 import org.knime.exttool.chem.filetype.sdf.SdfFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
-import org.knime.exttool.node.base.AbstractCommandlineSettings;
+import org.knime.exttool.node.AbstractCommandlineSettings;
 
-/**
+/** A command line setting representing the configuration of the babel node.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 final class BabelCommandlineSettings

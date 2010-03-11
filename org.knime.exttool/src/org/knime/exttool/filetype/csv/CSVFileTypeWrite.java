@@ -68,14 +68,15 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
 
 /**
+ * CSV write support.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 class CSVFileTypeWrite extends AbstractFileTypeWrite {
 
     private FileWriterSettings m_settings;
 
-    /**
-     * @param factory
+    /** Create instance, associating it with its factory.
+     * @param factory Factory that creates this instance.
      */
     public CSVFileTypeWrite(final CSVFileTypeFactory factory) {
         super(factory);
@@ -89,7 +90,7 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
     @Override
     public void setSelectedInput(final DataColumnSpec... spec)
             throws InvalidSettingsException {
-
+        // write everything that comes in.
     }
 
     /** {@inheritDoc} */

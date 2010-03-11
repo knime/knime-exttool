@@ -113,6 +113,9 @@ public class SDFReader {
         BROKEN_RECORDS_SPEC = new DataTableSpec(dcs1, dcs2);
     }
 
+    /** Name of structure column. */
+    public static final String MOLECULE_NAME_COLUMN = "Molecule Name";
+
     private final SDFReaderSettings m_settings;
 
     private String m_warningMessage;
@@ -194,7 +197,7 @@ public class SDFReader {
         }
 
         if (m_settings.extractName()) {
-            colSpecs.add(new DataColumnSpecCreator("Molecule name",
+            colSpecs.add(new DataColumnSpecCreator(MOLECULE_NAME_COLUMN,
                     StringCell.TYPE).createSpec());
         }
 

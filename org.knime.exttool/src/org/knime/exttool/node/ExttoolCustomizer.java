@@ -48,22 +48,42 @@
  * History
  *   Jan 18, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.node;
 
 import java.util.Arrays;
 
 import org.knime.core.data.DataValue;
 import org.knime.core.node.util.ColumnFilter;
 import org.knime.core.node.util.DataValueColumnFilter;
+import org.knime.exttool.executor.Execution;
 
-/**
+/** A configuration object to customize properties of external tool
+ * node extensions. In particular it allows setting
+ * <ul>
+ * <li>the number of in- and output ports (defaults to 1:1)
+ * <li>the visibility of different controls in the dialog
+ *     (e.g. to disable the input/output tabs)
+ * <li>a pre-filtering of the appropriate input columns (for instance if
+ *     a derived node only handles certain input types)
+ * </ul>
+ * This class is also meant to be subclassed in order to return, e.g. a
+ * specialized dialog panel with custom controls (buttons, checkboxes, etc.).
+ * Subclasses will overwrite methods such as
+ * {@link #createCommandlineSettings()}.
+ *
+ * This class is used in (extensions of) the {@link ExttoolNodeFactory} to do
+ * a custom setup of the node. Although almost all properties in this class
+ * have both a set and get method, the set methods must only be called right
+ * after instantiation of this object (which is typically in the
+ * constructor of the node factory).
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class ExttoolCustomizer {
 
+    private final int m_nrInputs;
+    private final int m_nrOutputs;
 
-    private int m_nrInputs = 1;
-    private int m_nrOutputs = 1;
     private boolean m_showChunkSizeHandlingPanel = true;
     private boolean m_showPathToExecutableField = false;
     private boolean m_showPathToTempInputFile = true;
@@ -80,60 +100,74 @@ public class ExttoolCustomizer {
     private ColumnFilter m_columnFilter =
         new DataValueColumnFilter(DataValue.class);
 
+    /** Create new customizer for nodes with one in- and one output. */
+    public ExttoolCustomizer() {
+        this(1, 1);
+    }
+
+    /** Create a customizer for nodes with a given number of
+     * in- and outports.
+     * @param ins number of inputs.
+     * @param outs number of outputs. */
+    public ExttoolCustomizer(final int ins, final int outs) {
+        if (ins < 0) {
+            throw new IllegalArgumentException("Illegal port count: " + ins);
+        }
+        if (outs < 0) {
+            throw new IllegalArgumentException("Illegal port count: " + outs);
+        }
+        m_nrInputs = ins;
+        m_nrOutputs = outs;
+    }
+
+    /** Create a custom commandline settings objects. Subclasses overwrite this
+     * method to return their custom dialog settings (and panel). This method
+     * is called often, each invocation must return a new object of same class.
+     * @return A <b>new</b> instance of the  command line settings, this
+     * implementation returns a new instance of
+     * {@link FreeFormCommandlineSettings}.
+     */
     protected AbstractCommandlineSettings createCommandlineSettings() {
         return new FreeFormCommandlineSettings();
     }
 
+    /** Create a new settings object that is used to persist the node
+     * configuration. Subclasses may override this to return an extension
+     * of {@link ExttoolSettings}. This method is called frequently (several
+     * times when a dialog is opened or closed).
+     * @return A new settings object.
+     */
     protected ExttoolSettings createExttoolSettings() {
         return new ExttoolSettings(this);
     }
 
+    /** Create a new {@link Execution} that performs the run. This method
+     * is called during the node's execution.
+     * @param settings The current settings to the node.
+     * @return A new execution object.
+     */
     protected Execution createExecution(final ExttoolSettings settings) {
         return new Execution(this, settings);
     }
 
-    /**
-     * @return the nrInputs
-     */
+    /** @return the nrInputs (constructor argument) */
     public int getNrInputs() {
         return m_nrInputs;
     }
 
-    /**
-     * @param inputs the nrInputs to set
-     */
-    public void setNrInputs(final int inputs) {
-        if (inputs < 0) {
-            throw new IllegalArgumentException("Illegal port count: " + inputs);
-        }
-        m_nrInputs = inputs;
-    }
-
-    /**
-     * @return the nrOutputs
-     */
+    /** @return the nrOutputs (constructor argument) */
     public int getNrOutputs() {
         return m_nrOutputs;
     }
 
-    /**
-     * @param outs the nrOutputs to set
-     */
-    public void setNrOutputs(final int outs) {
-        if (outs < 0) {
-            throw new IllegalArgumentException("Illegal port count: " + outs);
-        }
-        m_nrOutputs = outs;
-    }
-
-    /**
-     * @return the showChunkSizeHandlingPanel
+    /** Whether to show the panel with the chunk size handling.
+     * @return the showChunkSizeHandlingPanel property
      */
     public boolean isShowChunkSizeHandlingPanel() {
         return m_showChunkSizeHandlingPanel;
     }
 
-    /**
+    /** Set whether to show the chunk size panel.
      * @param showChunkSizeHandlingPanel the showChunkSizeHandlingPanel to set
      */
     public void setShowChunkSizeHandlingPanel(
@@ -141,15 +175,16 @@ public class ExttoolCustomizer {
         m_showChunkSizeHandlingPanel = showChunkSizeHandlingPanel;
     }
 
-    /**
-     * @return the showPathToExecutableField
+    /** Whether to show the path to the executable (text field with history).
+     * @return the showPathToExecutableField property
      */
     public boolean isShowPathToExecutableField() {
         return m_showPathToExecutableField;
     }
 
-    /**
-     * @param showPathToExecutableField the showPathToExecutableField to set
+    /** Set whether to show the path to the executable
+     *  (text field with history).
+     * @param showPathToExecutableField the showPathToExecutableField property
      */
     public void setShowPathToExecutableField(
             final boolean showPathToExecutableField) {
@@ -292,7 +327,7 @@ public class ExttoolCustomizer {
         m_columnFilter = columnFilter;
     }
 
-    /**
+    /** Reduce the number of selectable input columns to the argument type list.
      * @param valClass A class of DataValue class that are accepted
      * @see #setColumnFilter(ColumnFilter)
      * @see DataValueColumnFilter

@@ -61,13 +61,10 @@ import org.knime.exttool.executor.InputDataHandle.FileInputDataHandle;
 import org.knime.exttool.executor.OutputDataHandle.FileOutputDataHandle;
 
 /**
+ * Default (local) execution by means of temporary files.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class DefaultExttoolExecutor extends AbstractExttoolExecutor {
-
-    protected DefaultExttoolExecutor() {
-        super();
-    }
 
     /** {@inheritDoc} */
     @Override

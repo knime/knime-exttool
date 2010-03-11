@@ -62,9 +62,15 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
-import org.knime.exttool.node.base.ExttoolSettings;
+import org.knime.exttool.node.ExttoolSettings;
 
-/**
+/** Factory for a custom {@link AbstractExttoolExecutor executor}.
+ * Factories are registered by means of contributions to the extension point
+ * {@value #EXTENSION_ID}.
+ *
+ * <p><b>Warning:</b> API needs review, subclassing outside this package
+ * is currently not encouraged.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public abstract class AbstractExttoolExecutorFactory {
@@ -72,27 +78,39 @@ public abstract class AbstractExttoolExecutorFactory {
     private static final NodeLogger LOGGER =
         NodeLogger.getLogger(AbstractExttoolExecutorFactory.class);
 
+    /** Extension point ID. */
     public static final String EXTENSION_ID = "org.knime.exttool.executor";
 
     private static Map<String, AbstractExttoolExecutorFactory> factoryMap;
 
+    /** IDs of all registered executors. By convention, the ID is the fully
+     * qualified class name of the factory.
+     * @return The set of registered IDs.
+     * @see #get(String)
+     */
     public static final Set<String> keySet() {
         ensureInitExtensions();
         return factoryMap.keySet();
     }
 
-    public static final AbstractExttoolExecutorFactory get(final String key)
+    /** Look-up of registered executor.
+     * @param id The ID (fully qualified class name) of the factory.
+     * @return The associated factory, never <code>null</code>.
+     * @throws InvalidSettingsException If <code>id</code> is null or unknown.
+     */
+    public static final AbstractExttoolExecutorFactory get(final String id)
         throws InvalidSettingsException {
         ensureInitExtensions();
-        AbstractExttoolExecutorFactory result = factoryMap.get(key);
+        AbstractExttoolExecutorFactory result = factoryMap.get(id);
         if (result == null) {
-            throw new InvalidSettingsException("Unknown executor ID \"" + key
+            throw new InvalidSettingsException("Unknown executor ID \"" + id
                     + "\"; valid values are: "
                     + Arrays.toString(keySet().toArray()));
         }
         return result;
     }
 
+    /** Collects all registered extensions when called the first time. */
     private static void ensureInitExtensions() {
         if (factoryMap == null) {
             Map<String, AbstractExttoolExecutorFactory> map =
@@ -106,7 +124,6 @@ public abstract class AbstractExttoolExecutorFactory {
                     if (o instanceof AbstractExttoolExecutorFactory) {
                         AbstractExttoolExecutorFactory f =
                             (AbstractExttoolExecutorFactory)o;
-                        f.setName(name);
                         map.put(o.getClass().getName(), f);
                         LOGGER.debug("Adding exttool executor \""
                                 + f.getClass().getName() + "\"");
@@ -124,31 +141,39 @@ public abstract class AbstractExttoolExecutorFactory {
         }
     }
 
-    private String m_name = "<No Name>";
-
-    /**
-     * @param name the name to set
+    /** Create a new instance of an executor. This method is called often, e.g.
+     * for each individual chunk to be processed.
+     * @return A new executor.
      */
-    final void setName(final String name) {
-        if (name != null) {
-            m_name = name;
-        }
-    }
-
-    /**
-     * @return the name
-     */
-    public final String getName() {
-        return m_name;
-    }
-
     public abstract AbstractExttoolExecutor createNewInstance();
 
+    /** User-friendly name of the executor (shown to the user). This could be
+     * "SSH Executor" or "Grid Executor".
+     * @return The constant name of the executor.
+     */
+    public abstract String getName();
+
+    /** Create a handle for the external tool's output data.
+     * @param settings The settings for the current node (can mostly be ignored)
+     * @param suggestOutFile The file suggested by the framework. This can
+     * either be a user-entered name or a temp file name that is
+     * automatically generated.
+     * @return A new output handle.
+     * @throws InvalidSettingsException If the settings are inappropriate.
+     */
     public abstract OutputDataHandle createOutputDataHandle(
             final ExttoolSettings settings,
             final File suggestOutFile)
         throws InvalidSettingsException;
 
+    /** Create a handle for the external tool's input data.
+     * @param settings The settings for the current node (can mostly be ignored)
+     * @param suggestInFile The file suggested by the framework. This can
+     * either be a user-entered name or a temp file name that is
+     * automatically generated.
+     * @return A new input handle.
+     * @throws InvalidSettingsException If the settings are inappropriate.
+     */
     public abstract InputDataHandle createInputDataHandle(
             final ExttoolSettings settings,
             final File suggestInFile)

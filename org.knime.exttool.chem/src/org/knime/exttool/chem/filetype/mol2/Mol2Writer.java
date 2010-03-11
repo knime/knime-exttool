@@ -50,10 +50,12 @@
  */
 package org.knime.exttool.chem.filetype.mol2;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 
 import org.knime.chem.types.Mol2Value;
 import org.knime.core.data.DataCell;
@@ -83,12 +85,16 @@ public class Mol2Writer {
     private static final String CFG_TARGET_FILE = "output_file";
     /** Config identifier for overwrite OK. */
     private static final String CFG_OVERWRITE_OK = "overwriteOK";
+    /** Config identifier for replacing molecule name by row ID. */
+    private static final String CFG_REPLACE_TITLE_BY_ID = "replaceTitleByRowID";
 
     private String m_mol2Column;
     private String m_outputFile;
     private boolean m_overwriteOK;
+    private boolean m_replaceTitleByRowID;
 
     private String m_warningMessage;
+
 
     /**
      * @return the mol2Column
@@ -132,6 +138,20 @@ public class Mol2Writer {
         m_overwriteOK = overwriteOK;
     }
 
+    /**
+     * @return the replaceTitleByRowID
+     */
+    public boolean isReplaceTitleByRowID() {
+        return m_replaceTitleByRowID;
+    }
+
+    /**
+     * @param replaceTitleByRowID the replaceTitleByRowID to set
+     */
+    public void setReplaceTitleByRowID(final boolean replaceTitleByRowID) {
+        m_replaceTitleByRowID = replaceTitleByRowID;
+    }
+
     /** Saves the current configuration to the argument.
      * @param settings To save to.
      */
@@ -140,6 +160,7 @@ public class Mol2Writer {
             settings.addString(CFG_TARGET_COLUMN, m_mol2Column);
             settings.addString(CFG_TARGET_FILE, m_outputFile);
             settings.addBoolean(CFG_OVERWRITE_OK, m_overwriteOK);
+            settings.addBoolean(CFG_REPLACE_TITLE_BY_ID, m_replaceTitleByRowID);
         }
     }
 
@@ -154,6 +175,9 @@ public class Mol2Writer {
         m_outputFile = settings.getString(CFG_TARGET_FILE);
         // added in v2.1
         m_overwriteOK = settings.getBoolean(CFG_OVERWRITE_OK, true);
+        // added in v2.2
+        m_replaceTitleByRowID =
+            settings.getBoolean(CFG_REPLACE_TITLE_BY_ID, false);
     }
 
     /** Loads the settings in the dialog.
@@ -171,6 +195,8 @@ public class Mol2Writer {
         m_outputFile = settings.getString(CFG_TARGET_FILE, null);
         m_mol2Column = settings.getString(CFG_TARGET_COLUMN, "");
         m_overwriteOK = settings.getBoolean(CFG_OVERWRITE_OK, false);
+        m_replaceTitleByRowID =
+            settings.getBoolean(CFG_REPLACE_TITLE_BY_ID, false);
     }
 
     /** Performs the nodes execute step. It writes the argument table to its
@@ -201,7 +227,25 @@ public class Mol2Writer {
             } else {
                 Mol2Value v = (Mol2Value)c;
                 String toString = v.toString();
-                outWriter.write(toString);
+                if (m_replaceTitleByRowID) {
+                    boolean isTitleLine = false;
+                    BufferedReader reader =
+                        new BufferedReader(new StringReader(toString));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (isTitleLine) {
+                            line = r.getKey().getString();
+                            isTitleLine = false;
+                        } else if (line.startsWith(
+                                Mol2Reader.TRIPOS_MOLECULE)) {
+                            isTitleLine = true;
+                        }
+                        outWriter.write(line);
+                        outWriter.newLine();
+                    }
+                } else {
+                    outWriter.write(toString);
+                }
                 outWriter.newLine();
             }
             i++;

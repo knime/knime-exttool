@@ -48,7 +48,7 @@
  * History
  *   Jan 20, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.node;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +60,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 
 /**
+ * Default command line settings, representing a command line string.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class FreeFormCommandlineSettings extends AbstractCommandlineSettings {

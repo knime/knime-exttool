@@ -54,6 +54,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
@@ -63,6 +64,7 @@ import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 
 /**
+ * Mol2 read support.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class Mol2FileTypeRead extends AbstractFileTypeRead {
@@ -101,7 +103,10 @@ public class Mol2FileTypeRead extends AbstractFileTypeRead {
         reader.setExtractMolName(true);
         reader.setGenerateID(true);
         BufferedDataTable result = reader.execute(exec);
-        return result;
+        ColumnRearranger rearranger = new ColumnRearranger(
+                result.getDataTableSpec());
+        rearranger.move(Mol2Reader.MOLECULE_COLNAME_SPEC.getName(), 0);
+        return exec.createColumnRearrangeTable(result, rearranger, exec);
     }
 
     /** {@inheritDoc} */

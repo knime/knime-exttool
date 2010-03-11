@@ -1,7 +1,7 @@
-/*
- * ------------------------------------------------------------------------
+<!--
+========================================================================
  *
- *  Copyright (C) 2003 - 2009
+ *  Copyright (C) 2003 - 2010
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -43,61 +43,11 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ----------------------------------------------------------------------------
- */
-package org.knime.exttool;
-
-import org.eclipse.core.runtime.Plugin;
-import org.osgi.framework.BundleContext;
-
-
-/**
- * This is the activator for this plugin that is instantiated by the Eclipse
- * framework once the plugin is loaded.
- *
- * @author Bernd Wiswedel, University of Konstanz
- */
-public class ExttoolNodePlugin extends Plugin {
-    // The shared instance.
-    private static ExttoolNodePlugin plugin;
-
-    /**
-     * The constructor.
-     */
-    public ExttoolNodePlugin() {
-        super();
-        plugin = this;
-    }
-
-    /**
-     * This method is called upon plug-in activation.
-     *
-     * @param context the OSGI bundle context
-     * @throws Exception if this plugin could not be started
-     */
-    @Override
-    public void start(final BundleContext context) throws Exception {
-        super.start(context);
-    }
-
-    /**
-     * This method is called when the plug-in is stopped.
-     *
-     * @param context the OSGI bundle context
-     * @throws Exception if this plugin could not be stopped
-     */
-    @Override
-    public void stop(final BundleContext context) throws Exception {
-        super.stop(context);
-        plugin = null;
-    }
-
-    /**
-     * Returns the shared instance.
-     *
-     * @return singleton instance of the Plugin
-     */
-    public static ExttoolNodePlugin getDefault() {
-        return plugin;
-    }
-}
+===============================================================================
+-->
+<body>
+Contains base classes for the external tool node. It also contains the default
+node implementation of the external tool node that uses a text field where the
+user can enter the command line. For a brief introduction on how to extend the
+external tool consult the <a href="ExttoolNodeFactory.html">node factory</a>.
+</body>

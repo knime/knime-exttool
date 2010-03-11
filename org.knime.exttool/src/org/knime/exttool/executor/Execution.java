@@ -48,7 +48,7 @@
  * History
  *   Feb 19, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.executor;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,13 +57,25 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.knime.core.data.DataCell;
+import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
 import org.knime.core.data.RowIterator;
+import org.knime.core.data.RowKey;
+import org.knime.core.data.container.BlobSupportDataRow;
+import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -73,15 +85,23 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.FileUtil;
 import org.knime.core.util.ThreadPool;
-import org.knime.exttool.executor.AbstractExttoolExecutor;
-import org.knime.exttool.executor.AbstractExttoolExecutorFactory;
-import org.knime.exttool.executor.InputDataHandle;
-import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
-import org.knime.exttool.node.base.ExttoolSettings.PathAndTypeConfiguration;
+import org.knime.exttool.node.ExttoolCustomizer;
+import org.knime.exttool.node.ExttoolSettings;
+import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfiguration;
 
 /**
+ * Contains the logic of setting up and running all the executions. There is
+ * one single object of this class responsible for the entire execution of a
+ * node, that is, it also controls all the thread-handling for individual
+ * chunks. None of the methods, except for the
+ * {@link #execute(BufferedDataTable[], ExecutionContext) execute method} is
+ * meant to be called outside this class or a subclass of it.
+
+ * <p><b>Warning:</b> API needs review, subclassing outside this package
+ * is currently not encouraged.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class Execution {
@@ -92,33 +112,54 @@ public class Execution {
     private final ExttoolCustomizer m_customizer;
     private final ExttoolSettings m_settings;
 
+    /** Working directory, created based on the first valid in/output file.*/
     private File m_workingDirectory;
+    /** Directory in the working dir containing input data to the ext-tool. */
     private File m_inputDirectory;
+    /** Directory in the working dir containing output data created by
+     * the external tool. */
     private File m_outputDirectory;
 
-    protected Execution(final ExttoolCustomizer customizer,
+    /** Creates new execution for a given customizer and the (validated!)
+     * settings.
+     * @param customizer The customizer for this node ("static" information)
+     * @param settings The node settings.
+     */
+    public Execution(final ExttoolCustomizer customizer,
             final ExttoolSettings settings) {
+        if (customizer == null || settings == null) {
+            throw new NullPointerException("Arguments must not be null.");
+        }
         m_customizer = customizer;
         m_settings = settings;
     }
 
-    /**
-     * @return the customizer
-     */
+    /** @return the customizer passed in the constructor. */
     protected ExttoolCustomizer getCustomizer() {
         return m_customizer;
     }
 
-    /**
-     * @return the settings
-     */
+    /** @return the settings passed in the constructor. */
     protected ExttoolSettings getSettings() {
         return m_settings;
     }
 
+    /** Called from the {@link #execute(BufferedDataTable[], ExecutionContext)
+     * execute method} to write the input and create the execution callables.
+     * This method is not be called outside this class (but it can be
+     * overwritten to take additional steps that are required in preparation of
+     * the execution).
+     * @param inputTables The input table of this node.
+     * @param exec Progress monitor for cancellation/progress
+     * @return A list of callables that are run by the <code>execute</code>
+     * @throws IOException If there problems writing the input data.
+     * @throws InvalidSettingsException If the settings aren't OK
+     * @throws CanceledExecutionException If canceled.
+     */
     protected List<ExecutionChunkCallable> prepareExecution(
             final BufferedDataTable[] inputTables, final ExecutionMonitor exec)
-            throws IOException, InvalidSettingsException, CanceledExecutionException {
+            throws IOException, InvalidSettingsException,
+            CanceledExecutionException {
         final ExttoolSettings settings = getSettings();
         final int nrInPorts = getCustomizer().getNrInputs();
         final int nrOutPorts = getCustomizer().getNrOutputs();
@@ -234,78 +275,97 @@ public class Execution {
         return result;
     }
 
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
+    /** Main execution called from the node's execute method. It writes the
+     * input data, runs the process(es), reads back the results and merges
+     * the input with the output data.
+     * @param inData The input data of the node.
+     * @param exec for progress monitoring, cancelation, table creation.
+     * @return The final output table(s).
+     * @throws Exception In case of errors.
+     */
+    public BufferedDataTable[] execute(final BufferedDataTable[] inData,
                 final ExecutionContext exec) throws Exception {
-            ThreadPool threadPool =
-                KNIMEConstants.GLOBAL_THREAD_POOL.createSubPool(8);
-            double pre = 0.1;
-            double main = 0.8;
-            double post = 0.1;
-            exec.setMessage("Writing input");
-            ExecutionMonitor subExec = exec.createSubProgress(pre);
-            List<ExecutionChunkCallable> executionChunks =
-                prepareExecution(inData, subExec);
-            final int chunkCount = executionChunks.size();
-            subExec.setProgress(1.0);
-            ExecutionContext mainExec = exec.createSubExecutionContext(main);
-            exec.setMessage("Calling executable (" + chunkCount + " chunk(s)");
-            List<Future<BufferedDataTable[]>> futures =
-                new ArrayList<Future<BufferedDataTable[]>>();
-            for (final ExecutionChunkCallable ec : executionChunks) {
-                final ExecutionContext sub =
-                    mainExec.createSilentSubExecutionContext(1.0 / chunkCount);
-                ec.setExecutionContext(sub);
-                futures.add(threadPool.enqueue(ec));
+        if (inData.length != m_customizer.getNrInputs()) {
+            throw new Exception("Invalid input length: " + inData.length);
+        }
+        ThreadPool threadPool =
+            KNIMEConstants.GLOBAL_THREAD_POOL.createSubPool(8);
+        double pre = 0.1;
+        double main = 0.7;
+        double post = 0.1;
+        double merge = 0.1;
+        exec.setMessage("Writing input");
+        ExecutionMonitor subExec = exec.createSubProgress(pre);
+        List<ExecutionChunkCallable> executionChunks =
+            prepareExecution(inData, subExec);
+        final int chunkCount = executionChunks.size();
+        subExec.setProgress(1.0);
+        ExecutionContext mainExec = exec.createSubExecutionContext(main);
+        exec.setMessage("Calling executable (" + chunkCount + " chunk(s))");
+        List<Future<BufferedDataTable[]>> futures =
+            new ArrayList<Future<BufferedDataTable[]>>();
+        AtomicInteger rowUnifier = new AtomicInteger();
+        for (final ExecutionChunkCallable ec : executionChunks) {
+            final ExecutionContext sub =
+                mainExec.createSilentSubExecutionContext(1.0 / chunkCount);
+            ec.setExecutionContext(sub);
+            if (chunkCount > 0) {
+                ec.setRowIdUnifier(rowUnifier);
             }
-            boolean success = false;
-            final int nrOutputs = getCustomizer().getNrOutputs();
-            @SuppressWarnings("unchecked")
-            List<BufferedDataTable>[] tablesPerPort = new ArrayList[nrOutputs];
-            for (int i = 0; i < nrOutputs; i++) {
-                tablesPerPort[i] = new ArrayList<BufferedDataTable>();
-            }
-            List<Throwable> failures = new ArrayList<Throwable>();
-            for (int chunk = 0; chunk < chunkCount; chunk++) {
-                Future<BufferedDataTable[]> f = futures.get(chunk);
-                BufferedDataTable[] result;
-                try {
-                    result = f.get();
-                    if (result.length != nrOutputs) {
-                        IndexOutOfBoundsException iooe =
-                            new IndexOutOfBoundsException("Returned table "
+            futures.add(threadPool.enqueue(ec));
+        }
+        boolean success = false;
+        final int nrOutputs = getCustomizer().getNrOutputs();
+        @SuppressWarnings("unchecked")
+        List<BufferedDataTable>[] tablesPerPort = new ArrayList[nrOutputs];
+        for (int i = 0; i < nrOutputs; i++) {
+            tablesPerPort[i] = new ArrayList<BufferedDataTable>();
+        }
+        List<Throwable> failures = new ArrayList<Throwable>();
+        for (int chunk = 0; chunk < chunkCount; chunk++) {
+            Future<BufferedDataTable[]> f = futures.get(chunk);
+            BufferedDataTable[] result;
+            try {
+                result = f.get();
+                if (result.length != nrOutputs) {
+                    IndexOutOfBoundsException iooe =
+                        new IndexOutOfBoundsException("Returned table "
                                 + "array is not of expected length, got "
                                 + result.length + ", expected " + nrOutputs);
-                        throw new ExecutionException(iooe);
+                    throw new ExecutionException(iooe);
+                }
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (chunkCount == 1) {
+                    if (cause instanceof Exception) {
+                        throw (Exception)cause;
+                    } else {
+                        throw e;
                     }
-                } catch (ExecutionException e) {
-                    Throwable cause = e.getCause();
-                    if (chunkCount == 1) {
-                        if (cause instanceof Exception) {
-                            throw (Exception)cause;
-                        } else {
-                            throw e;
-                        }
-                    }
-                    LOGGER.warn("Execution on chunk " + chunk + " failed: "
-                            + e.getMessage(), cause);
-                    failures.add(cause);
-                    continue;
                 }
-                if (chunkCount == 1) { // one chunk only
-                    return result;
-                }
-                success = true;
-                for (int i = 0; i < tablesPerPort.length; i++) {
-                    tablesPerPort[i].add(result[i]);
-                }
+                LOGGER.warn("Execution on chunk " + chunk + " failed: "
+                        + e.getMessage(), cause);
+                failures.add(cause);
+                continue;
             }
-            if (!success) {
-                throw new Exception("Failed on all chunks, last error:  "
-                        + failures.get(failures.size() - 1).getMessage());
+            success = true;
+            for (int i = 0; i < tablesPerPort.length; i++) {
+                tablesPerPort[i].add(result[i]);
             }
+        }
+        if (!success) {
+            throw new Exception("Failed on all chunks, last error:  "
+                    + failures.get(failures.size() - 1).getMessage());
+        }
+        BufferedDataTable[] finalResult = new BufferedDataTable[nrOutputs];
+        if (chunkCount == 1) {
+            for (int i = 0; i < nrOutputs; i++) {
+                finalResult[i] = tablesPerPort[i].get(0);
+            }
+        } else {
             exec.setMessage("Aggregating output tables");
+            finalResult = new BufferedDataTable[nrOutputs];
             ExecutionContext postExec = exec.createSubExecutionContext(post);
-            BufferedDataTable[] finalResult = new BufferedDataTable[nrOutputs];
             for (int i = 0; i < nrOutputs; i++) {
                 ExecutionMonitor sub =
                     postExec.createSubProgress(1.0 / nrOutputs);
@@ -314,13 +374,167 @@ public class Execution {
                 finalResult[i] =
                     postExec.createConcatenateTable(sub, fromChunks);
             }
+        }
+        if (inData.length == 0 || nrOutputs == 0) {
             return finalResult;
         }
+        ExecutionContext mergeExec = exec.createSubExecutionContext(merge);
+        BufferedDataTable in = inData[0];
+        BufferedDataTable out = finalResult[0];
+        String idColumn = out.getDataTableSpec().getColumnSpec(0).getName();
+        finalResult[0] = joinInAndOutputTable(in, out, idColumn, mergeExec);
+        return finalResult;
 
+    }
+
+    /** Joins the first input data table with the first output data table. The
+     * output table must retain the same row-ordering as the input table, though
+     * it may contain additional rows in between (with the same IDs) or no
+     * matching row at all.
+     * @param in The input table.
+     * @param out The output table (output from external tool).
+     * @param idColInOutTable Name of the column in the output table containing
+     *        the ID based on which the matching with the input row IDs is done.
+     * @param exec for progress/cancellation/table creation.
+     * @return The final output table (at port 0)
+     * @throws Exception In case of problems.
+     */
+    protected BufferedDataTable joinInAndOutputTable(
+            final BufferedDataTable in, final BufferedDataTable out,
+            final String idColInOutTable, final ExecutionContext exec)
+        throws Exception {
+        RowIterator inIt = in.iterator();
+        DataTableSpec inSpec = in.getDataTableSpec();
+        int inCount = in.getRowCount();
+
+        DataTableSpec outSpec = out.getDataTableSpec();
+        int idCol = outSpec.findColumnIndex(idColInOutTable);
+        if (idCol < 0) {
+            throw new Exception("No ID column \"" + idColInOutTable
+                    + "\" in output table: " + outSpec);
+        }
+
+        HashSet<String> namesHash = new HashSet<String>();
+        List<DataColumnSpec> colSpecs = new ArrayList<DataColumnSpec>();
+        for (int i = 0; i < inSpec.getNumColumns(); i++) {
+            DataColumnSpec col = inSpec.getColumnSpec(i);
+            namesHash.add(col.getName());
+            colSpecs.add(col);
+        }
+        for (int i = 0; i < outSpec.getNumColumns(); i++) {
+            if (i != idCol) {
+                DataColumnSpec col = outSpec.getColumnSpec(i);
+                if (!namesHash.add(col.getName())) {
+                    int index = 1;
+                    String name;
+                    do {
+                        name = col.getName() + "(#" + (index++) + ")";
+                    } while (!namesHash.add(name));
+                    DataColumnSpecCreator c = new DataColumnSpecCreator(col);
+                    c.setName(name);
+                    colSpecs.add(c.createSpec());
+                } else {
+                    colSpecs.add(col);
+                }
+            }
+        }
+        DataTableSpec spec = new DataTableSpec(inSpec.getName(),
+                colSpecs.toArray(new DataColumnSpec[colSpecs.size()]));
+        BufferedDataContainer cont = exec.createDataContainer(spec);
+        RowIterator outIt = out.iterator();
+
+        DataRow lastFromRight = outIt.hasNext() ? outIt.next() : null;
+        int runningIndex = 0;
+        int index = 0;
+        while (inIt.hasNext()) {
+            runningIndex = 0;
+            DataRow inRow = inIt.next();
+            exec.setProgress(index / (double)inCount,
+                    "Finding matches to row \"" + inRow.getKey() + "\" ("
+                    + index + "/" + inCount + ")");
+            exec.checkCanceled();
+            if (lastFromRight == null && outIt.hasNext()) {
+                lastFromRight = outIt.next();
+            }
+            while (addToContainerIfMatches(inRow, lastFromRight,
+                    idCol, cont, runningIndex)) {
+                runningIndex++;
+                lastFromRight = outIt.hasNext() ? outIt.next() : null;
+            }
+            if (runningIndex == 0) {
+                DataCell[] missingCells = new DataCell[outSpec.getNumColumns()];
+                Arrays.fill(missingCells, DataType.getMissingCell());
+                missingCells[idCol] =
+                    new StringCell(inRow.getKey().getString());
+                DataRow missingRow =
+                    new DefaultRow(inRow.getKey(), missingCells);
+                boolean add = addToContainerIfMatches(inRow, missingRow, idCol,
+                        cont, runningIndex++);
+                assert add : "Fill row was not added";
+            }
+        }
+        exec.setMessage("Filling remaining rows");
+        while (lastFromRight != null && runningIndex == 0) {
+            exec.checkCanceled();
+            DataCell[] inMissingCells = new DataCell[inSpec.getNumColumns()];
+            Arrays.fill(inMissingCells, DataType.getMissingCell());
+            RowKey key = new RowKey(lastFromRight.getCell(idCol).toString());
+            DataRow inMissing = new DefaultRow(key, inMissingCells);
+            boolean add = addToContainerIfMatches(inMissing, lastFromRight,
+                    idCol, cont, runningIndex);
+            assert add;
+            lastFromRight = outIt.hasNext() ? outIt.next() : null;
+        }
+        cont.close();
+        return cont.getTable();
+    }
+
+    /** Add a row the output container if the two argument rows match. */
+    private boolean addToContainerIfMatches(final DataRow left,
+            final DataRow right, final int idColInRight,
+            final BufferedDataContainer cont, final int runningIndex) {
+        if (left == null || right == null) {
+            return false;
+        }
+        DataCell idCellRight = right.getCell(idColInRight);
+        RowKey leftKey = left.getKey();
+        if (leftKey.getString().equals(idCellRight.toString())) {
+            RowKey newKey = leftKey;
+            if (runningIndex > 0) {
+                leftKey = new RowKey(leftKey + "_" + runningIndex);
+            }
+            int leftCount = left.getNumCells();
+            int rightCount = right.getNumCells();
+            DataCell[] newCells = new DataCell[leftCount + rightCount - 1];
+            int index = 0;
+            for (int i = 0; i < leftCount; i++) {
+                newCells[index++] = left instanceof BlobSupportDataRow
+                ? ((BlobSupportDataRow)left).getRawCell(i) : left.getCell(i);
+            }
+            for (int i = 0; i < rightCount; i++) {
+                if (i == idColInRight) {
+                    continue;
+                }
+                newCells[index++] = right instanceof BlobSupportDataRow
+                ? ((BlobSupportDataRow)right).getRawCell(i) : right.getCell(i);
+            }
+            cont.addRowToTable(new BlobSupportDataRow(newKey, newCells));
+            return true;
+        }
+        return false;
+    }
+
+    /** Creates the complete command line prior execution. It replaces the
+     * in- and output place holders by their final actual file paths.
+     * @param inputHandles Input handles to the external tool.
+     * @param outputHandles Output handles, containing result data.
+     * @return The list of final commandline arguments
+     * @throws InvalidSettingsException If settings are invalid.
+     */
     protected String[] createCommandlineArgs(
             final InputDataHandle[] inputHandles,
             final OutputDataHandle[] outputHandles)
-        throws InvalidSettingsException {
+    throws InvalidSettingsException {
         String[] args = m_settings.getCommandlineArgs();
         String[] copy = Arrays.copyOf(args, args.length);
         // replace in each argument %inFile%, %inFile_x%",... by the full paths
@@ -361,6 +575,14 @@ public class Execution {
         return copy;
     }
 
+    /** Get the final path of the input file.
+     * @param port Port of interest
+     * @param chunkIndex Current chunk information.
+     * @param inputFileType Associated file type
+     * @return The file of the input.
+     * @throws IOException If a file can't be created
+     * @throws InvalidSettingsException If settings are invalid.
+     */
     protected File getInputFilePath(final int port, final int chunkIndex,
             final AbstractFileTypeWrite inputFileType)
         throws IOException, InvalidSettingsException {
@@ -390,6 +612,15 @@ public class Execution {
         return new File(inputFile);
     }
 
+    /** Get the final path of the output file (file created by the
+     * external tool).
+     * @param port Port of interest
+     * @param chunkIndex Current chunk information.
+     * @param outputFileType Associated file type
+     * @return Output file.
+     * @throws IOException If a file can't be created
+     * @throws InvalidSettingsException If settings are invalid.
+     */
     protected File getOutputFilePath(final int port, final int chunkIndex,
             final AbstractFileTypeRead outputFileType)
     throws IOException, InvalidSettingsException {
@@ -419,6 +650,10 @@ public class Execution {
         return new File(outputFile);
     }
 
+    /** Create a callable representing an execution of a chunk.
+     * @param executor The associated executor.
+     * @return A new chunk callable.
+     */
     protected ExecutionChunkCallable createExecutionChunkCallable(
             final AbstractExttoolExecutor executor) {
         return new ExecutionChunkCallable(executor);
@@ -428,6 +663,10 @@ public class Execution {
     private static final SimpleDateFormat DATE_FORMAT =
         new SimpleDateFormat("yyyyMMdd");
 
+    /** Create a working directory for all the jobs.
+     * @throws IOException If the file can't be created.
+     * @throws InvalidSettingsException If settings are invalid.
+     */
     protected void createWorkingDirectory()
         throws IOException, InvalidSettingsException {
         final ExttoolSettings settings = getSettings();
@@ -464,15 +703,15 @@ public class Execution {
         m_outputDirectory.mkdir();
     }
 
+    /** Helper class that creates a filter view on an argument iterator.
+     * This is used to sub-divide the input data into several chunks.
+     */
     private static final class ViewRowIterator extends RowIterator {
 
         private final RowIterator m_it;
         private final int m_maxRowCount;
         private int m_currentRowIndex;
 
-        /**
-         *
-         */
         ViewRowIterator(final RowIterator it, final int maxRowCount) {
             m_it = it;
             m_maxRowCount = maxRowCount;

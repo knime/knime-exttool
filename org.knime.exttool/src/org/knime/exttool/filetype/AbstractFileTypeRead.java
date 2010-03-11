@@ -55,15 +55,32 @@ import org.knime.core.node.ExecutionContext;
 import org.knime.exttool.executor.OutputDataHandle;
 
 
-/**
+/** File type supporting reading files (output of the external tool).
+ *
+ * <p><b>Warning:</b> API needs review, subclassing and usage outside this
+ * package is currently not encouraged.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public abstract class AbstractFileTypeRead extends AbstractFileType {
 
+    /** Create instance, associating it with its factory.
+     * @param factory Factory that creates this instance.
+     */
     protected AbstractFileTypeRead(final AbstractFileTypeFactory factory) {
         super(factory);
     }
 
+    /** Read the file from the given output data handle and returns a table
+     * containing the content. The table <b>must</b> have as its first column
+     * the IDs that are used to merge the output with the input data. It must be
+     * a separate column since the output can contain multiple matches for an
+     * input record.
+     * @param handle the output handle.
+     * @param exec for progress/cancelation/table creation
+     * @return the output table
+     * @throws Exception In case of problems
+     */
     public abstract BufferedDataTable readTable(final OutputDataHandle handle,
             final ExecutionContext exec) throws Exception;
 

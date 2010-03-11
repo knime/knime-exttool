@@ -58,7 +58,7 @@ import org.knime.core.data.StringValue;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 
-/**
+/** CSV (comma separated value) file type factory.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class CSVFileTypeFactory extends AbstractFileTypeFactory {

@@ -56,12 +56,16 @@ import org.knime.core.node.NodeSettingsWO;
 
 
 /**
+ * Parent class of a file type.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public abstract class AbstractFileType {
 
     private final AbstractFileTypeFactory m_factory;
 
+    /** Create instance, associating it with its factory.
+     * @param factory Factory that creates this instance.
+     */
     protected AbstractFileType(final AbstractFileTypeFactory factory) {
         if (factory == null) {
             throw new NullPointerException("Argument must not be null.");
@@ -69,9 +73,17 @@ public abstract class AbstractFileType {
         m_factory = factory;
     }
 
+    /** Saves a configuration to the argument settings.
+     * @param settings To save to.
+     * @throws InvalidSettingsException If the configuration is invalid.
+     */
     public abstract void saveSettings(final NodeSettingsWO settings)
         throws InvalidSettingsException;
 
+    /** Loads a configuration from the argument settings.
+     * @param settings To load from.
+     * @throws InvalidSettingsException If the settings are invalid.
+     */
     public abstract void loadSettings(final NodeSettingsRO settings)
         throws InvalidSettingsException;
 

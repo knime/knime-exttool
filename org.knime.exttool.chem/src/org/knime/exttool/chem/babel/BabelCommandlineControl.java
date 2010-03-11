@@ -75,12 +75,14 @@ import org.knime.exttool.chem.filetype.sdf.SdfFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
-import org.knime.exttool.node.base.AbstractCommandlineControl;
-import org.knime.exttool.node.base.AbstractCommandlineSettings;
-import org.knime.exttool.node.base.ExttoolSettings;
-import org.knime.exttool.node.base.ExttoolSettings.PathAndTypeConfiguration;
+import org.knime.exttool.node.AbstractCommandlineControl;
+import org.knime.exttool.node.AbstractCommandlineSettings;
+import org.knime.exttool.node.ExttoolSettings;
+import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfiguration;
 
-/**
+/** GUI control elements for the Babel control panel. It has a column selection
+ * combo box (choosing Mol2 and Sdf type columns) and button group, in which
+ * the user can choose the output format.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 final class BabelCommandlineControl extends AbstractCommandlineControl {

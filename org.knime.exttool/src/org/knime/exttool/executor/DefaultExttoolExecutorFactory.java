@@ -55,13 +55,20 @@ import java.io.File;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.exttool.executor.InputDataHandle.FileInputDataHandle;
 import org.knime.exttool.executor.OutputDataHandle.FileOutputDataHandle;
-import org.knime.exttool.node.base.ExttoolSettings;
+import org.knime.exttool.node.ExttoolSettings;
 
 /**
+ * Default (local) execution by means of temporary files.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class DefaultExttoolExecutorFactory extends
     AbstractExttoolExecutorFactory {
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return "Default Executor";
+    }
 
     /** {@inheritDoc} */
     @Override

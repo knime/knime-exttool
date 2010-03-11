@@ -53,20 +53,33 @@ package org.knime.exttool.executor;
 import java.util.Observable;
 
 import org.knime.core.node.ExecutionMonitor;
-import org.knime.exttool.node.base.ExecutionChunkCallable;
-
-
 
 /**
+ * Executor for an external application. It does the process handling in
+ * the {@link #execute(ExecutionMonitor)} method, i.e. invoking the commandline.
+ * If the external tool node is run in chunks (or even row-by-row), each of
+ * the chunks constitutes an individual execution.
+ *
+ * <p>
+ * None of the methods is meant to be called by client code, except for
+ * sub-classes, which implement the <code>execute</code> logic. All of the
+ * <code>get</code> methods return meaningful information only during the
+ * execution.
+ *
+ * <p><b>Warning:</b> API needs review, subclassing outside this package
+ * is currently not encouraged.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public abstract class AbstractExttoolExecutor extends Observable {
 
     private ExecutionChunkCallable m_executionChunkCallable;
 
-
     /**
-     * @return
+     * Get the final commandline. Any of the placeholders such as %inFile%
+     * will be replaced by the final file location.
+     * @return the command line arguments, ready to be passed to, e.g.
+     * {@link Runtime#exec(String[])}.
      * @see ExecutionChunkCallable#getCommandlineArgs()
      */
     protected final String[] getCommandlineArgs() {
@@ -74,7 +87,12 @@ public abstract class AbstractExttoolExecutor extends Observable {
     }
 
     /**
-     * @return
+     * Get the input handles that are associated with this execution. Each
+     * element in the returned array can safely be type-casted to the class
+     * that is returned by the corresponding factory's
+     * {@link AbstractExttoolExecutorFactory#createInputDataHandle(
+     *  org.knime.exttool.node.ExttoolSettings, java.io.File)} method.
+     * @return input handles for this execution.
      * @see ExecutionChunkCallable#getInputHandles()
      */
     protected final InputDataHandle[] getInputHandles() {
@@ -82,15 +100,20 @@ public abstract class AbstractExttoolExecutor extends Observable {
     }
 
     /**
-     * @return
+     * Get the output handles that are associated with this execution. Each
+     * element in the returned array can safely be type-casted to the class
+     * that is returned by the corresponding factory's
+     * {@link AbstractExttoolExecutorFactory#createOutputDataHandle(
+     *  org.knime.exttool.node.ExttoolSettings, java.io.File)} method.
+     * @return output handles for this execution.
      * @see ExecutionChunkCallable#getOutputHandles()
      */
     protected final OutputDataHandle[] getOutputHandles() {
         return getExecutionChunkCallable().getOutputHandles();
     }
 
-    /**
-     * @return the executionChunkCallable
+    /** Get callable, throw exception when not set (asserts proper execution).
+     * @return the callable for this execution.
      */
     private ExecutionChunkCallable getExecutionChunkCallable() {
         if (m_executionChunkCallable == null) {
@@ -100,16 +123,25 @@ public abstract class AbstractExttoolExecutor extends Observable {
         return m_executionChunkCallable;
     }
 
-    /**
-     * @param executionChunkCallable the executionChunkCallable to set
+    /** Set the callable. This method is called shortly before the
+     * {@link #execute(ExecutionMonitor)} is called.
+     * @param executionChunkCallable the callable to set
      */
-    public final void setExecutionChunkCallable(
+    final void setExecutionChunkCallable(
             final ExecutionChunkCallable executionChunkCallable) {
         m_executionChunkCallable = executionChunkCallable;
     }
 
-    public abstract int execute(final ExecutionMonitor monitor)
+    /** Launches the process and returns the process' exit code. This method
+     * needs to create the output files. It is run a separate thread, subclasses
+     * should evaluate the monitors cancellation flag and/or the calling threads
+     * interrupt status.
+     * @param monitor The monitor for possible progress report and cancellation.
+     * @return The exit code of the external process. A non-zero exit code
+     *         represents and error.
+     * @throws Exception any exception that is appropriate to indicate an error.
+     */
+    protected abstract int execute(final ExecutionMonitor monitor)
         throws Exception;
-
 
 }

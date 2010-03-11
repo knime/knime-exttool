@@ -14,7 +14,7 @@
           id="org.knime.chem.exttool.node.converter.string2smiles.String2SmilesNodeFactory"/> -->
     <node
           category-path="/misc"
-          factory-class="org.knime.exttool.node.base.ExttoolNodeFactory"
+          factory-class="org.knime.exttool.node.ExttoolNodeFactory"
           id="org.knime.exttool.node.base.ExttoolNodeFactory"/>
             
 	</extension>

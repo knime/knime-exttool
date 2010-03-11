@@ -65,6 +65,14 @@ import org.knime.core.node.NodeLogger;
 
 
 /**
+ * A file type factories adds support for different data types and file
+ * formats. It is used to write the input data for the external tool in a custom
+ * format (such as CSV) and also parse the result. Factories are registered
+ * as contribution to the extension point {@value #EXTENSION_ID}.
+ *
+ * <p><b>Warning:</b> API needs review, subclassing and usage outside this
+ * package is currently not encouraged.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public abstract class AbstractFileTypeFactory {
@@ -150,43 +158,82 @@ public abstract class AbstractFileTypeFactory {
         return result;
     }
 
+    /** Get IDs (class name) of all factories for writing (input) file types.
+     * @return The set of write IDs.
+     */
     public static final Set<String> getWriteIDs() {
         ensureInitExtensions();
         return factoryMapWrite.keySet();
     }
 
+    /** @return Get all write factories. */
     public static final Collection<AbstractFileTypeFactory>
         getWriteFactories() {
         ensureInitExtensions();
         return factoryMapWrite.values();
     }
 
+    /** Get IDs (class name) of all factories for reading (output) file types.
+     * @return The set of read IDs.
+     */
     public static final Set<String> getReadIDs() {
         ensureInitExtensions();
         return factoryMapRead.keySet();
     }
 
+    /** @return Get all read factories. */
     public static final Collection<AbstractFileTypeFactory> getReadFactories() {
         ensureInitExtensions();
         return factoryMapRead.values();
     }
 
+    /** Get ID of this concrete file type. By convention, the ID is the fully
+     * qualified class name of the factory.
+     * @return The ID.
+     */
     public final String getID() {
         return getClass().getName();
     }
 
+    /** If this factory supports writing files (possible input type). If so,
+     * the {@link #createNewWriteInstance()} must not contain <code>null</code>.
+     * @return Whether this file type can write.
+     */
     public abstract boolean canWrite();
 
+    /** Create a new file type for writing.
+     * @return A new instance.
+     * @see #canWrite()
+     */
     public abstract AbstractFileTypeWrite createNewWriteInstance();
 
+    /** If this factory supports reading files (possible output type). If so,
+     * the {@link #createNewReadInstance()} must not contain <code>null</code>.
+     * @return Whether this file type can read.
+     */
     public abstract boolean canRead();
 
+    /** Create a new file type for writing.
+     * @return A new instance.
+     * @see #canWrite()
+     */
     public abstract AbstractFileTypeRead createNewReadInstance();
 
+    /** Get the file suffix (excluding the doc). For CSV types, this would
+     * be <i>csv</i>.
+     * @return The file suffix, appended to temp files. */
     public abstract String getSuffix();
 
+    /** Get a user friendly name of this file type. For CSV types, this would
+     * be <i>CSV</i>.
+     * @return A user-friendly name (shown in the dialog).
+     */
     public abstract String getUserFriendlyName();
 
+    /** Whether this file type can write the argument column type.
+     * @param spec The spec to check.
+     * @return true when it can write the type.
+     */
     public abstract boolean accepts(final DataColumnSpec spec);
 
 }

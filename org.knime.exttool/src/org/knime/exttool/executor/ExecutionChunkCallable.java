@@ -48,33 +48,56 @@
  * History
  *   Mar 6, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.executor;
 
 import java.util.Arrays;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.knime.core.data.DataRow;
+import org.knime.core.data.RowKey;
+import org.knime.core.data.container.BlobSupportDataRow;
+import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
+import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
-import org.knime.exttool.executor.AbstractExttoolExecutor;
-import org.knime.exttool.executor.InputDataHandle;
-import org.knime.exttool.executor.OutputDataHandle;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 
 /**
+ * A {@link Callable} that runs the external process. Upon {@link #call()} it
+ * will have its entire environment set up (e.g. input files to the external
+ * tool are written and command line is created).
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
 
+    /** input handles, length equals number of input ports. */
     private InputDataHandle[] m_inputHandles;
+
+    /** output handles, length equals number of output ports. */
     private OutputDataHandle[] m_outputHandles;
+
+    /** output file type readers for parsing the result,
+     * length equals number of output ports. */
     private AbstractFileTypeRead[] m_outputFileTypes;
+
+    /** pre-compiled command line args (placeholders such %inFile% already
+     * replaced by actual path. */
     private String[] m_commandlineArgs;
+
     private ExecutionContext m_context;
 
+    /** An atomic integer that is used to create unique row IDs in the result
+     * tables. See {@link #setRowIdUnifier(AtomicInteger)} for details. */
+    private AtomicInteger m_rowIdUnifier;
+
+    /** Executor for this job/chunk. */
     private final AbstractExttoolExecutor m_executor;
 
-    /**
-     *
+    /** Create new chunk callable based for the associated executor.
+     * @param executor The (non-null) executor.
      */
     protected ExecutionChunkCallable(final AbstractExttoolExecutor executor) {
         if (executor == null) {
@@ -83,22 +106,56 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
         m_executor = executor;
     }
 
-    /** {@inheritDoc} */
-    public BufferedDataTable[] call() throws Exception {
+    /** Prepares the executor and finally calls its
+     * {@link AbstractExttoolExecutor#execute(ExecutionMonitor)} method.
+     * @return The output data
+     * @exception Exception Any exception.
+     * @see Callable#call()
+     */
+    @Override
+    public final BufferedDataTable[] call() throws Exception {
         m_executor.setExecutionChunkCallable(this);
+        ExecutionMonitor mainMon;
+        ExecutionContext readContext;
+        ExecutionContext postContext;
+        if (m_rowIdUnifier != null) {
+            mainMon = m_context.createSubProgress(0.7);
+            readContext = m_context.createSubExecutionContext(0.2);
+            postContext = m_context.createSubExecutionContext(0.1);
+        } else {
+            mainMon = m_context.createSubProgress(0.75);
+            readContext = m_context.createSubExecutionContext(0.25);
+            postContext = m_context.createSubExecutionContext(0);
+        }
         if (m_context == null) {
             throw new IllegalStateException("No execution context set on "
                     + getClass().getSimpleName());
         }
-        int exitCode = m_executor.execute(m_context);
+        int exitCode = m_executor.execute(mainMon);
         if (exitCode != 0) {
             throw new Exception("Failed with exit code " + exitCode);
         }
-        return readResults();
+        mainMon.setProgress(1.0);
+        m_context.setMessage("Reading results");
+        BufferedDataTable[] tables = readResults(readContext);
+        readContext.setProgress(1.0);
+        if (m_rowIdUnifier != null && tables.length > 0) {
+            m_context.setMessage("Creating unique row identifiers "
+                        + "for table concatenation");
+            tables[0] = uniquifyRowIdsPort0(tables[0], postContext);
+            postContext.setProgress(1.0);
+        }
+        return tables;
     }
 
-    protected BufferedDataTable[] readResults() throws Exception {
-        ExecutionContext context = getExecutionContext();
+    /** Called after execution to read the final results.
+     * @param context For cancellation/progress report and table creation.
+     * @return The output tables, read from the corresponding
+     *         {@link #getOutputHandles()}.
+     * @throws Exception In case of read errors, e.g.
+     */
+    protected BufferedDataTable[] readResults(
+            final ExecutionContext context) throws Exception {
         final int outCount = m_outputFileTypes.length;
         BufferedDataTable[] result = new BufferedDataTable[outCount];
         final double prog = 1.0 / outCount;
@@ -111,8 +168,33 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
         return result;
     }
 
-    /**
-     * @return the commandlineArgs
+    /** Post-processing step to ensure unique row IDs in the output tables of
+     * all chunks. See {@link #setRowIdUnifier(AtomicInteger)} for details.
+     * @param table The table to be uniquified.
+     * @param exec for progress/cancel/table creation.
+     * @return The output table with new row IDs.
+     * @throws CanceledExecutionException If canceled.
+     */
+    protected BufferedDataTable uniquifyRowIdsPort0(
+            final BufferedDataTable table, final ExecutionContext exec)
+        throws CanceledExecutionException {
+        if (m_rowIdUnifier == null) {
+            return table;
+        }
+        BufferedDataContainer cont = exec.createDataContainer(table.getSpec());
+        int i = 0;
+        final double rowCount = table.getRowCount();
+        for (DataRow r : table) {
+            RowKey key = new RowKey("R" + m_rowIdUnifier.getAndIncrement());
+            cont.addRowToTable(new BlobSupportDataRow(key, r));
+            exec.checkCanceled();
+            exec.setProgress(i++ / rowCount, "Row " + i + "/" + rowCount);
+        }
+        cont.close();
+        return cont.getTable();
+    }
+
+    /** @return the (final) commandlineArgs, no placeholders left inside.
      */
     public final String[] getCommandlineArgs() {
         return m_commandlineArgs;
@@ -201,6 +283,18 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
      */
     final void setExecutionContext(final ExecutionContext context) {
         m_context = context;
+    }
+
+    /** Set by the framework when the execution is split into chunks. Each of
+     * the chunks potentially creates the same set of (default) row IDs, which
+     * need to be concatenated in a post-processing step. This atomic integer
+     * is used to create unique row IDs in the
+     * {@link #uniquifyRowIdsPort0(BufferedDataTable, ExecutionContext)} method.
+     *
+     * @param rowIdUnifier the rowIdUnifier to set
+     */
+    final void setRowIdUnifier(final AtomicInteger rowIdUnifier) {
+        m_rowIdUnifier = rowIdUnifier;
     }
 
 }

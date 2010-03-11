@@ -66,14 +66,15 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
 
 /**
+ * Mol2 write support.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
 
     private String m_targetColumn;
 
-    /**
-     *
+    /** Create new write instance.
+     * @param factory Registered factory for this write object.
      */
     Mol2FileTypeWrite(final Mol2FileTypeFactory factory) {
         super(factory);
@@ -88,7 +89,7 @@ public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
         if (m_targetColumn == null) {
             throw new IllegalStateException("No target column set");
         }
-        Mol2Writer config = new Mol2Writer() {
+        Mol2Writer writer = new Mol2Writer() {
             /** {@inheritDoc} */
             @Override
             protected void checkFileAccess() throws InvalidSettingsException {
@@ -101,10 +102,11 @@ public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
                 return new BufferedWriter(new OutputStreamWriter(out));
             }
         };
-        config.setMol2Column(m_targetColumn);
+        writer.setMol2Column(m_targetColumn);
+        writer.setReplaceTitleByRowID(true);
         try {
-            config.configure(spec); // only validates
-            config.execute(spec, it, rowCount, exec);
+            writer.configure(spec); // only validates
+            writer.execute(spec, it, rowCount, exec);
         } catch (CanceledExecutionException e) {
             throw e;
         } catch (IOException e) {

@@ -61,20 +61,42 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 
 
-/**
+/** File type supporting writing files (input to the external tool).
+ *
+ * <p><b>Warning:</b> API needs review, subclassing and usage outside this
+ * package is currently not encouraged. Specifically, the write method needs
+ * a careful review.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public abstract class AbstractFileTypeWrite extends AbstractFileType {
 
+    /** Create instance, associating it with its factory.
+     * @param factory Factory that creates this instance.
+     */
     protected AbstractFileTypeWrite(final AbstractFileTypeFactory factory) {
         super(factory);
     }
 
+    /** Write the input table to the output stream that comes from the
+     * corresponding {@link org.knime.exttool.executor.InputDataHandle}.
+     * @param spec The spec of the table.
+     * @param it The iterator returning the data.
+     * @param rowCount The row count in the iterator (for progress)
+     * @param out The output stream to write to (must be closed afterwards)
+     * @param exec For progress/cancelation.
+     * @throws IOException In case of I/O problems.
+     * @throws CanceledExecutionException If canceled.
+     */
     public abstract void writeTable(DataTableSpec spec,
             final RowIterator it, int rowCount, final OutputStream out,
             final ExecutionMonitor exec)
         throws IOException, CanceledExecutionException;
 
+    /** Set input column to be written.
+     * @param spec The columns to be written.
+     * @throws InvalidSettingsException If invalid.
+     */
     public abstract void setSelectedInput(final DataColumnSpec... spec)
     throws InvalidSettingsException;
 

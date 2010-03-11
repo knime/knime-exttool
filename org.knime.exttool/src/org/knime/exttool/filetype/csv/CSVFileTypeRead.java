@@ -65,13 +65,13 @@ import org.knime.core.util.tokenizer.SettingsStatus;
 import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 
-/**
+/** Read support for CSV.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 class CSVFileTypeRead extends AbstractFileTypeRead {
 
-    /**
-     * @param factory
+    /** Create instance, associating it with its factory.
+     * @param factory Factory that creates this instance.
      */
     public CSVFileTypeRead(final CSVFileTypeFactory factory) {
         super(factory);
@@ -103,7 +103,7 @@ class CSVFileTypeRead extends AbstractFileTypeRead {
         settings.setDelimiterUserSet(true);
         settings.setFileHasColumnHeaders(true);
         settings.setFileHasColumnHeadersUserSet(true);
-        settings.setFileHasRowHeaders(true);
+        settings.setFileHasRowHeaders(false);
         settings.setFileHasRowHeadersUserSet(true);
         settings.setQuoteUserSet(true);
         settings.setWhiteSpaceUserSet(true);
@@ -122,12 +122,14 @@ class CSVFileTypeRead extends AbstractFileTypeRead {
     @Override
     public void loadSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+        // nothing to load
     }
 
     /** {@inheritDoc} */
     @Override
     public void saveSettings(final NodeSettingsWO settings)
             throws InvalidSettingsException {
+        // nothing to save
     }
 
 }

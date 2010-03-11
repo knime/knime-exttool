@@ -66,14 +66,15 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
 
 /**
+ * SDF write support.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class SdfFileTypeWrite extends AbstractFileTypeWrite {
 
     private SDFWriterSettings m_settings;
 
-    /**
-     *
+    /** Create new write instance.
+     * @param factory Registered factory for this write object.
      */
     SdfFileTypeWrite(final SdfFileTypeFactory factory) {
         super(factory);

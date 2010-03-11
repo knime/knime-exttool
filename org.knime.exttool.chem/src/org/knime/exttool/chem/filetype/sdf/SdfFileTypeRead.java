@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.ExecutionContext;
@@ -65,25 +66,25 @@ import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 
 /**
+ * SDF read support.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class SdfFileTypeRead extends AbstractFileTypeRead {
-
-    private final SDFReaderSettings m_settings;
 
     /** Create new reader from a given factory (for meta information).
      * @param factory passed to super class, must not be nul.
      */
     SdfFileTypeRead(final SdfFileTypeFactory factory) {
         super(factory);
-        m_settings = new SDFReaderSettings();
     }
 
     /** {@inheritDoc} */
     @Override
     public BufferedDataTable readTable(final OutputDataHandle in,
             final ExecutionContext exec) throws Exception {
-        SDFReader reader = new SDFReader(m_settings) {
+        SDFReaderSettings settings = new SDFReaderSettings();
+        settings.extractName(true);
+        SDFReader reader = new SDFReader(settings) {
             private boolean m_isCalled = false;;
             /** {@inheritDoc} */
             @Override
@@ -105,21 +106,25 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
             }
         };
         BufferedDataTable[] result = reader.execute(exec);
-        return result[0];
+        BufferedDataTable successPort = result[0];
+        DataTableSpec spec = successPort.getDataTableSpec();
+        ColumnRearranger rearranger = new ColumnRearranger(spec);
+        rearranger.move(SDFReader.MOLECULE_NAME_COLUMN, 0);
+        return exec.createColumnRearrangeTable(successPort, rearranger, exec);
     }
 
     /** {@inheritDoc} */
     @Override
     public void loadSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_settings.loadSettings(settings);
+        // no settings.
     }
 
     /** {@inheritDoc} */
     @Override
     public void saveSettings(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        m_settings.saveSettings(settings);
+        // no settings.
     }
 
 }

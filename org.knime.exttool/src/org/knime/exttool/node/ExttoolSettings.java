@@ -48,7 +48,7 @@
  * History
  *   Jan 20, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
+package org.knime.exttool.node;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
@@ -65,6 +65,18 @@ import org.knime.exttool.filetype.AbstractFileTypeWrite;
 import org.knime.exttool.filetype.csv.CSVFileTypeFactory;
 
 /**
+ * Settings tree containing a node configuration. Typical use case is that prior
+ * to saving the node settings (either in the {@link ExttoolNodeModel} or the
+ * {@link ExttoolNodeDialogPane} a new object of this class is instantiated
+ * (using the {@link ExttoolCustomizer#createExttoolSettings()} method, the
+ * properties are set using the different set-methods and finally the
+ * then-actual configuration is saved using
+ * {@link #saveSettingsTo(NodeSettingsWO)}. The loading of settings works in a
+ * similar manner.
+ *
+ * Objects of this class should only be instantiated using the factory method
+ * in the customizer.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class ExttoolSettings {
@@ -78,8 +90,8 @@ public class ExttoolSettings {
     private String m_targetColumn;
     private int m_chunkSize;
 
-    /**
-     *
+    /** Create a new settings object from the given customizer.
+     * @param customizer The corresponding customizer.
      */
     protected ExttoolSettings(final ExttoolCustomizer customizer) {
         if (customizer == null) {
@@ -104,20 +116,29 @@ public class ExttoolSettings {
         m_executorClassName = DefaultExttoolExecutorFactory.class.getName();
     }
 
-    /**
-     * @return the executorClassName
+    /** Get the name of the {@link AbstractExttoolExecutorFactory
+     * executor factory}.
+     * @return the executor class name (may be invalid).
+     * @see #getExecutorFactory()
      */
     public String getExecutorClassName() {
         return m_executorClassName;
     }
 
+    /** Look-up the executor factory.
+     * @return The execution factory.
+     * @throws InvalidSettingsException If the factory is invalid.
+     * @see #getExecutorClassName()
+     */
     public AbstractExttoolExecutorFactory getExecutorFactory()
         throws InvalidSettingsException {
         return AbstractExttoolExecutorFactory.get(m_executorClassName);
     }
 
-    /**
+    /** Set (class) name of executor.
      * @param executorClassName the executorClassName to set
+     * @throws InvalidSettingsException If the class name is invalid according
+     * to {@link AbstractExttoolExecutorFactory#get(String)}
      */
     public void setExecutorClassName(final String executorClassName)
         throws InvalidSettingsException {
@@ -178,21 +199,39 @@ public class ExttoolSettings {
         }
     }
 
-    /**
-     * @return the commandlineSettings
+    /** Get commandline settings object. This object is created using the
+     * {@link ExttoolCustomizer#createCommandlineSettings() factory method} in
+     * the {@link ExttoolCustomizer customizer}.
+     * @return the commandlineSettings, never null.
      */
     public AbstractCommandlineSettings getCommandlineSettings() {
         return m_commandlineSettings;
     }
 
-    String[] getCommandlineArgs() throws InvalidSettingsException {
+    /** Get the current command line settings from the
+     * {@link AbstractCommandlineSettings}. The command line args potentially
+     * contain place holders.
+     * @return The command line arguments
+     * @throws InvalidSettingsException If the get-method on the
+     * {@link AbstractCommandlineSettings#getCommandlineArgs() get-method} fails
+     */
+    public String[] getCommandlineArgs() throws InvalidSettingsException {
         return m_commandlineSettings.getCommandlineArgs();
     }
 
+    /** Get the current input configuration for an input port.
+     * @param inPort Port of interest.
+     * @return The input configuration. */
     public PathAndTypeConfiguration getInputConfig(final int inPort) {
         return m_inputConfigs[inPort];
     }
 
+    /** Set the input configuration for a port.
+     * @param inPort Port of interest.
+     * @param config The new config.
+     * @throws IllegalArgumentException If the config argument is null
+     *         or invalid (no input).
+     */
     public void setInputConfig(final int inPort,
             final PathAndTypeConfiguration config) {
         if (config == null || !config.isInput()) {
@@ -201,10 +240,19 @@ public class ExttoolSettings {
         m_inputConfigs[inPort] = config;
     }
 
+    /** Get the current output configuration for an output port.
+     * @param outPort Port of interest.
+     * @return The output configuration. */
     public PathAndTypeConfiguration getOutputConfig(final int outPort) {
         return m_outputConfigs[outPort];
     }
 
+    /** Set the output configuration for a port.
+     * @param outPort Port of interest.
+     * @param config The new config.
+     * @throws IllegalArgumentException If the config argument is null
+     *         or invalid (no output).
+     */
     public void setOutputConfig(final int outPort,
             final PathAndTypeConfiguration config) {
         if (config == null || config.isInput()) {
@@ -275,6 +323,8 @@ public class ExttoolSettings {
         return instance;
     }
 
+    /** Saves the current configuration.
+     * @param settings To save to. */
     public void saveSettingsTo(final NodeSettingsWO settings) {
         settings.addString("executorClassName", m_executorClassName);
         settings.addString("pathToExecutable", m_pathToExecutable);
@@ -303,6 +353,11 @@ public class ExttoolSettings {
         m_commandlineSettings.saveSettings(commandSub);
     }
 
+    /** Loads a configuration, which was previously stored using the
+     * {@link #saveSettingsTo(NodeSettingsWO) save method}. This method is
+     * used in the model.
+     * @param settings To load from.
+     * @throws InvalidSettingsException If settings are incomplete. */
     public void loadSettingsFrom(final NodeSettingsRO settings)
         throws InvalidSettingsException {
         String executorClassName = settings.getString("executorClassName");
@@ -338,6 +393,13 @@ public class ExttoolSettings {
         m_commandlineSettings.loadSettingsInModel(commandSub);
     }
 
+    /** Loads the configuration, does not throw exception in case of problems.
+     * This method is used in the dialog.
+     * @param settings To load from.
+     * @param inSpecs The input table specs (to init defaults).
+     * @throws NotConfigurableException
+     *         If no appropriate input column is available.
+     */
     public void loadSettingsFrom(final NodeSettingsRO settings,
             final DataTableSpec[] inSpecs) throws NotConfigurableException {
         String executorClassName = settings.getString("executorClassName",
@@ -406,6 +468,10 @@ public class ExttoolSettings {
         m_commandlineSettings.loadSettingsInDialog(commandSub, inSpecs);
     }
 
+    /** Config object representing path, type and type settings to an in- or
+     * outport. The path may be null to indicate that a temp file path should
+     * be created. Type is an identifier (class name)
+     * (see {@link AbstractFileTypeFactory#getID()}) */
     public static final class PathAndTypeConfiguration {
 
         private final boolean m_isInput;
@@ -413,57 +479,50 @@ public class ExttoolSettings {
         private String m_type;
         private NodeSettings m_typeSettings;
 
-        /**
-         *
+        /** Create new config.
+         * @param isInput <code>true</code> if this represent an input port,
+         *        <code>false</code> for output port.
          */
         public PathAndTypeConfiguration(final boolean isInput) {
             m_isInput = isInput;
         }
 
-        /**
-         * @return the isInput
-         */
+        /**@return the isInput (constructor argument). */
         public boolean isInput() {
             return m_isInput;
         }
 
-        /**
-         * @return the path
-         */
+        /** @return the path being set (null for temp file creation) */
         public String getPath() {
             return m_path;
         }
-        /**
-         * @param path the path to set
-         */
+        /** @param path the path to set (or null) */
         public void setPath(final String path) {
             m_path = path;
         }
-        /**
-         * @return the type
+
+        /** @return the type (see {@link AbstractFileTypeFactory#getID()})
          */
         public String getType() {
             return m_type;
         }
-        /**
+        /** Set type to use, see {@link AbstractFileTypeFactory#getID()}.
          * @param type the type to set
          */
         public void setType(final String type) {
             m_type = type;
         }
-        /**
-         * @return the typeSettings
-         */
+        /** @return the settings to the selected type. */
         public NodeSettings getTypeSettings() {
             return m_typeSettings;
         }
-        /**
-         * @param typeSettings the typeSettings to set
-         */
+        /** @param typeSettings the new type settings. */
         public void setTypeSettings(final NodeSettings typeSettings) {
             m_typeSettings = typeSettings;
         }
 
+        /** Saves the current configuration.
+         * @param settings To save to. */
         public void save(final NodeSettingsWO settings) {
             settings.addString("path", m_path);
             settings.addString("type", m_type);
@@ -474,6 +533,9 @@ public class ExttoolSettings {
             }
         }
 
+        /** Loads the configuration.
+         * @param settings To load from.
+         * @throws InvalidSettingsException If settings are invalid. */
         public void load(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             m_path = settings.getString("path");
@@ -496,6 +558,8 @@ public class ExttoolSettings {
             m_typeSettings = confClone;
         }
 
+        /** Loads settings but does not through exception (using defaults then).
+         * @param settings To load from. */
         public void loadNoFail(final NodeSettingsRO settings) {
             try {
                 load(settings);

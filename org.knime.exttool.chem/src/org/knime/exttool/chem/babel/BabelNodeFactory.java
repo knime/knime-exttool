@@ -52,18 +52,22 @@ package org.knime.exttool.chem.babel;
 
 import org.knime.chem.types.Mol2Value;
 import org.knime.chem.types.SdfValue;
-import org.knime.exttool.node.base.AbstractCommandlineSettings;
-import org.knime.exttool.node.base.ExttoolCustomizer;
-import org.knime.exttool.node.base.ExttoolNodeFactory;
+import org.knime.exttool.node.AbstractCommandlineSettings;
+import org.knime.exttool.node.ExttoolCustomizer;
+import org.knime.exttool.node.ExttoolNodeFactory;
 
 /**
+ * Node factory that sets up a custom {@link ExttoolCustomizer} to hide
+ * in- and output panels from the default external tool dialog. It also
+ * registers a custom command line settings object to replace the default
+ * free format text area by appropriate GUI elements.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class BabelNodeFactory extends ExttoolNodeFactory {
 
-    /**
-     *
-     */
+    /** Create new factory, set up the customizer and register it with
+     * the super class. */
+    @SuppressWarnings("unchecked")
     public BabelNodeFactory() {
         ExttoolCustomizer customizer = new ExttoolCustomizer() {
             /** {@inheritDoc} */

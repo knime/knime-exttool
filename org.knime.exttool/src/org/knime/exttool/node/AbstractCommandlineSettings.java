@@ -48,76 +48,69 @@
  * History
  *   Jan 20, 2010 (wiswedel): created
  */
-package org.knime.exttool.node.base;
-
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+package org.knime.exttool.node;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 
-/**
+/** Command line settings represent the command line that is eventually
+ * executed by the external tool node. In the simplest case this is just a
+ * string with different switches (which is also the default in the standard
+ * external tool node). This can be more complicated, for instance if the
+ * corresponding dialog has combo boxes or textfields for different arguments.
+ *
+ * <p>
+ * Extensions of this class are used to
+ * <ul>
+ * <li>Save/load the settings (toggle states, content of text fields, etc...)
+ * <li>Create the command line arguments that are passed to the external process
+ * </ul>
+ * Objects of this class are not used to handle the GUI elements.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public class FreeFormCommandlineControl extends AbstractCommandlineControl {
+public abstract class AbstractCommandlineSettings {
 
-    private JTextArea m_commandlineTextArea;
+    /** Saves the current state to the argument.
+     * @param settings To save to. */
+    protected abstract void saveSettings(final NodeSettingsWO settings);
 
-    /** {@inheritDoc} */
-    @Override
-    protected void registerPanel(final JPanel parent) {
-        throw new IllegalStateException(
-                "Not to be called as second method is overridden");
-    }
+    /** Load a state from a settings object. This method is called from the
+     * load method in the {@link ExttoolNodeModel}.
+     * @param settings To load from.
+     * @throws InvalidSettingsException If settings are incomplete or invalid.
+     */
+    protected abstract void loadSettingsInModel(final NodeSettingsRO settings)
+        throws InvalidSettingsException;
 
-    /** {@inheritDoc} */
-    @Override
-    protected void registerPanel(
-            final JPanel parent, final GridBagConstraints gbc) {
-        StringBuilder helpText = new StringBuilder("<html><body>");
-        helpText.append("Enter command line here, use placeholder ");
-        helpText.append("<i>%inFile%</i> and <i>%outFile%</i>");
-        helpText.append(", which<br />");
-        helpText.append("will be replaced by the full path to the in-");
-        helpText.append("and output file upon execution</body></html>");
-        JLabel helpLabel = new JLabel(helpText.toString());
-        Insets oldInsets = gbc.insets;
-        gbc.insets = new Insets(15, 5, 5, 5);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        parent.add(helpLabel, gbc);
+    /** Load the settings in the dialog, falling back to default in case of
+     * errors.
+     * @param settings To load from.
+     * @param inSpecs The input table specs.
+     * @throws NotConfigurableException If no valid configuration is possible.
+     */
+    protected abstract void loadSettingsInDialog(
+            final NodeSettingsRO settings, final DataTableSpec[] inSpecs)
+        throws NotConfigurableException;
 
-        gbc.gridwidth = 1;
-        gbc.insets = oldInsets;
-        JLabel descLabel = new JLabel("Command line");
-        parent.add(descLabel, gbc);
+    /** Get the command line arguments to the external process.
+     * @return The array of the command line args, the different values may
+     *         contain place holders %inFile% or %outFile% to represent the
+     *         respective in/output.
+     * @throws InvalidSettingsException If the settings are invalid.
+     */
+    protected abstract String[] getCommandlineArgs()
+        throws InvalidSettingsException;
 
-        m_commandlineTextArea = new JTextArea(8, 20);
-        gbc.gridx = GridBagConstraints.RELATIVE;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        parent.add(new JScrollPane(m_commandlineTextArea), gbc);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected void loadSettings(final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException {
-        FreeFormCommandlineSettings set = (FreeFormCommandlineSettings)settings;
-        String cmdLine = set.getCommandline();
-        m_commandlineTextArea.setText(cmdLine == null ? "" : cmdLine);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected void saveSettings(final AbstractCommandlineSettings settings)
-        throws InvalidSettingsException {
-        FreeFormCommandlineSettings set = (FreeFormCommandlineSettings)settings;
-        set.setCommandline(m_commandlineTextArea.getText());
-    }
+    /** Create a new controller that will put GUI elements into a panel.
+     * The {@link AbstractCommandlineControl#saveSettings(
+     * AbstractCommandlineSettings) load and save methods} of the returned
+     * object can safely type-cast settings argument of this concrete subclass.
+     * @return A new controller.
+     */
+    protected abstract AbstractCommandlineControl createControl();
 
 }

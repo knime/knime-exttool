@@ -1,5 +1,5 @@
-/*
- * ------------------------------------------------------------------------
+<!--
+========================================================================
  *
  *  Copyright (C) 2003 - 2010
  *  University of Konstanz, Germany and
@@ -40,46 +40,11 @@
  *  License, the License does not apply to Nodes, you are not required to
  *  license Nodes under the License, and you are granted a license to
  *  prepare and propagate Nodes, in each case even if such Nodes are
- *  propagated with or for interoperation with KNIME. The owner of a Node
+ *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
- *
- * History
- *   Mar 10, 2010 (wiswedel): created
- */
-package org.knime.exttool.node.base;
-
-import java.awt.GridBagConstraints;
-
-import javax.swing.JPanel;
-
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NotConfigurableException;
-
-/**
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
- */
-public abstract class AbstractCommandlineControl {
-
-    protected abstract void registerPanel(final JPanel parent);
-
-    protected void registerPanel(final JPanel parent,
-            final GridBagConstraints gbc) {
-        registerPanel(parent);
-    }
-
-    protected abstract void loadSettings(
-            final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException;
-
-    protected void saveGlobalSettingsGlobal(final ExttoolSettings settings)
-        throws InvalidSettingsException {
-        // default implementation does not change input/output
-    }
-
-    protected abstract void saveSettings(
-            final AbstractCommandlineSettings settings)
-        throws InvalidSettingsException;
-}
+===============================================================================
+-->
+<body>
+CSV file support.
+</body>

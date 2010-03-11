@@ -5,12 +5,10 @@ Bundle-SymbolicName: org.knime.exttool;singleton:=true
 Bundle-Version: 2.1.1.0023899
 Bundle-ClassPath: knime-exttool-patches.jar,
  knime-exttool.jar
-Bundle-Activator: org.knime.exttool.ExttoolNodePlugin
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Require-Bundle: org.knime.base
 Eclipse-RegisterBuddy: org.knime.base
-Export-Package: org.knime.exttool,
- org.knime.exttool.executor,
+Export-Package: org.knime.exttool.executor,
  org.knime.exttool.filetype,
- org.knime.exttool.node.base
-Bundle-ActivationPolicy: lazy
+ org.knime.exttool.filetype.csv,
+ org.knime.exttool.node

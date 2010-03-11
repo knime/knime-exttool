@@ -56,25 +56,39 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
+/** Output handle of the external tool. It represents the data that is written
+ * by external process and which is then read by KNIME. The
+ * {@link DataHandle#getLocation() location} returned by objects of this
+ * interface replaces the stub %outFile% in the commandline.
+ *
+ * <p><b>Warning:</b> API needs review, subclassing outside this package
+ * is currently not encouraged.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public interface OutputDataHandle extends DataHandle {
 
+    /** Open a new stream, from which the framework reads the results.
+     * @return A new output stream, which is used by the framework to write
+     *         the data.
+     * @throws IOException In case of I/O problems.
+     */
     public abstract InputStream openOutputFileInStream() throws IOException;
 
+    /** Default implementation using local files. */
     public static class FileOutputDataHandle implements OutputDataHandle {
 
         private final File m_outFile;
 
-        /** */
+        /** New output handle for a given file.
+         * @param outFile The output file, must not be null. */
         public FileOutputDataHandle(final File outFile) {
+            if (outFile == null) {
+                throw new NullPointerException("Argument must not be null.");
+            }
             m_outFile = outFile;
         }
 
-        /**
-         * @return the outFile
-         */
+        /** @return the outFile as passed in constructor. */
         public File getOutFile() {
             return m_outFile;
         }
