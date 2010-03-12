@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
+import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.RowIterator;
@@ -136,7 +137,12 @@ public class SdfFileTypeWrite extends AbstractFileTypeWrite {
         if (spec.length != 1) {
             throw new InvalidSettingsException("Invalid column array argument");
         }
-        m_settings.structureColumn(spec[0].getName());
+        DataColumnSpec colSpec = spec[0];
+        if (!colSpec.getType().isCompatible(SdfValue.class)) {
+            throw new InvalidSettingsException("Invalid input column type: "
+                    + colSpec.getType() + " (expected sdf)");
+        }
+        m_settings.structureColumn(colSpec.getName());
     }
 }
 

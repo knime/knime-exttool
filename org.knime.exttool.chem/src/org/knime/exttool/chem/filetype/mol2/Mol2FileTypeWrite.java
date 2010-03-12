@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
+import org.knime.chem.types.Mol2Value;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.RowIterator;
@@ -113,7 +114,7 @@ public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
             throw e;
         } catch (Exception e) {
             throw new IOException(
-                    "Unable to write SDF stream: " + e.getMessage(), e);
+                    "Unable to write Mol2 stream: " + e.getMessage(), e);
         }
     }
 
@@ -138,7 +139,12 @@ public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
         if (spec.length != 1) {
             throw new InvalidSettingsException("Invalid column array argument");
         }
-        m_targetColumn = spec[0].getName();
+        DataColumnSpec colSpec = spec[0];
+        if (!colSpec.getType().isCompatible(Mol2Value.class)) {
+            throw new InvalidSettingsException("Invalid input column type: "
+                    + colSpec.getType() + " (expected mol2)");
+        }
+        m_targetColumn = colSpec.getName();
     }
 }
 

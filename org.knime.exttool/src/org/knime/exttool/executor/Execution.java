@@ -120,6 +120,9 @@ public class Execution {
      * the external tool. */
     private File m_outputDirectory;
 
+    /** Warning messages that are collected throughout the execution. */
+    private final StringBuilder m_warningMessageBuilder = new StringBuilder();
+
     /** Creates new execution for a given customizer and the (validated!)
      * settings.
      * @param customizer The customizer for this node ("static" information)
@@ -343,8 +346,10 @@ public class Execution {
                         throw e;
                     }
                 }
-                LOGGER.warn("Execution on chunk " + chunk + " failed: "
-                        + e.getMessage(), cause);
+                String message = "Execution on chunk " + chunk + " failed: "
+                    + e.getMessage();
+                addWarningMessage(message);
+                LOGGER.warn(message, cause);
                 failures.add(cause);
                 continue;
             }
@@ -444,8 +449,8 @@ public class Execution {
         RowIterator outIt = out.iterator();
 
         DataRow lastFromRight = outIt.hasNext() ? outIt.next() : null;
-        int runningIndex = 0;
         int index = 0;
+        int runningIndex = 0;
         while (inIt.hasNext()) {
             runningIndex = 0;
             DataRow inRow = inIt.next();
@@ -474,14 +479,15 @@ public class Execution {
             }
         }
         exec.setMessage("Filling remaining rows");
-        while (lastFromRight != null && runningIndex == 0) {
+        int uniquifier = 1;
+        while (lastFromRight != null) {
             exec.checkCanceled();
             DataCell[] inMissingCells = new DataCell[inSpec.getNumColumns()];
             Arrays.fill(inMissingCells, DataType.getMissingCell());
             RowKey key = new RowKey(lastFromRight.getCell(idCol).toString());
             DataRow inMissing = new DefaultRow(key, inMissingCells);
             boolean add = addToContainerIfMatches(inMissing, lastFromRight,
-                    idCol, cont, runningIndex);
+                    idCol, cont, uniquifier++);
             assert add;
             lastFromRight = outIt.hasNext() ? outIt.next() : null;
         }
@@ -501,7 +507,7 @@ public class Execution {
         if (leftKey.getString().equals(idCellRight.toString())) {
             RowKey newKey = leftKey;
             if (runningIndex > 0) {
-                leftKey = new RowKey(leftKey + "_" + runningIndex);
+                newKey = new RowKey(leftKey + "_" + runningIndex);
             }
             int leftCount = left.getNumCells();
             int rightCount = right.getNumCells();
@@ -657,6 +663,34 @@ public class Execution {
     protected ExecutionChunkCallable createExecutionChunkCallable(
             final AbstractExttoolExecutor executor) {
         return new ExecutionChunkCallable(executor);
+    }
+
+    /** Set (or append) a warning message. Called from the the execute method
+     * when something should be reported to the user (warning message on the
+     * node). Multiple warning messages are separated by newline...
+     * @param message The message to set/append.
+     */
+    protected void addWarningMessage(final String message) {
+        if (message == null || message.length() == 0) {
+            return;
+        }
+        if (m_warningMessageBuilder.length() == 0) {
+            m_warningMessageBuilder.append(message);
+        } else {
+            m_warningMessageBuilder.append('\n').append(message);
+        }
+    }
+
+    /** Get the aggregated warning messages and reset the internal field.
+     * @return the aggregated warning message (or null if none was set)
+     */
+    public String clearWarningMessage() {
+        if (m_warningMessageBuilder.length() == 0) {
+            return null;
+        }
+        String result = m_warningMessageBuilder.toString();
+        m_warningMessageBuilder.setLength(0);
+        return result;
     }
 
     /** the temp file will have a time stamp in its name. */
