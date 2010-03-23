@@ -119,11 +119,11 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
         ExecutionContext readContext;
         ExecutionContext postContext;
         if (m_rowIdUnifier != null) {
-            mainMon = m_context.createSubProgress(0.7);
+            mainMon = m_context.createSubExecutionContext(0.7);
             readContext = m_context.createSubExecutionContext(0.2);
             postContext = m_context.createSubExecutionContext(0.1);
         } else {
-            mainMon = m_context.createSubProgress(0.75);
+            mainMon = m_context.createSubExecutionContext(0.75);
             readContext = m_context.createSubExecutionContext(0.25);
             postContext = m_context.createSubExecutionContext(0);
         }
