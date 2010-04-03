@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ExtToolNode for KNIME Base Nodes
 Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
-Bundle-Version: 2.1.2.0024319
+Bundle-Version: 2.1.3.0025224
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Bundle-ClassPath: knime-extTool-patches.jar,
  knime-extTool.jar
