@@ -53,7 +53,6 @@ package org.knime.exttool.filetype;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.RowIterator;
 import org.knime.core.node.CanceledExecutionException;
@@ -78,8 +77,28 @@ public abstract class AbstractFileTypeWrite extends AbstractFileType {
         super(factory);
     }
 
+    /** Load settings from writer configuration. The argument can be safely
+     * type casted to the object that is returned by the associated factory's
+     * {@link AbstractFileTypeFactory#createNewWriteConfig()} method.
+     * @param config To load from.
+     */
+    public abstract void prepare(AbstractFileTypeWriteConfig config);
+
+    /** Validates that the argument input spec can be processe with the current
+     * settings. This method is called during the node configuration.  It can
+     * safely be assumed that {@link #prepare(AbstractFileTypeWriteConfig)}
+     * has been called beforehand.
+     * @param spec The input spec, never null.
+     * @throws InvalidSettingsException If the input can't be processed given
+     *         the current settings.
+     */
+    public abstract void validateInput(
+            final DataTableSpec spec) throws InvalidSettingsException;
+
     /** Write the input table to the output stream that comes from the
-     * corresponding {@link org.knime.exttool.executor.InputDataHandle}.
+     * corresponding {@link org.knime.exttool.executor.InputDataHandle}. It can
+     * safely be assumed that {@link #prepare(AbstractFileTypeWriteConfig)}
+     * has been called beforehand.
      * @param spec The spec of the table.
      * @param it The iterator returning the data.
      * @param rowCount The row count in the iterator (for progress)
@@ -92,12 +111,5 @@ public abstract class AbstractFileTypeWrite extends AbstractFileType {
             final RowIterator it, int rowCount, final OutputStream out,
             final ExecutionMonitor exec)
         throws IOException, CanceledExecutionException;
-
-    /** Set input column to be written.
-     * @param spec The columns to be written.
-     * @throws InvalidSettingsException If invalid.
-     */
-    public abstract void setSelectedInput(final DataColumnSpec... spec)
-    throws InvalidSettingsException;
 
 }

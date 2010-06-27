@@ -46,99 +46,106 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Jan 20, 2010 (wiswedel): created
+ *   Apr 13, 2010 (wiswedel): created
  */
-package org.knime.exttool.chem.filetype.sdf;
+package org.knime.exttool.filetype;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-
-import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.RowIterator;
-import org.knime.core.node.CanceledExecutionException;
-import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.exttool.filetype.AbstractFileTypeWrite;
-import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
-import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.util.ColumnFilter;
 
 /**
- * SDF write support.
+ * Default write (input) config for external tool. It has only a single target
+ * column field as parameter.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public class SdfFileTypeWrite extends AbstractFileTypeWrite {
+public class DefaultFileTypeWriteConfig extends AbstractFileTypeWriteConfig {
 
-    private SDFWriterSettings m_settings;
+    private final ColumnFilter m_columnFilter;
 
-    /** Create new write instance.
-     * @param factory Registered factory for this write object.
+    private String m_column;
+
+    /** Create new write config using a specified column filter to select
+     * the appropriate columns in the dialog. Use
+     * {@link org.knime.core.node.util.DataValueColumnFilter} to have a class
+     * based column filter.
+     * @param columnFilter The filter to use, must not be null.
      */
-    SdfFileTypeWrite(final SdfFileTypeFactory factory) {
-        super(factory);
-        m_settings = new SDFWriterSettings();
-        m_settings.overwriteOK(true);
-        m_settings.titleColumn(SDFWriterSettings.ROW_KEY_IDENTIFIER);
+    public DefaultFileTypeWriteConfig(final ColumnFilter columnFilter) {
+        if (columnFilter == null) {
+            throw new NullPointerException("Argument must not be null");
+        }
+        m_columnFilter = columnFilter;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void prepare(final AbstractFileTypeWriteConfig config) {
-        String targetColumn =
-            ((DefaultFileTypeWriteConfig)config).getColumn();
-        m_settings.structureColumn(targetColumn);
+    public AbstractFileTypeWriteConfigPanel createConfigPanel() {
+        return new DefaultFileTypeWriteConfigPanel(m_columnFilter);
+    }
+
+    /** Config key used to save the selected column in the load/save methods. */
+    static final String CFG_COLUMN = "column";
+
+    /** {@inheritDoc} */
+    @Override
+    public void loadSettingsInDialog(
+            final NodeSettingsRO settings, final DataTableSpec spec)
+            throws NotConfigurableException {
+        String column = settings.getString(CFG_COLUMN, null);
+        DataColumnSpec col = spec.getColumnSpec(column);
+        if (col != null && m_columnFilter.includeColumn(col)) {
+            // accept as is
+        } else {
+            column = null;
+            for (DataColumnSpec c : spec) {
+                if (m_columnFilter.includeColumn(c)) {
+                    column = c.getName();
+                    break;
+                }
+            }
+        }
+        if (column == null) {
+            throw new NotConfigurableException("No column of expected "
+                    + "type in input table");
+        }
+        m_column = column;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void validateInput(final DataTableSpec spec)
+    public void loadSettingsInModel(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        String targetColumn = m_settings.structureColumn();
-        DataColumnSpec col = spec.getColumnSpec(targetColumn);
-        if (col == null) {
+        String column = settings.getString(CFG_COLUMN);
+        if (column == null || column.length() == 0) {
             throw new InvalidSettingsException(
-                    "No such column: " + targetColumn);
+                    "Invalid column name: " + column);
         }
-        if (!col.getType().isCompatible(SdfValue.class)) {
-            throw new InvalidSettingsException("Input column \""
-                    + targetColumn + "\" is not SDF compatible");
-        }
+        m_column = column;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void writeTable(final DataTableSpec spec, final RowIterator it,
-            final int rowCount, final OutputStream out,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
-        SDFWriter writer = new SDFWriter(m_settings) {
-            /** {@inheritDoc} */
-            @Override
-            protected void checkFileAccess() throws InvalidSettingsException {
-                // ignore
-            }
+    public void saveSettings(final NodeSettingsWO settings) {
+        settings.addString(CFG_COLUMN, m_column);
+    }
 
-            /** {@inheritDoc} */
-            @Override
-            protected BufferedWriter openOutputWriter()
-                    throws InvalidSettingsException, IOException {
-                return new BufferedWriter(new OutputStreamWriter(out));
-            }
-        };
-        try {
-            writer.execute(spec, it, rowCount, exec);
-        } catch (CanceledExecutionException e) {
-            throw e;
-        } catch (IOException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IOException(
-                    "Unable to write SDF stream: " + e.getMessage(), e);
-        }
+    /**
+     * @return the column
+     */
+    public String getColumn() {
+        return m_column;
+    }
+
+    /**
+     * @param column the column to set
+     */
+    public void setColumn(final String column) {
+        m_column = column;
     }
 
 }
-

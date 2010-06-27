@@ -78,6 +78,12 @@ public class DefaultExttoolExecutorFactory extends
 
     /** {@inheritDoc} */
     @Override
+    public AbstractExttoolExecutorConfig createConfig() {
+        return new DefaultExttoolExecutorConfig();
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public FileInputDataHandle createInputDataHandle(
             final ExttoolSettings settings,
             final File suggestInFile) throws InvalidSettingsException {

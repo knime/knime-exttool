@@ -50,7 +50,6 @@
  */
 package org.knime.exttool.node;
 
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -68,8 +67,10 @@ import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.util.FilesHistoryPanel;
+import org.knime.exttool.node.ExttoolCustomizer.Chunking;
 
 /**
  * Main panel of the external tool node. It has fields for the executable,
@@ -84,9 +85,11 @@ public class ExternalToolPanel extends JPanel {
 
     private final FilesHistoryPanel m_executablePanel;
     private final JRadioButton m_chunkButtonEntireTable;
-    private final JRadioButton m_chunkButtonChunks;
-    private final JSpinner m_chunkSpinner;
     private final JRadioButton m_chunkButtonSingleRow;
+    private final JRadioButton m_chunkButtonChunkSize;
+    private final JRadioButton m_chunkButtonNrChunks;
+    private final JSpinner m_chunkSizeSpinner;
+    private final JSpinner m_nrChunksSpinner;
     private final JLabel[] m_inputTypeSummaryLabels;
 
     private final ExttoolCustomizer m_exttoolCustomizer;
@@ -107,20 +110,33 @@ public class ExternalToolPanel extends JPanel {
         m_executablePanel = new FilesHistoryPanel(historyID, suffixes);
 
         m_chunkButtonEntireTable = new JRadioButton("Entire Table");
-        m_chunkButtonChunks = new JRadioButton("Chunks of size");
+        m_chunkButtonChunkSize = new JRadioButton("Chunks of Size");
+        m_chunkButtonNrChunks = new JRadioButton("Nr of Chunks");
         m_chunkButtonSingleRow = new JRadioButton("Each row individually");
-        m_chunkSpinner = new JSpinner(
+        m_chunkSizeSpinner = new JSpinner(
                 new SpinnerNumberModel(500, 2, Integer.MAX_VALUE, 50));
-        m_chunkButtonChunks.addChangeListener(new ChangeListener() {
+        m_chunkButtonChunkSize.addChangeListener(new ChangeListener() {
             /** {@inheritDoc} */
             public void stateChanged(final ChangeEvent e) {
-                m_chunkSpinner.setEnabled(m_chunkButtonChunks.isSelected());
+                m_chunkSizeSpinner.setEnabled(
+                        m_chunkButtonChunkSize.isSelected());
             }
         });
-        m_chunkSpinner.setEnabled(false);
+        m_chunkSizeSpinner.setEnabled(false);
+        m_nrChunksSpinner = new JSpinner(
+                new SpinnerNumberModel(20, 1, Integer.MAX_VALUE, 2));
+        m_chunkButtonNrChunks.addChangeListener(new ChangeListener() {
+            /** {@inheritDoc} */
+            public void stateChanged(final ChangeEvent e) {
+                m_nrChunksSpinner.setEnabled(
+                        m_chunkButtonNrChunks.isSelected());
+            }
+        });
+        m_nrChunksSpinner.setEnabled(false);
         ButtonGroup bg = new ButtonGroup();
         bg.add(m_chunkButtonEntireTable);
-        bg.add(m_chunkButtonChunks);
+        bg.add(m_chunkButtonChunkSize);
+        bg.add(m_chunkButtonNrChunks);
         bg.add(m_chunkButtonSingleRow);
         m_chunkButtonEntireTable.doClick();
         m_inputTypeSummaryLabels = new JLabel[customizer.getNrInputs()];
@@ -173,16 +189,29 @@ public class ExternalToolPanel extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 20, 5, 5);
         gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         result.add(m_chunkButtonEntireTable, gbc);
 
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        JPanel chunkComponentPairPanel =
-            new JPanel(new FlowLayout(FlowLayout.LEADING));
-        chunkComponentPairPanel.add(m_chunkButtonChunks);
-        chunkComponentPairPanel.add(m_chunkSpinner);
-        result.add(chunkComponentPairPanel, gbc);
-
+        gbc.gridy += 1;
         result.add(m_chunkButtonSingleRow, gbc);
+
+        gbc.gridy += 1;
+        result.add(m_chunkButtonChunkSize, gbc);
+
+        gbc.gridy += 1;
+        result.add(m_chunkButtonNrChunks, gbc);
+
+        gbc.gridx += 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        result.add(m_chunkSizeSpinner, gbc);
+
+        gbc.gridy += 1;
+        result.add(m_nrChunksSpinner, gbc);
+
         return result;
     }
 
@@ -214,15 +243,29 @@ public class ExternalToolPanel extends JPanel {
         m_executablePanel.updateHistory();
         String pathToExecutable = settings.getPathToExecutable();
         m_executablePanel.setSelectedFile(pathToExecutable);
-        int chunkSize = settings.getChunkSize();
-        if (chunkSize <= 0) {
+        Chunking chunking = settings.getChunking();
+        int chunkValue = settings.getChunkValue();
+        switch (chunking) {
+        case EntireTable:
             m_chunkButtonEntireTable.doClick();
-        } else if (chunkSize == 1) {
+            break;
+        case IndividualRow:
             m_chunkButtonSingleRow.doClick();
-        } else {
-            m_chunkButtonChunks.doClick();
-            m_chunkSpinner.setValue(chunkSize);
+            break;
+        case ChunksOfSize:
+            m_chunkButtonChunkSize.doClick();
+            m_chunkSizeSpinner.setValue(chunkValue);
+            break;
+        case NrChunks:
+            m_chunkButtonNrChunks.doClick();
+            m_nrChunksSpinner.setValue(chunkValue);
+            break;
+        default:
+            NodeLogger.getLogger(getClass()).coding(
+                    "Unknown chunking: " + chunking);
+            m_chunkButtonEntireTable.doClick();
         }
+
         AbstractCommandlineSettings cmdSets = settings.getCommandlineSettings();
         m_commandlineControl.loadSettings(cmdSets, inputSpecs);
     }
@@ -235,17 +278,25 @@ public class ExternalToolPanel extends JPanel {
         throws InvalidSettingsException {
         String pathToExecutable = m_executablePanel.getSelectedFile();
         settings.setPathToExecutable(pathToExecutable);
-        int chunkSize;
-        if (m_chunkButtonChunks.isSelected()) {
-            chunkSize = (Integer)m_chunkSpinner.getValue();
+        Chunking chunking;
+        int chunkValue;
+
+        if (m_chunkButtonChunkSize.isSelected()) {
+            chunking = Chunking.ChunksOfSize;
+            chunkValue = (Integer)m_chunkSizeSpinner.getValue();
+        } else if (m_chunkButtonNrChunks.isSelected()) {
+            chunking = Chunking.NrChunks;
+            chunkValue = (Integer)m_nrChunksSpinner.getValue();
         } else if (m_chunkButtonSingleRow.isSelected()) {
-            chunkSize = 1;
+            chunking = Chunking.IndividualRow;
+            chunkValue = -1;
         } else { // m_chunkButtonEntireTable selected
-            chunkSize = -1;
+            chunking = Chunking.EntireTable;
+            chunkValue = -1;
         }
-        settings.setChunkSize(chunkSize);
+        settings.setChunking(chunking, chunkValue);
         AbstractCommandlineSettings cmdSets = settings.getCommandlineSettings();
-        m_commandlineControl.saveGlobalSettingsGlobal(settings);
+//        m_commandlineControl.saveGlobalSettingsGlobal(settings);
         m_commandlineControl.saveSettings(cmdSets);
     }
 

@@ -50,9 +50,6 @@
  */
 package org.knime.exttool.filetype;
 
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 
 
 /**
@@ -72,20 +69,6 @@ public abstract class AbstractFileType {
         }
         m_factory = factory;
     }
-
-    /** Saves a configuration to the argument settings.
-     * @param settings To save to.
-     * @throws InvalidSettingsException If the configuration is invalid.
-     */
-    public abstract void saveSettings(final NodeSettingsWO settings)
-        throws InvalidSettingsException;
-
-    /** Loads a configuration from the argument settings.
-     * @param settings To load from.
-     * @throws InvalidSettingsException If the settings are invalid.
-     */
-    public abstract void loadSettings(final NodeSettingsRO settings)
-        throws InvalidSettingsException;
 
     /** Get the suffix, set by the corresponding factory.
      * @return The suffix as in {@link AbstractFileTypeFactory#getSuffix()} */

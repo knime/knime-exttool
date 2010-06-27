@@ -52,7 +52,13 @@ package org.knime.exttool.node;
 
 import java.util.Arrays;
 
+import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataValue;
+import org.knime.core.data.container.ColumnRearranger;
+import org.knime.core.node.BufferedDataTable;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.util.ColumnFilter;
 import org.knime.core.node.util.DataValueColumnFilter;
 import org.knime.exttool.executor.Execution;
@@ -81,6 +87,70 @@ import org.knime.exttool.executor.Execution;
  */
 public class ExttoolCustomizer {
 
+    /** Wether (and which) temp files are deleted after execution. */
+    public enum DeleteTempFilePolicy {
+        /** Delete all files, independent of success of failure. */
+        All,
+        /** Delete only chunks with successful execution. */
+        OnlyNonFailed,
+        /** Delete no files. */
+        None;
+
+        /** Parses the argument, throws exception if invalid.
+         * @param value The value to parse
+         * @return The corresponding enum value.
+         * @throws InvalidSettingsException If that fails.
+         */
+        public static DeleteTempFilePolicy read(final String value)
+            throws InvalidSettingsException {
+            if (value == null) {
+                throw new InvalidSettingsException("Value for "
+                        + DeleteTempFilePolicy.class.getSimpleName()
+                        + " is null");
+            }
+            try {
+                return valueOf(value);
+            } catch (IllegalArgumentException iae) {
+                throw new InvalidSettingsException("Invalid value for "
+                        + DeleteTempFilePolicy.class.getSimpleName()
+                        + ": " + value);
+            }
+        }
+    }
+
+    /** Partitioning the input table. */
+    public enum Chunking {
+        /** All rows in one chunk. */
+        EntireTable,
+        /** Each row is a chunk. */
+        IndividualRow,
+        /** Chunks with a certain number of rows. */
+        ChunksOfSize,
+        /** Given number of chunks, number of rows per chunk set accordingly. */
+        NrChunks;
+
+        /** Parses the argument, throws exception if invalid.
+         * @param value The value to parse
+         * @return The corresponding enum value.
+         * @throws InvalidSettingsException If that fails.
+         */
+        public static Chunking read(final String value)
+            throws InvalidSettingsException {
+            if (value == null) {
+                throw new InvalidSettingsException("Value for "
+                        + Chunking.class.getSimpleName()
+                        + " is null");
+            }
+            try {
+                return valueOf(value);
+            } catch (IllegalArgumentException iae) {
+                throw new InvalidSettingsException("Invalid value for "
+                        + Chunking.class.getSimpleName()
+                        + ": " + value);
+            }
+        }
+    }
+
     private final int m_nrInputs;
     private final int m_nrOutputs;
 
@@ -89,9 +159,11 @@ public class ExttoolCustomizer {
     private boolean m_showPathToTempInputFile = true;
     private boolean m_showPathToTempOutputFile = true;
     private boolean m_showOutputTypeSelection = true;
-    private boolean m_showTargetColumnCombo = true;
     private boolean m_showTabInputFile = true;
     private boolean m_showTabOutputFile = true;
+    private boolean m_showTabExecutorPanel = true;
+    private DeleteTempFilePolicy m_defaultDeleteTempFilePolicy =
+        DeleteTempFilePolicy.All;
 
     private String m_executableFileHistoryID = "exttool";
     private String[] m_executableFileHistorySuffixes = new String[0];
@@ -148,6 +220,81 @@ public class ExttoolCustomizer {
      */
     protected Execution createExecution(final ExttoolSettings settings) {
         return new Execution(this, settings);
+    }
+
+    /** Modifies the input tables that are passed to the external tool
+     * framework (dialog and execution). Sub classes can overwrite the
+     * {@link #createPreprocessColumnRearranger(DataTableSpec[])} to control
+     * this preprocessing step and, for instance append columns that
+     * are required by the external process.
+     *
+     * @param input The input table specs
+     * @return The preprocessed input.
+     */
+    public final DataTableSpec[] preprocessInput(final DataTableSpec[] input) {
+        ColumnRearranger[] cr = createPreprocessColumnRearranger(input);
+        if (cr == null) {
+            return input;
+        }
+        DataTableSpec[] newIns = new DataTableSpec[input.length];
+        for (int i = 0; i < input.length; i++) {
+            ColumnRearranger r = cr[i];
+            newIns[i] = r.createSpec();
+        }
+        return newIns;
+    }
+
+    /** Modifies the input tables prior execution. It does so according
+     * to the (overwritten)
+     * {@link #createPreprocessColumnRearranger(DataTableSpec[])} method.
+     *
+     * @param input The original input data.
+     * @param exec The execution context in case column are removed or new
+     *             data is generated.
+     * @return The freshly prepared input data that is passed to the
+     *         external tool framework (file writers and so on).
+     * @throws CanceledExecutionException If canceled
+     */
+    public final BufferedDataTable[] preprocessInput(
+            final BufferedDataTable[] input, final ExecutionContext exec)
+    throws CanceledExecutionException {
+        DataTableSpec[] inSpecs = new DataTableSpec[input.length];
+        for (int i = 0; i < input.length; i++) {
+            inSpecs[i] = input[i].getDataTableSpec();
+        }
+        ColumnRearranger[] cr = createPreprocessColumnRearranger(inSpecs);
+        if (cr == null) {
+            return input;
+        }
+        BufferedDataTable[] newIns = new BufferedDataTable[input.length];
+        for (int i = 0; i < input.length; i++) {
+            ExecutionContext sub = exec;
+            if (input.length > 1) {
+                sub = exec.createSubExecutionContext(1.0 / input.length);
+                exec.setMessage("Port " + i);
+            }
+            ColumnRearranger r = cr[i];
+            newIns[i] = sub.createColumnRearrangeTable(input[i], r, sub);
+        }
+        return newIns;
+    }
+
+    /** Allows sub-classes to modify the input data that is passed to the
+     * external tool framework. This preprocessing is static for a given tool
+     * (nodes always append the same column, independent of the input data)
+     * and therefore independent of the actual {@link ExttoolSettings}.
+     *
+     * <p>The default implementation returns <code>null</code>, i.e. no
+     * modification is done.
+     *
+     * @param ins The original input specs.
+     * @return The rearranger to modify the input data. Returning
+     * <code>null</code> is OK (no change to input) but non-null return values
+     * must not contain null.
+     */
+    protected ColumnRearranger[] createPreprocessColumnRearranger(
+            final DataTableSpec[] ins) {
+        return null;
     }
 
     /** @return the nrInputs (constructor argument) */
@@ -237,20 +384,6 @@ public class ExttoolCustomizer {
     }
 
     /**
-     * @return the showTargetColumnCombo
-     */
-    public boolean isShowTargetColumnCombo() {
-        return m_showTargetColumnCombo;
-    }
-
-    /**
-     * @param showTargetColumnCombo the showTargetColumnCombo to set
-     */
-    public void setShowTargetColumnCombo(final boolean showTargetColumnCombo) {
-        m_showTargetColumnCombo = showTargetColumnCombo;
-    }
-
-    /**
      * @return the showTabInputFile
      */
     public boolean isShowTabInputFile() {
@@ -276,6 +409,20 @@ public class ExttoolCustomizer {
      */
     public void setShowTabOutputFile(final boolean showTabOutputFile) {
         m_showTabOutputFile = showTabOutputFile;
+    }
+
+    /**
+     * @return the showTabExecutorPanel
+     */
+    public boolean isShowTabExecutorPanel() {
+        return m_showTabExecutorPanel;
+    }
+
+    /**
+     * @param showTabExecutorPanel the showTabExecutorPanel to set
+     */
+    public void setShowTabExecutorPanel(final boolean showTabExecutorPanel) {
+        m_showTabExecutorPanel = showTabExecutorPanel;
     }
 
     /**
@@ -317,6 +464,25 @@ public class ExttoolCustomizer {
                     + "contain null elements");
         }
         m_executableFileHistorySuffixes = suffixes;
+    }
+
+    /**
+     * @param defaultDeleteTempFilePolicy the defaultDeleteTempFilePolicy to set
+     * @throws NullPointerException If argument is null.
+     */
+    public void setDefaultDeleteTempFilePolicy(
+            final DeleteTempFilePolicy defaultDeleteTempFilePolicy) {
+        if (defaultDeleteTempFilePolicy == null) {
+            throw new NullPointerException("Argument must not be null");
+        }
+        m_defaultDeleteTempFilePolicy = defaultDeleteTempFilePolicy;
+    }
+
+    /**
+     * @return the defaultDeleteTempFilePolicy
+     */
+    public DeleteTempFilePolicy getDefaultDeleteTempFilePolicy() {
+        return m_defaultDeleteTempFilePolicy;
     }
 
     /** @param columnFilter the columnFilter to set */

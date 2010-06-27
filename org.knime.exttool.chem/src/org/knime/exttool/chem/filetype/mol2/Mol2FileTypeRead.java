@@ -58,10 +58,9 @@ import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
+import org.knime.exttool.filetype.AbstractFileTypeReadConfig;
 
 /**
  * Mol2 read support.
@@ -74,6 +73,12 @@ public class Mol2FileTypeRead extends AbstractFileTypeRead {
      */
     Mol2FileTypeRead(final Mol2FileTypeFactory factory) {
         super(factory);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void prepare(final AbstractFileTypeReadConfig config) {
+        // no op
     }
 
     /** {@inheritDoc} */
@@ -107,20 +112,6 @@ public class Mol2FileTypeRead extends AbstractFileTypeRead {
                 result.getDataTableSpec());
         rearranger.move(Mol2Reader.MOLECULE_COLNAME_SPEC.getName(), 0);
         return exec.createColumnRearrangeTable(result, rearranger, exec);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void loadSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        // nothing to load
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void saveSettings(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        // nothing to save
     }
 
 }

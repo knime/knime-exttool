@@ -46,70 +46,44 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Mar 10, 2010 (wiswedel): created
+ *   Apr 8, 2010 (wiswedel): created
  */
-package org.knime.exttool.node;
+package org.knime.exttool.filetype;
 
-import java.awt.GridBagConstraints;
-
-import javax.swing.JPanel;
-
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 
-/**
- * GUI controller for {@link AbstractCommandlineSettings}. Objects of this
- * class are created using the corresponding factory method
- * {@link AbstractCommandlineSettings#createControl()}.
+/** Customization of the reader that parses the generated output file. This
+ * can be, e.g. what type of delimiter is used in CSV or whether a SDF file
+ * type should extract properties.
  *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public abstract class AbstractCommandlineControl {
+public abstract class AbstractFileTypeReadConfig {
 
-    /** Called from {@link #registerPanel(JPanel, GridBagConstraints)} to
-     * allow this control object to register a basic panel to the parent.
-     * Subclasses can alternatively overwrite
-     * {@link #registerPanel(JPanel, GridBagConstraints)} and beautify the
-     * layout a bit (two column layout). This abstract method should be
-     * implemented empty in this case.
-     * @param parent The panel where to add own GUI elements.
-     */
-    protected abstract void registerPanel(final JPanel parent);
-
-    /** Called from the framework to register custom GUI objects to the parent
-     * panel. The <code>parent</code> has a {@link java.awt.GridBagLayout}
-     * with two columns. In most cases it's easier to simply implement
-     * the {@link #registerPanel(JPanel)} method only.
-     * @param parent Where to register components
-     * @param gbc The constraints to layout the parent.
-     */
-    protected void registerPanel(final JPanel parent,
-            final GridBagConstraints gbc) {
-        registerPanel(parent);
-    }
-
-    /** Load the settings from the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
+    /** Loads settings, fails if invalid.
      * @param settings To load from.
-     * @param spec The input table specs
-     * @throws NotConfigurableException If no valid configuration is possible.
+     * @throws InvalidSettingsException If invalid.
      */
-    protected abstract void loadSettings(
-            final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException;
-
-    /** Saves the settings to the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To save to.
-     * @throws InvalidSettingsException If the current configuration is invalid.
-     */
-    protected abstract void saveSettings(
-            final AbstractCommandlineSettings settings)
+    public abstract void loadSettingsInModel(final NodeSettingsRO settings)
         throws InvalidSettingsException;
 
+    /** Load settings, init with defaults if invalid.
+     * @param settings To load from.
+     */
+    public abstract void loadSettingsInDialog(final NodeSettingsRO settings);
+
+    /** Saves current settings.
+     * @param settings To save to.
+     */
+    public abstract void saveSettings(final NodeSettingsWO settings);
+
+    /** Create a new panel that will be displayed in the "output file" panel
+     * of the external tool node. The returned object (not null) can safely
+     * typecast the config object to this concrete class in its load/save
+     * methods.
+     * @return a new config panel.
+     */
+    public abstract AbstractFileTypeReadConfigPanel createConfigPanel();
 }

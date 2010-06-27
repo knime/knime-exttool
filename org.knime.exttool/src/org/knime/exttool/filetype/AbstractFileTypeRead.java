@@ -71,11 +71,20 @@ public abstract class AbstractFileTypeRead extends AbstractFileType {
         super(factory);
     }
 
+    /** Load settings from reader configuration. The argument can be safely
+     * type casted to the object that is returned by the associated factory's
+     * {@link AbstractFileTypeFactory#createNewReadConfig()} method.
+     * @param config To load from.
+     */
+    public abstract void prepare(AbstractFileTypeReadConfig config);
+
     /** Read the file from the given output data handle and returns a table
      * containing the content. The table <b>must</b> have as its first column
      * the IDs that are used to merge the output with the input data. It must be
      * a separate column since the output can contain multiple matches for an
-     * input record.
+     * input record. The implementation can safely assume that the
+     * {@link #prepare(AbstractFileTypeReadConfig)} method has been called
+     * beforehand.
      * @param handle the output handle.
      * @param exec for progress/cancelation/table creation
      * @return the output table

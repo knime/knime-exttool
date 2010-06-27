@@ -207,19 +207,47 @@ public abstract class AbstractFileTypeFactory {
      */
     public abstract AbstractFileTypeWrite createNewWriteInstance();
 
+    /** Create a new configuration object that represents the settings to
+     * the write instance. The returned object must be of a class that is
+     * accepted by the write instance's {@link
+     * AbstractFileTypeWrite#writeTable(org.knime.core.data.DataTableSpec,
+     * org.knime.core.data.RowIterator, int, java.io.OutputStream,
+     * org.knime.core.node.ExecutionMonitor) writeTable method}, whereby the
+     * write instance is created using the {@link #createNewWriteInstance()}
+     * method.
+     * @return A new configuration representing the writer settings.
+     * @see #canWrite()
+     * @see #createNewWriteInstance()
+     */
+    public abstract AbstractFileTypeWriteConfig createNewWriteConfig();
+
     /** If this factory supports reading files (possible output type). If so,
      * the {@link #createNewReadInstance()} must not contain <code>null</code>.
      * @return Whether this file type can read.
      */
     public abstract boolean canRead();
 
-    /** Create a new file type for writing.
+    /** Create a new file type for reading.
      * @return A new instance.
-     * @see #canWrite()
+     * @see #canRead()
      */
     public abstract AbstractFileTypeRead createNewReadInstance();
 
-    /** Get the file suffix (excluding the doc). For CSV types, this would
+    /** Create a new configuration object that represents the settings to
+     * the read instance. The returned object must be of a class that is
+     * accepted by the read instance's {@linkplain
+     * AbstractFileTypeRead#readTable(
+     * org.knime.exttool.executor.OutputDataHandle,
+     * org.knime.core.node.ExecutionContext) readTable method},
+     * whereby the read instance is created using the
+     * {@link #createNewReadInstance()} method.
+     * @return A new configuration representing the reader settings.
+     * @see #canRead()
+     * @see #createNewReadInstance()
+     */
+    public abstract AbstractFileTypeReadConfig createNewReadConfig();
+
+    /** Get the file suffix (excluding the dot). For CSV types, this would
      * be <i>csv</i>.
      * @return The file suffix, appended to temp files. */
     public abstract String getSuffix();

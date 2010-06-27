@@ -53,7 +53,6 @@ package org.knime.exttool.node;
 import java.io.File;
 import java.io.IOException;
 
-import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -64,7 +63,6 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.executor.Execution;
-import org.knime.exttool.filetype.AbstractFileTypeWrite;
 
 /** Default node model for the external tool model. It mostly just delegates
  * to the executor and settings that are created by the
@@ -92,17 +90,8 @@ public class ExttoolNodeModel extends NodeModel {
         if (m_settings == null) {
             throw new InvalidSettingsException("No settings available");
         }
-        if (inSpecs.length > 0) {
-            String targetCol = m_settings.getTargetColumn();
-            DataTableSpec spec = inSpecs[0];
-            DataColumnSpec colSpec = spec.getColumnSpec(targetCol);
-            if (colSpec == null) {
-                throw new InvalidSettingsException("Selected column \""
-                        + targetCol + "\" does not exist in input table");
-            }
-            AbstractFileTypeWrite fileWrite = m_settings.createInputFileType(0);
-            fileWrite.setSelectedInput(colSpec);
-        }
+        DataTableSpec[] newInSpecs = m_customizer.preprocessInput(inSpecs);
+        m_settings.validateInput(newInSpecs);
         return null;
     }
 
@@ -111,7 +100,14 @@ public class ExttoolNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         Execution execution = m_customizer.createExecution(m_settings);
-        BufferedDataTable[] result = execution.execute(inData, exec);
+        BufferedDataTable[] newInData = m_customizer.preprocessInput(
+                inData, exec.createSubExecutionContext(0.0));
+        BufferedDataTable[] result;
+        try {
+            result = execution.execute(newInData, exec);
+        } finally {
+            execution.cleanUp();
+        }
         String warningMessage = execution.clearWarningMessage();
         if (warningMessage != null) {
             setWarningMessage(warningMessage);

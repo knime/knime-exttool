@@ -62,9 +62,9 @@ import org.knime.core.data.RowIterator;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
+import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
+import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 
 /**
  * Mol2 write support.
@@ -79,6 +79,27 @@ public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
      */
     Mol2FileTypeWrite(final Mol2FileTypeFactory factory) {
         super(factory);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void prepare(final AbstractFileTypeWriteConfig config) {
+        m_targetColumn = ((DefaultFileTypeWriteConfig)config).getColumn();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void validateInput(final DataTableSpec spec)
+            throws InvalidSettingsException {
+        DataColumnSpec col = spec.getColumnSpec(m_targetColumn);
+        if (col == null) {
+            throw new InvalidSettingsException(
+                    "No such column: " + m_targetColumn);
+        }
+        if (!col.getType().isCompatible(Mol2Value.class)) {
+            throw new InvalidSettingsException("Input column \""
+                    + m_targetColumn + "\" is not Mol2 compatible");
+        }
     }
 
     /** {@inheritDoc} */
@@ -116,35 +137,6 @@ public class Mol2FileTypeWrite extends AbstractFileTypeWrite {
             throw new IOException(
                     "Unable to write Mol2 stream: " + e.getMessage(), e);
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void loadSettings(final NodeSettingsRO settings)
-    throws InvalidSettingsException {
-        m_targetColumn = settings.getString("targetColumn");
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void saveSettings(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        settings.addString("targetColumn", m_targetColumn);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setSelectedInput(final DataColumnSpec... spec)
-            throws InvalidSettingsException {
-        if (spec.length != 1) {
-            throw new InvalidSettingsException("Invalid column array argument");
-        }
-        DataColumnSpec colSpec = spec[0];
-        if (!colSpec.getType().isCompatible(Mol2Value.class)) {
-            throw new InvalidSettingsException("Invalid input column type: "
-                    + colSpec.getType() + " (expected mol2)");
-        }
-        m_targetColumn = colSpec.getName();
     }
 }
 

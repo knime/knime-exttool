@@ -67,18 +67,13 @@ import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.util.ColumnSelectionComboxBox;
 import org.knime.exttool.chem.filetype.mol2.Mol2FileTypeFactory;
 import org.knime.exttool.chem.filetype.sdf.SdfFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
-import org.knime.exttool.filetype.AbstractFileTypeRead;
-import org.knime.exttool.filetype.AbstractFileTypeWrite;
 import org.knime.exttool.node.AbstractCommandlineControl;
 import org.knime.exttool.node.AbstractCommandlineSettings;
-import org.knime.exttool.node.ExttoolSettings;
-import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfiguration;
 
 /** GUI control elements for the Babel control panel. It has a column selection
  * combo box (choosing Mol2 and Sdf type columns) and button group, in which
@@ -103,54 +98,19 @@ final class BabelCommandlineControl extends AbstractCommandlineControl {
                     "Input contains no appropriate type");
         }
         m_colSelCombo.update(spec, babelSet.getInputColumn());
-        String outputType = babelSet.getOutputType();
+        AbstractFileTypeFactory outputType = babelSet.getOutputFileType();
+        String outputTypeName = outputType == null ? null
+                : outputType.getClass().getName();
         for (Enumeration<AbstractButton> enu
                 = m_outputButtonGroup.getElements(); enu.hasMoreElements();) {
             AbstractButton b = enu.nextElement();
-            if (b.getActionCommand().equals(outputType)) {
+            if (b.getActionCommand().equals(outputTypeName)) {
                 b.doClick();
             }
         }
         // can ignore input type here, it's magically determined based upon
         // the selected input column (no need to match the settings as we
         // are in the dialog, not the model).
-
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected void saveGlobalSettingsGlobal(final ExttoolSettings settings)
-        throws InvalidSettingsException {
-        DataColumnSpec selCol = (DataColumnSpec)m_colSelCombo.getSelectedItem();
-        settings.setTargetColumn(selCol.getName());
-
-        /* fix input configuration */
-        String inputType = getInputType();
-        AbstractFileTypeWrite fileTypeWrite =
-            AbstractFileTypeFactory.get(inputType).createNewWriteInstance();
-        fileTypeWrite.setSelectedInput(selCol);
-        NodeSettings inputWriteSettings = new NodeSettings("inputWrite");
-        fileTypeWrite.saveSettings(inputWriteSettings);
-
-        PathAndTypeConfiguration inConfig = new PathAndTypeConfiguration(true);
-        inConfig.setPath(null); // auto-generated
-        inConfig.setType(inputType);
-        inConfig.setTypeSettings(inputWriteSettings);
-        settings.setInputConfig(0, inConfig);
-
-        /* fix output configuration */
-        String outputType = getOutputType();
-        AbstractFileTypeRead fileTypeRead =
-            AbstractFileTypeFactory.get(outputType).createNewReadInstance();
-        NodeSettings outputReadSettings = new NodeSettings("outputRead");
-        fileTypeRead.saveSettings(outputReadSettings);
-
-        PathAndTypeConfiguration outConfig =
-            new PathAndTypeConfiguration(false);
-        outConfig.setPath(null); // auto-generated
-        outConfig.setType(outputType);
-        outConfig.setTypeSettings(outputReadSettings);
-        settings.setOutputConfig(0, outConfig);
     }
 
     /** {@inheritDoc} */
@@ -159,27 +119,30 @@ final class BabelCommandlineControl extends AbstractCommandlineControl {
             throws InvalidSettingsException {
         BabelCommandlineSettings babelSet = (BabelCommandlineSettings)settings;
         babelSet.setInputColumn(m_colSelCombo.getSelectedColumn());
-        babelSet.setInputType(getInputType());
-        babelSet.setOutputType(getOutputType());
+        babelSet.setInputFileType(getInputFileType());
+        babelSet.setOutputType(getOutputFileType());
     }
 
-    private String getInputType() throws InvalidSettingsException {
+    private AbstractFileTypeFactory getInputFileType()
+        throws InvalidSettingsException {
         DataColumnSpec selCol = (DataColumnSpec)m_colSelCombo.getSelectedItem();
-        String inputType;
         if (selCol.getType().isCompatible(SdfValue.class)) {
-            inputType = SdfFileTypeFactory.class.getName();
+            return AbstractFileTypeFactory.get(
+                    SdfFileTypeFactory.class.getName());
         } else if (selCol.getType().isCompatible(Mol2Value.class)) {
-            inputType = Mol2FileTypeFactory.class.getName();
+            return AbstractFileTypeFactory.get(
+                    Mol2FileTypeFactory.class.getName());
         } else {
             // can't happen, combo box filters appropriate types
             throw new InvalidSettingsException(
                     "Invalid input type selected: " + selCol);
         }
-        return inputType;
     }
 
-    private String getOutputType() {
-        return m_outputButtonGroup.getSelection().getActionCommand();
+    private AbstractFileTypeFactory getOutputFileType()
+        throws InvalidSettingsException {
+        return AbstractFileTypeFactory.get(
+                m_outputButtonGroup.getSelection().getActionCommand());
     }
 
     /** {@inheritDoc} */

@@ -74,27 +74,52 @@ import org.knime.core.node.NotConfigurableException;
  */
 public abstract class AbstractCommandlineSettings {
 
+    /** Allows sub-classes to modify the settings that are part of the
+     * {@link ExttoolSettings} configuration, such as in- and output file
+     * type configuration. This is necessary if custom node implementations do
+     * not use the in- and output panels but decide to do this type of
+     * configuration in their own control panel.
+     *
+     * <p>This method is called shortly before save and only if this settings
+     * object is used in a dialog context (not in the model).
+     *
+     * <p>Settings that are specific to sub-classes should be saved in
+     * the {@link #saveSettings(NodeSettingsWO)} method.
+     *
+     * @param exttoolSettings To be used to overwrite the settings that
+     * are contributed by the standard components such as in- and output file
+     * type configuration. */
+    protected abstract void correctSettingsForSave(final ExttoolSettings
+            exttoolSettings);
+
     /** Saves the current state to the argument.
-     * @param settings To save to. */
+     * @param settings To save any configuration that is special to this
+     * implementation of a command line settings and which can't be persisted
+     * in the {@link ExttoolSettings} argument.
+     * @see #correctSettingsForSave(ExttoolSettings) */
     protected abstract void saveSettings(final NodeSettingsWO settings);
 
     /** Load a state from a settings object. This method is called from the
      * load method in the {@link ExttoolNodeModel}.
-     * @param settings To load from.
+     * @param exttoolSettings To read type specific configuration from.
+     * @param settings To load extra parameters from.
      * @throws InvalidSettingsException If settings are incomplete or invalid.
      */
-    protected abstract void loadSettingsInModel(final NodeSettingsRO settings)
+    protected abstract void loadSettingsInModel(final ExttoolSettings
+            exttoolSettings, final NodeSettingsRO settings)
         throws InvalidSettingsException;
 
     /** Load the settings in the dialog, falling back to default in case of
      * errors.
-     * @param settings To load from.
+     * @param exttoolSettings To read standard parameters from, such as
+     * in- and output file type configuration.
+     * @param settings To load extra parameters from.
      * @param inSpecs The input table specs.
      * @throws NotConfigurableException If no valid configuration is possible.
      */
-    protected abstract void loadSettingsInDialog(
-            final NodeSettingsRO settings, final DataTableSpec[] inSpecs)
-        throws NotConfigurableException;
+    protected abstract void loadSettingsInDialog(final ExttoolSettings
+            exttoolSettings,  final NodeSettingsRO settings,
+            final DataTableSpec[] inSpecs) throws NotConfigurableException;
 
     /** Get the command line arguments to the external process.
      * @return The array of the command line args, the different values may

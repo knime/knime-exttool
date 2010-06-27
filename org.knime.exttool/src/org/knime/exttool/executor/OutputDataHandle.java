@@ -56,6 +56,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.knime.core.node.NodeLogger;
+
 /** Output handle of the external tool. It represents the data that is written
  * by external process and which is then read by KNIME. The
  * {@link DataHandle#getLocation() location} returned by objects of this
@@ -91,6 +93,14 @@ public interface OutputDataHandle extends DataHandle {
         /** @return the outFile as passed in constructor. */
         public File getOutFile() {
             return m_outFile;
+        }
+
+        /** {@inheritDoc} */
+        public void cleanUp() {
+            if (m_outFile.exists() && !m_outFile.delete()) {
+                NodeLogger.getLogger(getClass()).warn("Could not delete file \""
+                        + m_outFile.getAbsolutePath() + "\"");
+            }
         }
 
         /** {@inheritDoc} */

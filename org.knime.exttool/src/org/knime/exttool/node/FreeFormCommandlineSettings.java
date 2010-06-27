@@ -71,16 +71,28 @@ public class FreeFormCommandlineSettings extends AbstractCommandlineSettings {
 
     /** {@inheritDoc} */
     @Override
-    protected void loadSettingsInModel(final NodeSettingsRO settings)
+    protected void loadSettingsInModel(final ExttoolSettings
+            exttoolSettings, final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_commandline = settings.getString(CFG_COMMANDLINE);
+        if (m_commandline == null || m_commandline.isEmpty()) {
+            throw new InvalidSettingsException("No commandline specified");
+        }
     }
 
     /** {@inheritDoc} */
     @Override
-    protected void loadSettingsInDialog(final NodeSettingsRO settings,
+    protected void loadSettingsInDialog(final ExttoolSettings
+            exttoolSettings, final NodeSettingsRO settings,
             final DataTableSpec[] inSpecs) throws NotConfigurableException {
         m_commandline = settings.getString(CFG_COMMANDLINE, "");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected void correctSettingsForSave(
+            final ExttoolSettings exttoolSettings) {
+        // nothing to do here
     }
 
     /** {@inheritDoc} */

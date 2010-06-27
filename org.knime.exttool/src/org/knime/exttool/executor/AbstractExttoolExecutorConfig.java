@@ -46,70 +46,71 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Mar 10, 2010 (wiswedel): created
+ *   Jun 23, 2010 (wiswedel): created
  */
-package org.knime.exttool.node;
+package org.knime.exttool.executor;
 
-import java.awt.GridBagConstraints;
+import java.util.concurrent.ExecutorService;
 
-import javax.swing.JPanel;
-
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.exttool.node.ExttoolNodeModel;
 
 /**
- * GUI controller for {@link AbstractCommandlineSettings}. Objects of this
- * class are created using the corresponding factory method
- * {@link AbstractCommandlineSettings#createControl()}.
+ * Settings object that represents the configuration of an executor. For a
+ * default executor (local execution), this could be a total number of
+ * parallel threads (chunking), for an SSH executor the connection information
+ * for a remote host and for a queuing system executor some queue information.
  *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public abstract class AbstractCommandlineControl {
+public abstract class AbstractExttoolExecutorConfig {
 
-    /** Called from {@link #registerPanel(JPanel, GridBagConstraints)} to
-     * allow this control object to register a basic panel to the parent.
-     * Subclasses can alternatively overwrite
-     * {@link #registerPanel(JPanel, GridBagConstraints)} and beautify the
-     * layout a bit (two column layout). This abstract method should be
-     * implemented empty in this case.
-     * @param parent The panel where to add own GUI elements.
-     */
-    protected abstract void registerPanel(final JPanel parent);
+    /** Saves the current state to the argument.
+     * @param settings To save to. */
+    public abstract void saveSettings(final NodeSettingsWO settings);
 
-    /** Called from the framework to register custom GUI objects to the parent
-     * panel. The <code>parent</code> has a {@link java.awt.GridBagLayout}
-     * with two columns. In most cases it's easier to simply implement
-     * the {@link #registerPanel(JPanel)} method only.
-     * @param parent Where to register components
-     * @param gbc The constraints to layout the parent.
+    /** Load a state from a settings object. This method is called from the
+     * load method in the {@link ExttoolNodeModel}.
+     * @param settings To load configuration from.
+     * @throws InvalidSettingsException If settings are incomplete or invalid.
      */
-    protected void registerPanel(final JPanel parent,
-            final GridBagConstraints gbc) {
-        registerPanel(parent);
-    }
-
-    /** Load the settings from the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To load from.
-     * @param spec The input table specs
-     * @throws NotConfigurableException If no valid configuration is possible.
-     */
-    protected abstract void loadSettings(
-            final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException;
-
-    /** Saves the settings to the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To save to.
-     * @throws InvalidSettingsException If the current configuration is invalid.
-     */
-    protected abstract void saveSettings(
-            final AbstractCommandlineSettings settings)
+    public abstract void loadSettingsInModel(final NodeSettingsRO settings)
         throws InvalidSettingsException;
+
+    /** Load the settings in the dialog, falling back to default in case of
+     * errors.
+     * @param settings To load configuration from.
+     * @throws NotConfigurableException If no valid configuration is possible.
+     *         (this shouldn't happen as the executor configuration is
+     *         independent from the input data; this exception is declared
+     *         as all dialog loading methods can fail with it)
+     */
+    public abstract void loadSettingsInDialog(final NodeSettingsRO settings)
+        throws NotConfigurableException;
+
+    /** Create a new config panel for this configuration object. The returned
+     * instance can safely cast the config object to this concrete class in
+     * its save and load methods.
+     * @return A new controller.
+     */
+    public abstract AbstractExttoolExecutorConfigPanel createConfigPanel();
+
+    /** Get an executor service that is used to run the task(s). This can
+     * be an unbounded thread pool (which runs tasks as they arrive, useful,
+     * e.g. when jobs are run remotely and the threads just wait for the jobs to
+     * finish) or a bounded thread pool which executes at most a given
+     * number of tasks.
+     *
+     * <p>This method should not actually be used from custom executor
+     * implementations. It is used from the {@link Execution} class to submit
+     * sub-jobs.
+     *
+     * @return an executor service to run the job(s), one job if entire table
+     * is to be processed or multiple jobs when chunking is enabled.
+     */
+    abstract ExecutorService createExecutorService();
 
 }
