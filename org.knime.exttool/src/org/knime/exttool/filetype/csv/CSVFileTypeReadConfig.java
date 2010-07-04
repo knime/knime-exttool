@@ -46,76 +46,106 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Jan 20, 2010 (wiswedel): created
+ *   Apr 8, 2010 (wiswedel): created
  */
-package org.knime.exttool.chem.filetype.sdf;
+package org.knime.exttool.filetype.csv;
 
-import org.knime.chem.types.SdfValue;
-import org.knime.core.data.DataColumnSpec;
-import org.knime.core.node.util.DataValueColumnFilter;
-import org.knime.exttool.filetype.AbstractFileTypeFactory;
-import org.knime.exttool.filetype.DefaultFileTypeReadConfig;
-import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.exttool.filetype.AbstractFileTypeReadConfig;
+import org.knime.exttool.filetype.AbstractFileTypeReadConfigPanel;
 
 /**
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public class SdfFileTypeFactory extends AbstractFileTypeFactory {
+public final class CSVFileTypeReadConfig extends AbstractFileTypeReadConfig {
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean canWrite() {
-        return true;
+    private String m_colDelimiter;
+    private String m_rowDelimiter;
+    private String m_quoteChar;
+    private boolean m_hasColHeader;
+    /**
+     * @return the colDelimiter
+     */
+    public String getColDelimiter() {
+        return m_colDelimiter;
+    }
+    /**
+     * @param colDelimiter the colDelimiter to set
+     */
+    public void setColDelimiter(final String colDelimiter) {
+        m_colDelimiter = colDelimiter;
+    }
+    /**
+     * @return the rowDelimiter
+     */
+    public String getRowDelimiter() {
+        return m_rowDelimiter;
+    }
+    /**
+     * @param rowDelimiter the rowDelimiter to set
+     */
+    public void setRowDelimiter(final String rowDelimiter) {
+        m_rowDelimiter = rowDelimiter;
+    }
+    /**
+     * @return the quoteChar
+     */
+    public String getQuoteChar() {
+        return m_quoteChar;
+    }
+    /**
+     * @param quoteChar the quoteChar to set
+     */
+    public void setQuoteChar(final String quoteChar) {
+        m_quoteChar = quoteChar;
+    }
+    /**
+     * @return the hasColHeader
+     */
+    public boolean hasColHeader() {
+        return m_hasColHeader;
+    }
+    /**
+     * @param hasColHeader the hasColHeader to set
+     */
+    public void setHasColHeader(final boolean hasColHeader) {
+        m_hasColHeader = hasColHeader;
     }
 
     /** {@inheritDoc} */
     @Override
-    public SdfFileTypeWrite createNewWriteInstance() {
-        return new SdfFileTypeWrite(this);
+    public void loadSettingsInModel(final NodeSettingsRO settings)
+        throws InvalidSettingsException {
+        m_rowDelimiter = settings.getString("rowDelimiter");
+        m_colDelimiter = settings.getString("colDelimiter");
+        m_quoteChar = settings.getString("quoteChar");
+        m_hasColHeader = settings.getBoolean("hasColHeader");
     }
 
     /** {@inheritDoc} */
     @Override
-    @SuppressWarnings("unchecked")
-    public DefaultFileTypeWriteConfig createNewWriteConfig() {
-        return new DefaultFileTypeWriteConfig(
-                new DataValueColumnFilter(SdfValue.class));
+    public void loadSettingsInDialog(final NodeSettingsRO settings) {
+        m_rowDelimiter = settings.getString("rowDelimiter", "\n");
+        m_colDelimiter = settings.getString("colDelimiter", ",");
+        m_quoteChar = settings.getString("quoteChar", "\"");
+        m_hasColHeader = settings.getBoolean("hasColHeader", true);
     }
 
     /** {@inheritDoc} */
     @Override
-    public boolean canRead() {
-        return true;
+    public void saveSettings(final NodeSettingsWO settings) {
+        settings.addString("rowDelimiter", m_rowDelimiter);
+        settings.addString("colDelimiter", m_colDelimiter);
+        settings.addString("quoteChar", m_quoteChar);
+        settings.addBoolean("hasColHeader", m_hasColHeader);
     }
 
     /** {@inheritDoc} */
     @Override
-    public SdfFileTypeRead createNewReadInstance() {
-        return new SdfFileTypeRead(this);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public DefaultFileTypeReadConfig createNewReadConfig() {
-        return new DefaultFileTypeReadConfig();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getSuffix() {
-        return "sdf";
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getUserFriendlyName() {
-        return "SDF";
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean accepts(final DataColumnSpec spec) {
-        return spec.getType().isCompatible(SdfValue.class);
+    public AbstractFileTypeReadConfigPanel createConfigPanel() {
+        return new CSVFileTypeReadConfigPanel();
     }
 
 }

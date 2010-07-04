@@ -53,9 +53,13 @@ package org.knime.exttool.filetype.csv;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.knime.base.data.filter.column.FilterColumnTable;
 import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
+import org.knime.base.node.io.csvwriter.FileWriterSettings.quoteMode;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTable;
 import org.knime.core.data.DataTableSpec;
@@ -63,9 +67,8 @@ import org.knime.core.data.RowIterator;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
+import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
 
 /**
  * CSV write support.
@@ -73,24 +76,56 @@ import org.knime.exttool.filetype.AbstractFileTypeWrite;
  */
 class CSVFileTypeWrite extends AbstractFileTypeWrite {
 
-    private FileWriterSettings m_settings;
+    private CSVFileTypeWriteConfig m_csvConfig;
 
     /** Create instance, associating it with its factory.
      * @param factory Factory that creates this instance.
      */
     public CSVFileTypeWrite(final CSVFileTypeFactory factory) {
         super(factory);
-        m_settings = new FileWriterSettings();
-        m_settings.setWriteColumnHeader(true);
-        m_settings.setWriteRowID(true);
-        m_settings.setColSeparator(",");
     }
 
     /** {@inheritDoc} */
     @Override
-    public void setSelectedInput(final DataColumnSpec... spec)
+    public void prepare(final AbstractFileTypeWriteConfig config) {
+        m_csvConfig = (CSVFileTypeWriteConfig)config;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void validateInput(final DataTableSpec spec)
             throws InvalidSettingsException {
-        // write everything that comes in.
+        if (m_csvConfig.isIncludeAllColumns()) {
+            // find at least one matching column
+            boolean foundMatch = false;
+            for (DataColumnSpec col : spec) {
+                if (CSVFileTypeWriteConfig.COLUMN_FILTER.includeColumn(col)) {
+                    foundMatch = true;
+                    break;
+                }
+            }
+            if (!foundMatch) {
+                throw new InvalidSettingsException(
+                        "No approriate columns for CSV format");
+            }
+        } else {
+            String[] includeColumns = m_csvConfig.getIncludeColumns();
+            if (includeColumns == null) {
+                throw new InvalidSettingsException(
+                        "No columns for CSV input selected");
+            }
+            for (String s : includeColumns) {
+                DataColumnSpec col = spec.getColumnSpec(s);
+                if (col == null) {
+                    throw new InvalidSettingsException(
+                            "No such column in input: " + s);
+                }
+                if (!CSVFileTypeWriteConfig.COLUMN_FILTER.includeColumn(col)) {
+                    throw new InvalidSettingsException("Inappropriate input "
+                            + "column for CSV input table: " + col);
+                }
+            }
+        }
     }
 
     /** {@inheritDoc} */
@@ -99,8 +134,16 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
             final int rowCount, final OutputStream out,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
+        FileWriterSettings fileWriterSettings = new FileWriterSettings();
+        fileWriterSettings.setWriteRowID(true);
+        fileWriterSettings.setWriteColumnHeader(m_csvConfig.isWriteColHeader());
+        fileWriterSettings.setColSeparator(m_csvConfig.getColDelimiter());
+        fileWriterSettings.setQuoteMode(quoteMode.STRINGS);
+        fileWriterSettings.setQuoteBegin(m_csvConfig.getQuoteChar());
+        fileWriterSettings.setQuoteEnd(m_csvConfig.getQuoteChar());
+
         CSVWriter csvWriter = new CSVWriter(
-                new OutputStreamWriter(out), m_settings);
+                new OutputStreamWriter(out), fileWriterSettings);
         DataTable table = new DataTable() {
             private boolean m_firstIteration = true;
            /** {@inheritDoc} */
@@ -117,22 +160,21 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
                 return it;
             }
         };
+        String[] includeCols;
+        if (m_csvConfig.isIncludeAllColumns()) {
+            List<String> includeColsL = new ArrayList<String>();
+            for (DataColumnSpec col : spec) {
+                if (CSVFileTypeWriteConfig.COLUMN_FILTER.includeColumn(col)) {
+                    includeColsL.add(col.getName());
+                }
+            }
+            includeCols = includeColsL.toArray(new String[includeColsL.size()]);
+        } else {
+            includeCols = m_csvConfig.getIncludeColumns();
+        }
+        table = new FilterColumnTable(table, includeCols);
         csvWriter.write(table, exec);
         csvWriter.close();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void loadSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        m_settings = new FileWriterSettings(settings);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void saveSettings(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        m_settings.saveSettingsTo(settings);
     }
 
 }

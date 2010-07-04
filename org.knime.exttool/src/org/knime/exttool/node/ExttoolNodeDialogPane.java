@@ -68,6 +68,7 @@ public class ExttoolNodeDialogPane extends NodeDialogPane {
     private ExternalToolPanel m_externalToolPanel;
     private InputFilePanel m_inputFilePanel;
     private OutputFilePanel m_outputFilePanel;
+    private ExecutorPanel m_executorPanel;
 
     /** Create new dialog based on a given customizer. The caller must
      * invoke {@link #initLayout()} right after construction.
@@ -91,12 +92,17 @@ public class ExttoolNodeDialogPane extends NodeDialogPane {
         m_externalToolPanel.addListenerToInputPanel(m_inputFilePanel);
         m_outputFilePanel = createOutputFilePanel();
         m_outputFilePanel.initLayout();
+        m_executorPanel = createExecutorPanel();
+        m_executorPanel.initLayout();
         addTab("External Tool", m_externalToolPanel);
         if (m_dialogCustomizer.isShowTabInputFile()) {
             addTab("Input File", m_inputFilePanel);
         }
         if (m_dialogCustomizer.isShowTabOutputFile()) {
             addTab("Output File", m_outputFilePanel);
+        }
+        if (m_dialogCustomizer.isShowTabExecutorPanel()) {
+            addTab("Executor", m_executorPanel);
         }
     }
 
@@ -124,15 +130,26 @@ public class ExttoolNodeDialogPane extends NodeDialogPane {
         return new OutputFilePanel(m_dialogCustomizer);
     }
 
+    /** Create the output panel.
+     * @return A new {@link OutputFilePanel} using the customizer passed
+     *         in the constructor.
+     */
+    protected ExecutorPanel createExecutorPanel() {
+        return new ExecutorPanel(m_dialogCustomizer);
+    }
+
     /** {@inheritDoc} */
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final DataTableSpec[] inSpecs) throws NotConfigurableException {
+            final DataTableSpec[] rawInSpecs) throws NotConfigurableException {
+        DataTableSpec[] inSpecs =
+            m_dialogCustomizer.preprocessInput(rawInSpecs);
         ExttoolSettings exttoolSettings =
             m_dialogCustomizer.createExttoolSettings();
         exttoolSettings.loadSettingsFrom(settings, inSpecs);
         m_inputFilePanel.loadSettingsFrom(exttoolSettings, inSpecs);
-        m_outputFilePanel.loadSettingsFrom(exttoolSettings, inSpecs);
+        m_outputFilePanel.loadSettingsFrom(exttoolSettings);
+        m_executorPanel.loadSettingsFrom(exttoolSettings);
         m_externalToolPanel.loadSettingsFrom(exttoolSettings, inSpecs);
     }
 
@@ -144,8 +161,9 @@ public class ExttoolNodeDialogPane extends NodeDialogPane {
             m_dialogCustomizer.createExttoolSettings();
         m_inputFilePanel.saveSettingsTo(exttoolSettings);
         m_outputFilePanel.saveSettingsTo(exttoolSettings);
+        m_executorPanel.saveSettingsTo(exttoolSettings);
         m_externalToolPanel.saveSettingsTo(exttoolSettings);
-        exttoolSettings.saveSettingsTo(settings);
+        exttoolSettings.saveSettingsToInDialog(settings);
     }
 
 }

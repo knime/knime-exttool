@@ -46,70 +46,84 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Mar 10, 2010 (wiswedel): created
+ *   Jun 23, 2010 (wiswedel): created
  */
-package org.knime.exttool.node;
+package org.knime.exttool.executor;
 
-import java.awt.GridBagConstraints;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NotConfigurableException;
 
 /**
- * GUI controller for {@link AbstractCommandlineSettings}. Objects of this
- * class are created using the corresponding factory method
- * {@link AbstractCommandlineSettings#createControl()}.
- *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public abstract class AbstractCommandlineControl {
+@SuppressWarnings("serial")
+public class DefaultExttoolExecutorConfigPanel extends
+        AbstractExttoolExecutorConfigPanel {
 
-    /** Called from {@link #registerPanel(JPanel, GridBagConstraints)} to
-     * allow this control object to register a basic panel to the parent.
-     * Subclasses can alternatively overwrite
-     * {@link #registerPanel(JPanel, GridBagConstraints)} and beautify the
-     * layout a bit (two column layout). This abstract method should be
-     * implemented empty in this case.
-     * @param parent The panel where to add own GUI elements.
-     */
-    protected abstract void registerPanel(final JPanel parent);
+    private final JSpinner m_threadCountSpinner;
+    private final JCheckBox m_autoThreaderChecker;
 
-    /** Called from the framework to register custom GUI objects to the parent
-     * panel. The <code>parent</code> has a {@link java.awt.GridBagLayout}
-     * with two columns. In most cases it's easier to simply implement
-     * the {@link #registerPanel(JPanel)} method only.
-     * @param parent Where to register components
-     * @param gbc The constraints to layout the parent.
+    /**
+     *
      */
-    protected void registerPanel(final JPanel parent,
-            final GridBagConstraints gbc) {
-        registerPanel(parent);
+    public DefaultExttoolExecutorConfigPanel() {
+        super(new GridLayout(0, 1));
+        final int def = DefaultExttoolExecutorConfig.getAutoThreadCount();
+        m_autoThreaderChecker = new JCheckBox("Set automatically");
+        m_autoThreaderChecker.addChangeListener(new ChangeListener() {
+            /** {@inheritDoc} */
+            public void stateChanged(final ChangeEvent e) {
+                m_threadCountSpinner.setEnabled(
+                        !m_autoThreaderChecker.isSelected());
+            }
+        });
+        m_autoThreaderChecker.setToolTipText("Set thread count slighly larger "
+                + "than the system's CPU count (" + def + ")");
+        m_threadCountSpinner = new JSpinner(new SpinnerNumberModel(
+                def, 1, Integer.MAX_VALUE, 1));
+        setBorder(BorderFactory.createTitledBorder(
+                "Parallel process count (only when chunking enabled)"));
+        add(getInFlowLayout(m_autoThreaderChecker));
+        add(getInFlowLayout(m_threadCountSpinner));
+        m_autoThreaderChecker.doClick();
     }
 
-    /** Load the settings from the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To load from.
-     * @param spec The input table specs
-     * @throws NotConfigurableException If no valid configuration is possible.
-     */
-    protected abstract void loadSettings(
-            final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException;
+    private static final JPanel getInFlowLayout(final JComponent... comps) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        for (JComponent c : comps) {
+            panel.add(c);
+        }
+        return panel;
+    }
 
-    /** Saves the settings to the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To save to.
-     * @throws InvalidSettingsException If the current configuration is invalid.
-     */
-    protected abstract void saveSettings(
-            final AbstractCommandlineSettings settings)
-        throws InvalidSettingsException;
+    /** {@inheritDoc} */
+    @Override
+    public void loadSettings(final AbstractExttoolExecutorConfig config)
+            throws NotConfigurableException {
+        DefaultExttoolExecutorConfig c = (DefaultExttoolExecutorConfig)config;
+        m_threadCountSpinner.setValue(c.getMaxThreads());
+        m_autoThreaderChecker.setSelected(c.isAutoThreadCount());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void saveSettings(final AbstractExttoolExecutorConfig config)
+            throws InvalidSettingsException {
+        DefaultExttoolExecutorConfig c = (DefaultExttoolExecutorConfig)config;
+        c.setAutoThreadCount(m_autoThreaderChecker.isSelected());
+        c.setMaxThreads((Integer)m_threadCountSpinner.getValue());
+    }
 
 }

@@ -52,6 +52,7 @@ package org.knime.exttool.executor;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -110,8 +111,16 @@ public abstract class AbstractExttoolExecutorFactory {
         return result;
     }
 
+    /** Get all registered factories in a read-only collection.
+     * @return all registered factories.
+     */
+    public static Collection<AbstractExttoolExecutorFactory> getFactories() {
+        ensureInitExtensions();
+        return factoryMap.values();
+    }
+
     /** Collects all registered extensions when called the first time. */
-    private static void ensureInitExtensions() {
+    private static synchronized void ensureInitExtensions() {
         if (factoryMap == null) {
             Map<String, AbstractExttoolExecutorFactory> map =
                 new LinkedHashMap<String, AbstractExttoolExecutorFactory>();
@@ -120,7 +129,6 @@ public abstract class AbstractExttoolExecutorFactory {
             for (IConfigurationElement e : config) {
                 try {
                     Object o = e.createExecutableExtension("factory");
-                    String name = e.getAttribute("name");
                     if (o instanceof AbstractExttoolExecutorFactory) {
                         AbstractExttoolExecutorFactory f =
                             (AbstractExttoolExecutorFactory)o;
@@ -128,7 +136,7 @@ public abstract class AbstractExttoolExecutorFactory {
                         LOGGER.debug("Adding exttool executor \""
                                 + f.getClass().getName() + "\"");
                     } else {
-                        LOGGER.warn("Ignoring contribution \"" + name
+                        LOGGER.warn("Ignoring contribution \"" + o
                                 + "\" to extension point " + EXTENSION_ID
                                 + ", not of expected class");
                     }
@@ -152,6 +160,11 @@ public abstract class AbstractExttoolExecutorFactory {
      * @return The constant name of the executor.
      */
     public abstract String getName();
+
+    /** Create configuration object used to persist the settings for
+     * an executor.
+     * @return new instance of a configuration object */
+    public abstract AbstractExttoolExecutorConfig createConfig();
 
     /** Create a handle for the external tool's output data.
      * @param settings The settings for the current node (can mostly be ignored)
@@ -178,5 +191,15 @@ public abstract class AbstractExttoolExecutorFactory {
             final ExttoolSettings settings,
             final File suggestInFile)
         throws InvalidSettingsException;
+
+    /** Get the default temporary directory. Sub-classes can overwrite this to
+     * return, e.g. a dedicated shared drive. This default implementation
+     * returns the file pointing to the system property
+     * &quot;java.io.tmpdir&quot;
+     * @return The default temporary directory, never null.
+     */
+    public File getDefaultTempDirectory() {
+        return new File(System.getProperty("java.io.tmpdir"));
+    }
 
 }

@@ -62,4 +62,7 @@ interface DataHandle {
      */
     public String getLocation();
 
+    /** Deletes allocated resources. Called after execution. */
+    public void cleanUp();
+
 }

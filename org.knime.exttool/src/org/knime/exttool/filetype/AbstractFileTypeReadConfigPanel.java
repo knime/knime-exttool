@@ -46,70 +46,49 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Mar 10, 2010 (wiswedel): created
+ *   Apr 8, 2010 (wiswedel): created
  */
-package org.knime.exttool.node;
+package org.knime.exttool.filetype;
 
-import java.awt.GridBagConstraints;
+import java.awt.LayoutManager;
 
 import javax.swing.JPanel;
 
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NotConfigurableException;
 
 /**
- * GUI controller for {@link AbstractCommandlineSettings}. Objects of this
- * class are created using the corresponding factory method
- * {@link AbstractCommandlineSettings#createControl()}.
+ * A panel allowing the user to customize the reading of the generated
+ * output files. It is the view to {@link AbstractFileTypeReadConfig}.
  *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public abstract class AbstractCommandlineControl {
+@SuppressWarnings("serial")
+public abstract class AbstractFileTypeReadConfigPanel extends JPanel {
 
-    /** Called from {@link #registerPanel(JPanel, GridBagConstraints)} to
-     * allow this control object to register a basic panel to the parent.
-     * Subclasses can alternatively overwrite
-     * {@link #registerPanel(JPanel, GridBagConstraints)} and beautify the
-     * layout a bit (two column layout). This abstract method should be
-     * implemented empty in this case.
-     * @param parent The panel where to add own GUI elements.
-     */
-    protected abstract void registerPanel(final JPanel parent);
-
-    /** Called from the framework to register custom GUI objects to the parent
-     * panel. The <code>parent</code> has a {@link java.awt.GridBagLayout}
-     * with two columns. In most cases it's easier to simply implement
-     * the {@link #registerPanel(JPanel)} method only.
-     * @param parent Where to register components
-     * @param gbc The constraints to layout the parent.
-     */
-    protected void registerPanel(final JPanel parent,
-            final GridBagConstraints gbc) {
-        registerPanel(parent);
+    /** Delegating to super constructor, see {@link JPanel#JPanel()}. */
+    public AbstractFileTypeReadConfigPanel() {
+        super();
     }
 
-    /** Load the settings from the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To load from.
-     * @param spec The input table specs
-     * @throws NotConfigurableException If no valid configuration is possible.
-     */
-    protected abstract void loadSettings(
-            final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException;
+    /** Delegating to super constructor,
+     * see {@link JPanel#JPanel(LayoutManager)}.
+     * @param layout Passed to super constructor. */
+    public AbstractFileTypeReadConfigPanel(final LayoutManager layout) {
+        super(layout);
+    }
 
-    /** Saves the settings to the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To save to.
-     * @throws InvalidSettingsException If the current configuration is invalid.
+    /** Load settings into dialog. Argument can be safely type casted to
+     * expected config class.
+     * @param config To load from.
      */
-    protected abstract void saveSettings(
-            final AbstractCommandlineSettings settings)
+    public abstract void loadSettings(final AbstractFileTypeReadConfig config);
+
+    /** Saves settings to config object. Argument can be safely type casted to
+     * expected config class.
+     * @param config To save to.
+     * @throws InvalidSettingsException If user entered invalid values.
+     */
+    public abstract void saveSettings(final AbstractFileTypeReadConfig config)
         throws InvalidSettingsException;
 
 }

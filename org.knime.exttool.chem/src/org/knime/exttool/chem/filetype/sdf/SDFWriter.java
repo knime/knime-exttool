@@ -306,8 +306,12 @@ public class SDFWriter {
                     exec.setProgress(count / max, "Wrote " + count
                             + " molecules");
                 }
+                DataCell cell = row.getCell(structureIndex);
+                if (cell.isMissing()) {
+                    continue;
+                }
                 if (isSDF) {
-                    SdfValue sdf = (SdfValue)row.getCell(structureIndex);
+                    SdfValue sdf = (SdfValue)cell;
                     String s = sdf.getSdfValue();
                     out.write(s);
                     if (!s.trim().endsWith("$$$$")) {
@@ -337,8 +341,12 @@ public class SDFWriter {
                             + " molecules");
                 }
 
+                DataCell cell = row.getCell(structureIndex);
+                if (cell.isMissing()) {
+                    continue;
+                }
                 if (isSDF) {
-                    SdfValue sdfValue = (SdfValue)row.getCell(structureIndex);
+                    SdfValue sdfValue = (SdfValue)cell;
                     SDFBlock sdf =
                             SDFAnalyzer.analyzeSDF(sdfValue.getSdfValue());
                     if (titleIndex == -2) {

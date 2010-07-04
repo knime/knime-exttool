@@ -112,6 +112,20 @@ public abstract class AbstractExttoolExecutor extends Observable {
         return getExecutionChunkCallable().getOutputHandles();
     }
 
+    /**
+     * Get the executor configuration. Depending on the executor this can be
+     * simple (e.g. the default=local executor has no configuration) or complex
+     * (a remote SSH executor would need all the connection infos).
+     *
+     * <p>The returned object can be safely-type casted to the class returned
+     * by the associated factory's
+     * {@link AbstractExttoolExecutorFactory#createConfig()} method.
+     * @return The executor config, not null.
+     */
+    protected final AbstractExttoolExecutorConfig getExecutorConfig() {
+        return getExecutionChunkCallable().getExecutorConfig();
+    }
+
     /** Get callable, throw exception when not set (asserts proper execution).
      * @return the callable for this execution.
      */

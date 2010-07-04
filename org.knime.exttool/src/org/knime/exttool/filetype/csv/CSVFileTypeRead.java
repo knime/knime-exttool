@@ -54,21 +54,20 @@ import java.io.File;
 
 import org.knime.base.node.io.filereader.FileAnalyzer;
 import org.knime.base.node.io.filereader.FileReaderNodeSettings;
-import org.knime.base.node.io.filereader.FileReaderSettings;
 import org.knime.base.node.io.filereader.FileTable;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.util.tokenizer.SettingsStatus;
 import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
+import org.knime.exttool.filetype.AbstractFileTypeReadConfig;
 
 /** Read support for CSV.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 class CSVFileTypeRead extends AbstractFileTypeRead {
+
+    private CSVFileTypeReadConfig m_csvReadConfig;
 
     /** Create instance, associating it with its factory.
      * @param factory Factory that creates this instance.
@@ -79,8 +78,15 @@ class CSVFileTypeRead extends AbstractFileTypeRead {
 
     /** {@inheritDoc} */
     @Override
+    public void prepare(final AbstractFileTypeReadConfig config) {
+        m_csvReadConfig = (CSVFileTypeReadConfig)config;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public BufferedDataTable readTable(final OutputDataHandle in,
             final ExecutionContext exec) throws Exception {
+
         File input;
         if (in instanceof OutputDataHandle.FileOutputDataHandle) {
             input = ((OutputDataHandle.FileOutputDataHandle)in).getOutFile();
@@ -91,21 +97,31 @@ class CSVFileTypeRead extends AbstractFileTypeRead {
                 + "; got " + in.getClass().getSimpleName();
             throw new Exception(error);
         }
+
         // prepare the settings for the file analyzer
         FileReaderNodeSettings settings = new FileReaderNodeSettings();
-        String escOutSep = FileReaderSettings.unescapeString(",");
-        settings.addDelimiterPattern(escOutSep, false, false, false);
-        settings.setDataFileLocationAndUpdateTableName(input.toURI().toURL());
-        settings.addRowDelimiter("\n", true);
-        settings.addQuotePattern("\"", "\"");
-        settings.setCommentUserSet(true);
-        settings.setTableName("exttool input");
+        settings.addDelimiterPattern(m_csvReadConfig.getColDelimiter(),
+                false, false, false);
         settings.setDelimiterUserSet(true);
-        settings.setFileHasColumnHeaders(true);
+
+        settings.setDataFileLocationAndUpdateTableName(input.toURI().toURL());
+        settings.setTableName("exttool input");
+
+        settings.addRowDelimiter(m_csvReadConfig.getRowDelimiter(), true);
+
+        String quoteChar = m_csvReadConfig.getQuoteChar();
+        if (quoteChar != null && quoteChar.length() > 0) {
+            settings.addQuotePattern(quoteChar, quoteChar);
+        }
+        settings.setQuoteUserSet(true);
+
+        settings.setFileHasColumnHeaders(m_csvReadConfig.hasColHeader());
         settings.setFileHasColumnHeadersUserSet(true);
+
         settings.setFileHasRowHeaders(false);
         settings.setFileHasRowHeadersUserSet(true);
-        settings.setQuoteUserSet(true);
+
+        settings.setCommentUserSet(true);
         settings.setWhiteSpaceUserSet(true);
 
         settings = FileAnalyzer.analyze(settings, null);
@@ -116,20 +132,6 @@ class CSVFileTypeRead extends AbstractFileTypeRead {
         FileTable fTable = new FileTable(settings.createDataTableSpec(),
                 settings, null);
         return exec.createBufferedDataTable(fTable, exec);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void loadSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        // nothing to load
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void saveSettings(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        // nothing to save
     }
 
 }

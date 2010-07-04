@@ -60,10 +60,9 @@ import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
+import org.knime.exttool.filetype.AbstractFileTypeReadConfig;
 
 /**
  * SDF read support.
@@ -76,6 +75,12 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
      */
     SdfFileTypeRead(final SdfFileTypeFactory factory) {
         super(factory);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void prepare(final AbstractFileTypeReadConfig config) {
+        // ignore, use default settings
     }
 
     /** {@inheritDoc} */
@@ -111,20 +116,6 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
         ColumnRearranger rearranger = new ColumnRearranger(spec);
         rearranger.move(SDFReader.MOLECULE_NAME_COLUMN, 0);
         return exec.createColumnRearrangeTable(successPort, rearranger, exec);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void loadSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        // no settings.
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void saveSettings(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        // no settings.
     }
 
 }

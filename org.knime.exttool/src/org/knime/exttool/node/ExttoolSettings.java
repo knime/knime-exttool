@@ -52,17 +52,23 @@ package org.knime.exttool.node;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.config.Config;
+import org.knime.exttool.executor.AbstractExttoolExecutorConfig;
 import org.knime.exttool.executor.AbstractExttoolExecutorFactory;
 import org.knime.exttool.executor.DefaultExttoolExecutorFactory;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
+import org.knime.exttool.filetype.AbstractFileTypeReadConfig;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
+import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
 import org.knime.exttool.filetype.csv.CSVFileTypeFactory;
+import org.knime.exttool.node.ExttoolCustomizer.Chunking;
+import org.knime.exttool.node.ExttoolCustomizer.DeleteTempFilePolicy;
 
 /**
  * Settings tree containing a node configuration. Typical use case is that prior
@@ -81,14 +87,23 @@ import org.knime.exttool.filetype.csv.CSVFileTypeFactory;
  */
 public class ExttoolSettings {
 
+    private static final NodeLogger LOGGER =
+        NodeLogger.getLogger(ExttoolSettings.class);
+
+    /** An empty settings object, used to init defaults. */
+    public static final NodeSettingsRO EMPTY_SETTINGS =
+        new NodeSettings("empty");
+
     private final ExttoolCustomizer m_customizer;
     private final AbstractCommandlineSettings m_commandlineSettings;
-    private final PathAndTypeConfiguration[] m_inputConfigs;
-    private final PathAndTypeConfiguration[] m_outputConfigs;
-    private String m_executorClassName;
+    private final PathAndTypeConfigurationInput[] m_inputConfigs;
+    private final PathAndTypeConfigurationOutput[] m_outputConfigs;
+    private DeleteTempFilePolicy m_deleteTempFilePolicy;
+    private AbstractExttoolExecutorFactory m_executorFactory;
+    private AbstractExttoolExecutorConfig m_executorConfig;
     private String m_pathToExecutable;
-    private String m_targetColumn;
-    private int m_chunkSize;
+    private Chunking m_chunking = Chunking.EntireTable;
+    private int m_chunkValue;
 
     /** Create a new settings object from the given customizer.
      * @param customizer The corresponding customizer.
@@ -105,49 +120,61 @@ public class ExttoolSettings {
         }
         int inCount = m_customizer.getNrInputs();
         int outCount = m_customizer.getNrOutputs();
-        m_inputConfigs = new PathAndTypeConfiguration[inCount];
+        m_inputConfigs = new PathAndTypeConfigurationInput[inCount];
         for (int i = 0; i < inCount; i++) {
-            m_inputConfigs[i] = new PathAndTypeConfiguration(true);
+            m_inputConfigs[i] = new PathAndTypeConfigurationInput();
         }
-        m_outputConfigs = new PathAndTypeConfiguration[outCount];
+        m_outputConfigs = new PathAndTypeConfigurationOutput[outCount];
         for (int o = 0; o < outCount; o++) {
-            m_outputConfigs[o] = new PathAndTypeConfiguration(false);
+            m_outputConfigs[o] = new PathAndTypeConfigurationOutput();
         }
-        m_executorClassName = DefaultExttoolExecutorFactory.class.getName();
+        try {
+            m_executorFactory = AbstractExttoolExecutorFactory.get(
+                    DefaultExttoolExecutorFactory.class.getName());
+            m_executorConfig = m_executorFactory.createConfig();
+        } catch (InvalidSettingsException e) {
+            LOGGER.error("No local executor available", e);
+        }
+        m_deleteTempFilePolicy = customizer.getDefaultDeleteTempFilePolicy();
     }
 
-    /** Get the name of the {@link AbstractExttoolExecutorFactory
-     * executor factory}.
-     * @return the executor class name (may be invalid).
-     * @see #getExecutorFactory()
-     */
-    public String getExecutorClassName() {
-        return m_executorClassName;
-    }
-
-    /** Look-up the executor factory.
+    /** Get current executor factory.
      * @return The execution factory.
-     * @throws InvalidSettingsException If the factory is invalid.
-     * @see #getExecutorClassName()
      */
-    public AbstractExttoolExecutorFactory getExecutorFactory()
-        throws InvalidSettingsException {
-        return AbstractExttoolExecutorFactory.get(m_executorClassName);
+    public AbstractExttoolExecutorFactory getExecutorFactory() {
+        return m_executorFactory;
     }
 
-    /** Set (class) name of executor.
-     * @param executorClassName the executorClassName to set
-     * @throws InvalidSettingsException If the class name is invalid according
-     * to {@link AbstractExttoolExecutorFactory#get(String)}
+    /** Get configuration to the current executor factory.
+     * @return Current executor config.
      */
-    public void setExecutorClassName(final String executorClassName)
-        throws InvalidSettingsException {
-        if (m_executorClassName == null) {
-            throw new InvalidSettingsException("No executor class name set");
+    public AbstractExttoolExecutorConfig getExecutorConfig() {
+        return m_executorConfig;
+    }
+
+    /** Sets executor factory and corresponding configuration.
+     * @param factory The factory to set.
+     * @param config Its configuration, this can be as simply as
+     *        {@link AbstractExttoolExecutorFactory#createConfig()
+     *        factory.createConfig()}.
+     * @throws InvalidSettingsException If either argument is null or the config
+     *         class is not of the expected type
+     */
+    public void setExecutor(final AbstractExttoolExecutorFactory factory,
+            final AbstractExttoolExecutorConfig config)
+    throws InvalidSettingsException {
+        if (factory == null || config == null) {
+            throw new InvalidSettingsException("No executor factory set");
         }
-        // validate class name
-        AbstractExttoolExecutorFactory.get(executorClassName);
-        m_executorClassName = executorClassName;
+        AbstractExttoolExecutorConfig refConfig = factory.createConfig();
+        if (!refConfig.getClass().equals(config.getClass())) {
+            throw new InvalidSettingsException("Invalid config class type,"
+                    + " got \"" + config.getClass().getName()
+                    + "\", expected \"" + refConfig.getClass().getName()
+                    + "\"");
+        }
+        m_executorFactory = factory;
+        m_executorConfig = config;
     }
 
     /**
@@ -162,41 +189,73 @@ public class ExttoolSettings {
     public void setPathToExecutable(final String pathToExecutable) {
         m_pathToExecutable = pathToExecutable;
     }
-    /**
-     * @return the targetColumn
+
+    /** Get the chunking policy.
+     * @return The chunking policy.
+     * @see #getChunkValue()
      */
-    public String getTargetColumn() {
-        return m_targetColumn;
+    public Chunking getChunking() {
+        return m_chunking;
     }
-    /**
-     * @param targetColumn the targetColumn to set
+
+    /** Get the value for the chunking. For {@link Chunking#ChunksOfSize} this
+     * represents the number of rows per chunk and for {@link Chunking#NrChunks}
+     * this is the number of chunks. For all other, the returned value has
+     * no meaning.
+     * @return The chunking value, interpretation depends on
+     * {@link #getChunking()}
      */
-    public void setTargetColumn(final String targetColumn) {
-        m_targetColumn = targetColumn;
+    public int getChunkValue() {
+        return m_chunkValue;
     }
-    /** Get the chunk size, see {@link #setChunkSize(int)} for conventions.
-     * @return the chunkSize
+
+    /** Sets chunking parameters. If chunking is {@link Chunking#ChunksOfSize}
+     * or {@link Chunking#NrChunks} the <code>value</code> parameter is
+     * interpreted as number of rows or number of chunks. It must not be &lt 1
+     * in this case. In all other cases the value is ignored.
+     * @param chunking The chunking to set (not null)
+     * @param value The value (see above)
+     * @throws InvalidSettingsException If arguments are invalid.
      */
-    public int getChunkSize() {
-        return m_chunkSize;
-    }
-    /** Set the number of rows to be processed in a chunk. This includes:
-     * <dl>
-     *   <dt>chunkSize &lt;= 0</dt>
-     *   <dd>Process entire table in one chunk</dd>
-     *   <dt>chunkSize = 1</dt>
-     *   <dd>Process each row individually</dd>
-     *   <dt>chunkSize &gt; 1</dt>
-     *   <dd>Process chunks of the given size</dd>
-     * </dl>
-     * @param chunkSize the chunkSize to set
-     */
-    public void setChunkSize(final int chunkSize) {
-        if (chunkSize <= 0) {
-            m_chunkSize = -1;
-        } else {
-            m_chunkSize = chunkSize;
+    public void setChunking(final Chunking chunking, final int value)
+        throws InvalidSettingsException {
+        if (chunking == null) {
+            throw new InvalidSettingsException("Chunking must not be null.");
         }
+        int newValue;
+        switch (chunking) {
+        case ChunksOfSize:
+        case NrChunks:
+            if (value < 1) {
+                throw new InvalidSettingsException(
+                        "Invalid chunk value: " + value);
+            }
+            newValue = value;
+            break;
+        default:
+            newValue = -1;
+        }
+        m_chunking = chunking;
+        m_chunkValue = newValue;
+    }
+
+    /**
+     * @param deleteTempFilePolicy the deleteTempFilePolicy to set
+     * @throws InvalidSettingsException If argument is null
+     */
+    public void setDeleteTempFilePolicy(final DeleteTempFilePolicy
+            deleteTempFilePolicy) throws InvalidSettingsException {
+        if (deleteTempFilePolicy == null) {
+            throw new InvalidSettingsException("Argument must not be null");
+        }
+        m_deleteTempFilePolicy = deleteTempFilePolicy;
+    }
+
+    /**
+     * @return the deleteTempFilePolicy
+     */
+    public DeleteTempFilePolicy getDeleteTempFilePolicy() {
+        return m_deleteTempFilePolicy;
     }
 
     /** Get commandline settings object. This object is created using the
@@ -222,7 +281,7 @@ public class ExttoolSettings {
     /** Get the current input configuration for an input port.
      * @param inPort Port of interest.
      * @return The input configuration. */
-    public PathAndTypeConfiguration getInputConfig(final int inPort) {
+    public PathAndTypeConfigurationInput getInputConfig(final int inPort) {
         return m_inputConfigs[inPort];
     }
 
@@ -233,8 +292,8 @@ public class ExttoolSettings {
      *         or invalid (no input).
      */
     public void setInputConfig(final int inPort,
-            final PathAndTypeConfiguration config) {
-        if (config == null || !config.isInput()) {
+            final PathAndTypeConfigurationInput config) {
+        if (config == null) {
             throw new IllegalArgumentException("Illegal argument: " + config);
         }
         m_inputConfigs[inPort] = config;
@@ -243,7 +302,7 @@ public class ExttoolSettings {
     /** Get the current output configuration for an output port.
      * @param outPort Port of interest.
      * @return The output configuration. */
-    public PathAndTypeConfiguration getOutputConfig(final int outPort) {
+    public PathAndTypeConfigurationOutput getOutputConfig(final int outPort) {
         return m_outputConfigs[outPort];
     }
 
@@ -254,8 +313,8 @@ public class ExttoolSettings {
      *         or invalid (no output).
      */
     public void setOutputConfig(final int outPort,
-            final PathAndTypeConfiguration config) {
-        if (config == null || config.isInput()) {
+            final PathAndTypeConfigurationOutput config) {
+        if (config == null) {
             throw new IllegalArgumentException("Illegal argument: " + config);
         }
         m_outputConfigs[outPort] = config;
@@ -264,7 +323,7 @@ public class ExttoolSettings {
     /** Create a {@link AbstractFileTypeWrite} instance for the given input
      * port. It will never return null, the returned object is fully
      * initialized, including the call to
-     * {@link AbstractFileTypeWrite#loadSettings(NodeSettingsRO)}.
+     * {@link AbstractFileTypeWrite#prepare(AbstractFileTypeWriteConfig)}.
      * @param port The port of interest.
      * @return The initialized file type, never null.
      * @throws InvalidSettingsException If the settings are incomplete.
@@ -274,28 +333,31 @@ public class ExttoolSettings {
         if (port < 0 || port >= m_customizer.getNrInputs()) {
             throw new IndexOutOfBoundsException("Invalid port index: " + port);
         }
-        PathAndTypeConfiguration config = getInputConfig(port);
+        PathAndTypeConfigurationInput config = getInputConfig(port);
         if (config == null || config.getType() == null) {
             throw new InvalidSettingsException("No input file type associated"
                     + " with port " + port);
         }
-        String type = config.getType();
-        NodeSettings settings = config.getTypeSettings();
-        if (settings == null) {
+        AbstractFileTypeFactory fac = config.getType();
+        if (fac == null) {
+            throw new InvalidSettingsException(
+                    "No input type for port " + port);
+        }
+        AbstractFileTypeWriteConfig writeConfig = config.getWriteConfig();
+        if (writeConfig == null) {
             throw new InvalidSettingsException("No settings associated with "
-                    + "file type \"" + type + "\" at port " + port);
+                    + "file type \"" + fac.getID() + "\" at port " + port);
         }
 
-        AbstractFileTypeFactory fac = AbstractFileTypeFactory.get(type);
         AbstractFileTypeWrite instance = fac.createNewWriteInstance();
-        instance.loadSettings(settings);
+        instance.prepare(writeConfig);
         return instance;
     }
 
     /** Create a {@link AbstractFileTypeRead} instance for the given output
      * port. It will never return null, the returned object is fully
      * initialized, including the call to
-     * {@link AbstractFileTypeRead#loadSettings(NodeSettingsRO)}.
+     * {@link AbstractFileTypeRead#prepare(AbstractFileTypeReadConfig)}.
      * @param port The port of interest.
      * @return The initialized file type, never null.
      * @throws InvalidSettingsException If the settings are incomplete.
@@ -305,35 +367,59 @@ public class ExttoolSettings {
         if (port < 0 || port >= m_customizer.getNrOutputs()) {
             throw new IndexOutOfBoundsException("Invalid port index: " + port);
         }
-        PathAndTypeConfiguration config = getOutputConfig(port);
+        PathAndTypeConfigurationOutput config = getOutputConfig(port);
         if (config == null || config.getType() == null) {
             throw new InvalidSettingsException("No output file type associated"
                     + " with port " + port);
         }
-        String type = config.getType();
-        NodeSettings settings = config.getTypeSettings();
-        if (settings == null) {
+        AbstractFileTypeFactory fac = config.getType();
+        if (fac == null) {
+            throw new InvalidSettingsException(
+                    "No input type for port " + port);
+        }
+        AbstractFileTypeReadConfig readConfig = config.getReadConfig();
+        if (readConfig == null) {
             throw new InvalidSettingsException("No settings associated with "
-                    + "file type \"" + type + "\" at port " + port);
+                    + "file type \"" + fac.getID() + "\" at port " + port);
         }
 
-        AbstractFileTypeFactory fac = AbstractFileTypeFactory.get(type);
         AbstractFileTypeRead instance = fac.createNewReadInstance();
-        instance.loadSettings(settings);
+        instance.prepare(readConfig);
         return instance;
     }
 
-    /** Saves the current configuration.
+    /** Saves the current configuration, used in dialog. It allows custom
+     * commandline settings to correct in/output configuration.
+     * @param settings To save to. */
+    public void saveSettingsToInDialog(final NodeSettingsWO settings) {
+        m_commandlineSettings.correctSettingsForSave(this);
+        saveSettingsTo(settings);
+    }
+
+    /** Saves the current configuration, used in model.
      * @param settings To save to. */
     public void saveSettingsTo(final NodeSettingsWO settings) {
-        settings.addString("executorClassName", m_executorClassName);
+        settings.addString("executor", m_executorFactory.getClass().getName());
+        NodeSettingsWO execSets = settings.addNodeSettings("executorSettings");
+        m_executorConfig.saveSettings(execSets);
         settings.addString("pathToExecutable", m_pathToExecutable);
-        settings.addString("targetColumn", m_targetColumn);
-        settings.addInt("chunkSize", m_chunkSize);
+
+        settings.addString("chunking", m_chunking.name());
+        switch (m_chunking) {
+        case ChunksOfSize:
+        case NrChunks:
+            settings.addInt("chunkingValue", m_chunkValue);
+            break;
+        default:
+            // ignore, value has no meaning
+        }
+
+        settings.addString("deleteTempFilePolicy",
+                m_deleteTempFilePolicy.name());
         NodeSettingsWO inSettings = settings.addNodeSettings("inports");
         final int inCount = m_customizer.getNrInputs();
         for (int i = 0; i < inCount; i++) {
-            PathAndTypeConfiguration config = getInputConfig(i);
+            AbstractPathAndTypeConfiguration config = getInputConfig(i);
             NodeSettingsWO sub = inSettings.addNodeSettings("inport_" + i);
             if (config != null) {
                 config.save(sub);
@@ -344,7 +430,7 @@ public class ExttoolSettings {
         final int outCount = m_customizer.getNrOutputs();
         for (int o = 0; o < outCount; o++) {
             NodeSettingsWO sub = outSettings.addNodeSettings("outport_" + o);
-            PathAndTypeConfiguration config = getOutputConfig(o);
+            AbstractPathAndTypeConfiguration config = getOutputConfig(o);
             if (config != null) {
                 config.save(sub);
             }
@@ -360,20 +446,47 @@ public class ExttoolSettings {
      * @throws InvalidSettingsException If settings are incomplete. */
     public void loadSettingsFrom(final NodeSettingsRO settings)
         throws InvalidSettingsException {
-        String executorClassName = settings.getString("executorClassName");
-        setExecutorClassName(executorClassName);
+        String executorClassName = settings.getString("executor");
+        AbstractExttoolExecutorFactory execFac =
+            AbstractExttoolExecutorFactory.get(executorClassName);
+        if (execFac == null) {
+            throw new InvalidSettingsException("No executor defined");
+        }
+        NodeSettingsRO execSet = settings.getNodeSettings("executorSettings");
+        AbstractExttoolExecutorConfig execConf = execFac.createConfig();
+        execConf.loadSettingsInModel(execSet);
+        m_executorFactory = execFac;
+        m_executorConfig = execConf;
 
         m_pathToExecutable = settings.getString("pathToExecutable");
-        m_targetColumn = settings.getString("targetColumn");
-        m_chunkSize = settings.getInt("chunkSize");
+
+        String chunkingS = settings.getString("chunking");
+        m_chunking = Chunking.read(chunkingS);
+        switch (m_chunking) {
+        case ChunksOfSize:
+        case NrChunks:
+            m_chunkValue = settings.getInt("chunkingValue");
+            if (m_chunkValue < 1) {
+                throw new InvalidSettingsException(
+                        "Invalid chunking value: " + m_chunkValue);
+            }
+            break;
+        default:
+            m_chunkValue = -1;
+        }
+
+        String deleteTempFilePolicyS =
+            settings.getString("deleteTempFilePolicy");
+        m_deleteTempFilePolicy =
+            DeleteTempFilePolicy.read(deleteTempFilePolicyS);
 
         /* Load inport related settings, including file path, type, ... */
         NodeSettingsRO inSettings = settings.getNodeSettings("inports");
         final int inCount = m_customizer.getNrInputs();
         for (int i = 0; i < inCount; i++) {
             NodeSettingsRO sub = inSettings.getNodeSettings("inport_" + i);
-            PathAndTypeConfiguration config =
-                new PathAndTypeConfiguration(true);
+            PathAndTypeConfigurationInput config =
+                new PathAndTypeConfigurationInput();
             config.load(sub);
             m_inputConfigs[i] = config;
         }
@@ -383,14 +496,14 @@ public class ExttoolSettings {
         final int outCount = m_customizer.getNrOutputs();
         for (int o = 0; o < outCount; o++) {
             NodeSettingsRO sub = outSettings.getNodeSettings("outport_" + o);
-            PathAndTypeConfiguration config =
-                new PathAndTypeConfiguration(false);
+            PathAndTypeConfigurationOutput config =
+                new PathAndTypeConfigurationOutput();
             config.load(sub);
             m_outputConfigs[o] = config;
         }
 
         NodeSettingsRO commandSub = settings.getNodeSettings("commandLine");
-        m_commandlineSettings.loadSettingsInModel(commandSub);
+        m_commandlineSettings.loadSettingsInModel(this, commandSub);
     }
 
     /** Loads the configuration, does not throw exception in case of problems.
@@ -402,18 +515,69 @@ public class ExttoolSettings {
      */
     public void loadSettingsFrom(final NodeSettingsRO settings,
             final DataTableSpec[] inSpecs) throws NotConfigurableException {
-        String executorClassName = settings.getString("executorClassName",
-                DefaultExttoolExecutorFactory.class.getName());
+        AbstractExttoolExecutorFactory fallbackExecutor;
+        // first load default
         try {
-            // also validates ID
-            setExecutorClassName(executorClassName);
-        } catch (InvalidSettingsException ise) {
             // the default executor must work (locally registered)
-            m_executorClassName = DefaultExttoolExecutorFactory.class.getName();
+            fallbackExecutor = AbstractExttoolExecutorFactory.get(
+                    DefaultExttoolExecutorFactory.class.getName());
+        } catch (InvalidSettingsException ise) {
+            LOGGER.error("Could not load default executor", ise);
+            fallbackExecutor = new DefaultExttoolExecutorFactory();
         }
+
+        String executorClassName = settings.getString("executor",
+                fallbackExecutor.getClass().getName());
+
+        AbstractExttoolExecutorFactory execFac;
+        try {
+            execFac = AbstractExttoolExecutorFactory.get(executorClassName);
+        } catch (InvalidSettingsException ise) {
+            execFac = fallbackExecutor;
+        }
+        AbstractExttoolExecutorConfig execConf = execFac.createConfig();
+        NodeSettingsRO execSet;
+        try {
+            execSet = settings.getNodeSettings("executorSettings");
+        } catch (InvalidSettingsException ise) {
+            execSet = new NodeSettings("empty");
+        }
+        execConf.loadSettingsInDialog(execSet);
+        m_executorFactory = execFac;
+        m_executorConfig = execConf;
+
         m_pathToExecutable = settings.getString("pathToExecutable", "");
-        m_targetColumn = settings.getString("targetColumn", "");
-        m_chunkSize = settings.getInt("chunkSize", -1);
+
+        String chunkingS = settings.getString("chunking",
+                Chunking.EntireTable.name());
+        try {
+            m_chunking = Chunking.read(chunkingS);
+        } catch (InvalidSettingsException ise) {
+            m_chunking = Chunking.EntireTable;
+        }
+        switch (m_chunking) {
+        case ChunksOfSize:
+        case NrChunks:
+            m_chunkValue = settings.getInt("chunkingValue", 20);
+            if (m_chunkValue < 1) {
+                m_chunkValue = 20;
+            }
+            break;
+        default:
+            m_chunkValue = -1;
+        }
+
+        DeleteTempFilePolicy defDeleteTempFilePolicy =
+            m_customizer.getDefaultDeleteTempFilePolicy();
+
+        String deleteTempFilePolicyS = settings.getString(
+                "deleteTempFilePolicy", defDeleteTempFilePolicy.name());
+        try {
+            m_deleteTempFilePolicy =
+                DeleteTempFilePolicy.read(deleteTempFilePolicyS);
+        } catch (InvalidSettingsException ise) {
+            m_deleteTempFilePolicy = defDeleteTempFilePolicy;
+        }
 
         /* Load inport related settings, including file path, type, ... */
         NodeSettingsRO inportSettings;
@@ -431,9 +595,9 @@ public class ExttoolSettings {
                 sub = new NodeSettings("empty");
             }
 
-            PathAndTypeConfiguration config =
-                new PathAndTypeConfiguration(true);
-            config.loadNoFail(sub);
+            PathAndTypeConfigurationInput config =
+                new PathAndTypeConfigurationInput();
+            config.loadNoFail(sub, inSpecs[i]);
             m_inputConfigs[i] = config;
         }
 
@@ -453,8 +617,8 @@ public class ExttoolSettings {
                 sub = new NodeSettings("empty");
             }
 
-            PathAndTypeConfiguration config =
-                new PathAndTypeConfiguration(false);
+            PathAndTypeConfigurationOutput config =
+                new PathAndTypeConfigurationOutput();
             config.loadNoFail(sub);
             m_outputConfigs[o] = config;
         }
@@ -465,31 +629,44 @@ public class ExttoolSettings {
         } catch (InvalidSettingsException e) {
             commandSub = new NodeSettings("empty");
         }
-        m_commandlineSettings.loadSettingsInDialog(commandSub, inSpecs);
+        m_commandlineSettings.loadSettingsInDialog(this, commandSub, inSpecs);
     }
+
+
+    /** Called from the node during its configure step. This method validates
+     * the assigned executor and the input & output file types.
+     * @param inSpecs The input specs to validate against.
+     * @throws InvalidSettingsException If any configuration is invalid.
+     */
+    public void validateInput(final DataTableSpec[] inSpecs)
+        throws InvalidSettingsException {
+        for (int i = 0; i < inSpecs.length; i++) {
+            AbstractFileTypeWrite writer = createInputFileType(i);
+            writer.validateInput(inSpecs[i]);
+        }
+        for (int o = 0; o < m_customizer.getNrOutputs(); o++) {
+            createOutputFileType(o);
+        }
+    }
+
 
     /** Config object representing path, type and type settings to an in- or
      * outport. The path may be null to indicate that a temp file path should
-     * be created. Type is an identifier (class name)
-     * (see {@link AbstractFileTypeFactory#getID()}) */
-    public static final class PathAndTypeConfiguration {
+     * be created. */
+    private abstract static class AbstractPathAndTypeConfiguration {
 
-        private final boolean m_isInput;
         private String m_path;
-        private String m_type;
-        private NodeSettings m_typeSettings;
+        private AbstractFileTypeFactory m_type;
 
-        /** Create new config.
-         * @param isInput <code>true</code> if this represent an input port,
-         *        <code>false</code> for output port.
-         */
-        public PathAndTypeConfiguration(final boolean isInput) {
-            m_isInput = isInput;
-        }
-
-        /**@return the isInput (constructor argument). */
-        public boolean isInput() {
-            return m_isInput;
+        /** @return fallback factory if settings are invalid. */
+        static CSVFileTypeFactory getCSVTypeFactory() {
+            try {
+                return (CSVFileTypeFactory)AbstractFileTypeFactory.get(
+                        CSVFileTypeFactory.class.getName());
+            } catch (InvalidSettingsException e1) {
+                LOGGER.error("Can't load CSV type factory", e1);
+            }
+            return new CSVFileTypeFactory();
         }
 
         /** @return the path being set (null for temp file creation) */
@@ -503,44 +680,32 @@ public class ExttoolSettings {
 
         /** @return the type (see {@link AbstractFileTypeFactory#getID()})
          */
-        public String getType() {
+        public AbstractFileTypeFactory getType() {
             return m_type;
         }
-        /** Set type to use, see {@link AbstractFileTypeFactory#getID()}.
+        /** Set type to use.
          * @param type the type to set
          */
-        public void setType(final String type) {
+        public void setType(final AbstractFileTypeFactory type) {
             m_type = type;
-        }
-        /** @return the settings to the selected type. */
-        public NodeSettings getTypeSettings() {
-            return m_typeSettings;
-        }
-        /** @param typeSettings the new type settings. */
-        public void setTypeSettings(final NodeSettings typeSettings) {
-            m_typeSettings = typeSettings;
         }
 
         /** Saves the current configuration.
          * @param settings To save to. */
-        public void save(final NodeSettingsWO settings) {
+        protected void save(final NodeSettingsWO settings) {
             settings.addString("path", m_path);
-            settings.addString("type", m_type);
-            if (m_typeSettings != null) {
-                NodeSettingsWO conf =
-                    settings.addNodeSettings("fileTypeConfig");
-                m_typeSettings.copyTo(conf);
-            }
+            String typeS = m_type == null ? null : m_type.getID();
+            settings.addString("type", typeS);
         }
 
         /** Loads the configuration.
          * @param settings To load from.
          * @throws InvalidSettingsException If settings are invalid. */
-        public void load(final NodeSettingsRO settings)
+        protected void load(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             m_path = settings.getString("path");
-            m_type = settings.getString("type");
-            AbstractFileTypeFactory fac = AbstractFileTypeFactory.get(m_type);
+            String typeS = settings.getString("type");
+            m_type = AbstractFileTypeFactory.get(typeS);
             NodeSettingsRO conf = settings.getNodeSettings("fileTypeConfig");
             NodeSettings confClone = new NodeSettings("fileTypeConfig");
             if (conf instanceof Config) {
@@ -550,23 +715,170 @@ public class ExttoolSettings {
                         + conf.getClass().getSimpleName()
                         + " not supported");
             }
-            if (m_isInput) {
-                fac.createNewWriteInstance().loadSettings(confClone);
-            } else { // output
-                fac.createNewReadInstance().loadSettings(confClone);
-            }
-            m_typeSettings = confClone;
         }
 
-        /** Loads settings but does not through exception (using defaults then).
+        /** Sets default settings, null path and csv file type factory, used
+         * in dialog when settings are invalid.*/
+        protected void initWithDefaults() {
+            m_path = null;
+            m_type = getCSVTypeFactory();
+        }
+
+    }
+
+    /** Configuration for an output port, contains path, type and
+     * type configuration. */
+    public static final class PathAndTypeConfigurationOutput
+        extends AbstractPathAndTypeConfiguration {
+
+        private AbstractFileTypeReadConfig m_readConfig;
+
+        /**
+         * @return the readConfig
+         */
+        public AbstractFileTypeReadConfig getReadConfig() {
+            return m_readConfig;
+        }
+
+        /**
+         * @param readConfig the readConfig to set
+         */
+        public void setReadConfig(final AbstractFileTypeReadConfig readConfig) {
+            m_readConfig = readConfig;
+        }
+
+        /** Saves the current configuration.
+         * @param settings To save to. */
+        @Override
+        public void save(final NodeSettingsWO settings) {
+            super.save(settings);
+            if (m_readConfig != null) {
+                NodeSettingsWO conf =
+                    settings.addNodeSettings("fileTypeConfig");
+                m_readConfig.saveSettings(conf);
+            }
+        }
+
+        /** Loads the configuration.
+         * @param settings To load from.
+         * @throws InvalidSettingsException If settings are invalid. */
+        @Override
+        public void load(final NodeSettingsRO settings)
+        throws InvalidSettingsException {
+            super.load(settings);
+            AbstractFileTypeFactory type = getType();
+            if (type == null || !type.canRead()) {
+                throw new InvalidSettingsException("No output file type");
+            }
+            NodeSettingsRO conf = settings.getNodeSettings("fileTypeConfig");
+            AbstractFileTypeReadConfig config = type.createNewReadConfig();
+            config.loadSettingsInModel(conf);
+            m_readConfig = config;
+        }
+
+        /** Loads settings but does not throw exception (using defaults then).
          * @param settings To load from. */
-        public void loadNoFail(final NodeSettingsRO settings) {
+        protected void loadNoFail(final NodeSettingsRO settings) {
             try {
                 load(settings);
             } catch (InvalidSettingsException e) {
-                m_path = null;
-                m_type = CSVFileTypeFactory.class.getName();
-                m_typeSettings = new NodeSettings("empty_settings");
+                initWithDefaults();
+            }
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        protected void initWithDefaults() {
+            super.initWithDefaults();
+            AbstractFileTypeFactory type = getType();
+            if (type == null || !type.canRead()) {
+                type = getCSVTypeFactory();
+                setType(type);
+            }
+            m_readConfig = type.createNewReadConfig();
+            m_readConfig.loadSettingsInDialog(new NodeSettings(""));
+        }
+    }
+
+    /** Configuration for an input port, contains path, type and
+     * type configuration. */
+    public static final class PathAndTypeConfigurationInput
+    extends AbstractPathAndTypeConfiguration {
+
+        private AbstractFileTypeWriteConfig m_writeConfig;
+
+        /**
+         * @return the m_readConfig
+         */
+        public AbstractFileTypeWriteConfig getWriteConfig() {
+            return m_writeConfig;
+        }
+
+        /**
+         * @param writeConfig the m_readConfig to set
+         */
+        public void setWriteConfig(
+                final AbstractFileTypeWriteConfig writeConfig) {
+            m_writeConfig = writeConfig;
+        }
+
+        /** Saves the current configuration.
+         * @param settings To save to. */
+        @Override
+        public void save(final NodeSettingsWO settings) {
+            super.save(settings);
+            if (m_writeConfig != null) {
+                NodeSettingsWO conf =
+                    settings.addNodeSettings("fileTypeConfig");
+                m_writeConfig.saveSettings(conf);
+            }
+        }
+
+        /** Loads the configuration.
+         * @param settings To load from.
+         * @throws InvalidSettingsException If settings are invalid. */
+        @Override
+        public void load(final NodeSettingsRO settings)
+        throws InvalidSettingsException {
+            super.load(settings);
+            AbstractFileTypeFactory type = getType();
+            if (type == null || !type.canWrite()) {
+                throw new InvalidSettingsException("No input file type");
+            }
+            NodeSettingsRO conf = settings.getNodeSettings("fileTypeConfig");
+            AbstractFileTypeWriteConfig config = type.createNewWriteConfig();
+            config.loadSettingsInModel(conf);
+            m_writeConfig = config;
+        }
+
+        /** Loads settings but does not throw exception (using defaults then).
+         * @param settings To load from.
+         * @param spec Input spec, used to init defaults. */
+        protected void loadNoFail(final NodeSettingsRO settings,
+                final DataTableSpec spec) {
+            try {
+                load(settings);
+            } catch (InvalidSettingsException e) {
+                initWithDefaults(spec);
+            }
+        }
+
+        /** Sets default settings, null path and csv file type factory, used
+         * in dialog when settings are invalid.
+         * @param spec Input spec, used to init defaults. Ignore */
+        protected void initWithDefaults(final DataTableSpec spec) {
+            super.initWithDefaults();
+            AbstractFileTypeFactory type = getType();
+            if (type == null || !type.canWrite()) {
+                type = getCSVTypeFactory();
+                setType(type);
+            }
+            m_writeConfig = type.createNewWriteConfig();
+            try {
+                m_writeConfig.loadSettingsInDialog(
+                        new NodeSettings("empty"), spec);
+            } catch (NotConfigurableException e) {
+                // ignore here.
             }
         }
     }

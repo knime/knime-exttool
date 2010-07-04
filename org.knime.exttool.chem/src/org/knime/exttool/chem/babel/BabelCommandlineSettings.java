@@ -53,7 +53,11 @@ package org.knime.exttool.chem.babel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.knime.chem.types.Mol2Value;
+import org.knime.chem.types.SdfValue;
+import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -61,7 +65,13 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.exttool.chem.filetype.mol2.Mol2FileTypeFactory;
 import org.knime.exttool.chem.filetype.sdf.SdfFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
+import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
+import org.knime.exttool.filetype.DefaultFileTypeReadConfig;
+import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 import org.knime.exttool.node.AbstractCommandlineSettings;
+import org.knime.exttool.node.ExttoolSettings;
+import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfigurationInput;
+import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfigurationOutput;
 
 /** A command line setting representing the configuration of the babel node.
  *
@@ -71,38 +81,37 @@ final class BabelCommandlineSettings
     extends AbstractCommandlineSettings {
 
     private String m_inputColumn;
-    private String m_inputType;
-    private String m_outputType;
+    private AbstractFileTypeFactory m_inputFileType;
+    private AbstractFileTypeFactory m_outputFileType;
 
     /** {@inheritDoc} */
     @Override
     protected String[] getCommandlineArgs() throws InvalidSettingsException {
+        if (m_inputFileType == null || m_outputFileType == null) {
+            throw new InvalidSettingsException("No input/output type selected");
+        }
         // check presence of selected types
-        AbstractFileTypeFactory inFactory =
-            AbstractFileTypeFactory.get(m_inputType);
-        AbstractFileTypeFactory outFactory =
-            AbstractFileTypeFactory.get(m_outputType);
         List<String> cmds = new ArrayList<String>();
         // e.g. "babel -i sdf %inFile% -o mol2 %outFile%"
         cmds.add("babel");
         cmds.add("-i");
-        if (inFactory instanceof SdfFileTypeFactory) {
+        if (m_inputFileType instanceof SdfFileTypeFactory) {
             cmds.add("sdf");
-        } else if (inFactory instanceof Mol2FileTypeFactory) {
+        } else if (m_inputFileType instanceof Mol2FileTypeFactory) {
             cmds.add("mol2");
         } else {
             throw new InvalidSettingsException(
-                    "Unsupported input type: " + m_inputType);
+                    "Unsupported input type: " + m_inputFileType);
         }
         cmds.add("%inFile%");
         cmds.add("-o");
-        if (outFactory instanceof SdfFileTypeFactory) {
+        if (m_outputFileType instanceof SdfFileTypeFactory) {
             cmds.add("sdf");
-        } else if (outFactory instanceof Mol2FileTypeFactory) {
+        } else if (m_outputFileType instanceof Mol2FileTypeFactory) {
             cmds.add("mol2");
         } else {
             throw new InvalidSettingsException(
-                    "Unsupported output type: " + m_outputType);
+                    "Unsupported output type: " + m_outputFileType);
         }
         cmds.add("%outFile%");
         return cmds.toArray(new String[cmds.size()]);
@@ -110,38 +119,93 @@ final class BabelCommandlineSettings
 
     /** {@inheritDoc} */
     @Override
+    protected void correctSettingsForSave(
+            final ExttoolSettings exttoolSettings) {
+        PathAndTypeConfigurationInput in = new PathAndTypeConfigurationInput();
+        in.setPath(null); // auto-generated temp
+        in.setType(m_inputFileType);
+        in.setWriteConfig(createWriteConfig());
+        exttoolSettings.setInputConfig(0, in);
+
+        PathAndTypeConfigurationOutput out =
+            new PathAndTypeConfigurationOutput();
+        out.setPath(null);
+        out.setType(m_outputFileType);
+        out.setReadConfig(createReadConfig());
+        exttoolSettings.setOutputConfig(0, out);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     protected void saveSettings(final NodeSettingsWO settings) {
-        settings.addString("inputColumn", m_inputColumn);
-        settings.addString("inputType", m_inputType);
-        settings.addString("outputType", m_outputType);
+        // no individual config here.
     }
 
     /** {@inheritDoc} */
     @Override
-    protected void loadSettingsInModel(final NodeSettingsRO settings)
+    protected void loadSettingsInModel(final ExttoolSettings
+            exttoolSettings, final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_inputColumn = settings.getString("inputColumn");
-        if (m_inputColumn == null || m_inputColumn.length() == 0) {
-            throw new InvalidSettingsException("Invalid column: "
-                    + m_inputColumn);
+
+        PathAndTypeConfigurationInput in = exttoolSettings.getInputConfig(0);
+        AbstractFileTypeFactory inType = in.getType();
+        setInputFileType(inType); // validates class
+
+        AbstractFileTypeWriteConfig writeConfig = in.getWriteConfig();
+        String column;
+        // supported types all return the default implementation
+        if (writeConfig instanceof DefaultFileTypeWriteConfig) {
+            column = ((DefaultFileTypeWriteConfig)writeConfig).getColumn();
+        } else {
+            throw new InvalidSettingsException("Type " + inType + " does not"
+                    + " return expected config implementation");
         }
-        String inTypeS = settings.getString("inputType");
-        String outTypeS = settings.getString("outputType");
-        AbstractFileTypeFactory.get(inTypeS); // validates
-        AbstractFileTypeFactory.get(outTypeS);
-        m_inputType = inTypeS;
-        m_outputType = outTypeS;
+        if (column == null || column.length() == 0) {
+            throw new InvalidSettingsException("Invalid column: " + column);
+        }
+
+        PathAndTypeConfigurationOutput out = exttoolSettings.getOutputConfig(0);
+        AbstractFileTypeFactory outType = out.getType();
+        setOutputType(outType); // validates class
+        // config is ignored here -- nothing to set up
     }
 
     /** {@inheritDoc} */
     @Override
-    protected void loadSettingsInDialog(final NodeSettingsRO settings,
+    protected void loadSettingsInDialog(final ExttoolSettings
+            exttoolSettings, final NodeSettingsRO settings,
             final DataTableSpec[] inSpecs) throws NotConfigurableException {
-        m_inputColumn = settings.getString("inputColumn", "");
-        m_inputType = settings.getString("inputType",
-                SdfFileTypeFactory.class.getName());
-        m_outputType = settings.getString("outputType",
-                SdfFileTypeFactory.class.getName());
+        PathAndTypeConfigurationInput in = exttoolSettings.getInputConfig(0);
+        // type can be ignored -- automagically determined based on actual
+        // column type
+        AbstractFileTypeWriteConfig writeConfig = in.getWriteConfig();
+
+        String column = null;
+        // supported types all return the default implementation
+        if (writeConfig instanceof DefaultFileTypeWriteConfig) {
+            column = ((DefaultFileTypeWriteConfig)writeConfig).getColumn();
+        }
+
+        DataColumnSpec defColumn = null;
+        for (DataColumnSpec cs : inSpecs[0]) {
+            DataType type = cs.getType();
+            if (type.isCompatible(Mol2Value.class)
+                    || type.isCompatible(SdfValue.class)) {
+                if (defColumn == null) {
+                    defColumn = cs;
+                } else if (defColumn.getName().equals(column)) {
+                    defColumn = cs;
+                } else {
+                    // ignore, we have a reasonable default
+                }
+            }
+        }
+        if (defColumn == null) {
+            throw new NotConfigurableException(
+                    "No valid input column in table");
+        }
+        m_inputColumn = defColumn.getName();
+
     }
 
     /** {@inheritDoc} */
@@ -167,29 +231,79 @@ final class BabelCommandlineSettings
     /**
      * @return the inputType
      */
-    String getInputType() {
-        return m_inputType;
+    AbstractFileTypeFactory getInputFileType() {
+        return m_inputFileType;
     }
 
-    /**
-     * @param inputType the inputType to set
+    /** @param inputFileType the inputType to set
+     * @throws InvalidSettingsException If the argument is invalid
      */
-    void setInputType(final String inputType) {
-        m_inputType = inputType;
+    void setInputFileType(final AbstractFileTypeFactory inputFileType)
+        throws InvalidSettingsException {
+        if (inputFileType instanceof SdfFileTypeFactory) {
+            // accept
+        } else if (inputFileType instanceof Mol2FileTypeFactory) {
+            // accept
+        } else {
+            throw new InvalidSettingsException("Unsupported input type: "
+                    + inputFileType);
+        }
+        m_inputFileType = inputFileType;
     }
 
     /**
      * @return the outputType
      */
-    String getOutputType() {
-        return m_outputType;
+    AbstractFileTypeFactory getOutputFileType() {
+        return m_outputFileType;
     }
 
     /**
-     * @param outputType the outputType to set
+     * @param outputFileType the outputType to set
+     * @throws InvalidSettingsException If argument type is unsupported
      */
-    void setOutputType(final String outputType) {
-        m_outputType = outputType;
+    void setOutputType(final AbstractFileTypeFactory outputFileType)
+        throws InvalidSettingsException {
+        if (outputFileType instanceof SdfFileTypeFactory) {
+            // accept
+        } else if (outputFileType instanceof Mol2FileTypeFactory) {
+            // accept
+        } else {
+            throw new InvalidSettingsException("Unsupported output type: "
+                    + outputFileType);
+        }
+        m_outputFileType = outputFileType;
+    }
+
+    DefaultFileTypeWriteConfig createWriteConfig() {
+        DefaultFileTypeWriteConfig writeConfig;
+        if (m_inputFileType instanceof SdfFileTypeFactory) {
+           writeConfig =
+               ((SdfFileTypeFactory)m_inputFileType).createNewWriteConfig();
+        } else if (m_inputFileType instanceof Mol2FileTypeFactory) {
+            writeConfig =
+                ((Mol2FileTypeFactory)m_inputFileType).createNewWriteConfig();
+        } else {
+            throw new IllegalStateException("Unsupported input type: "
+                    + m_inputFileType);
+        }
+        writeConfig.setColumn(m_inputColumn);
+        return writeConfig;
+    }
+
+    DefaultFileTypeReadConfig createReadConfig() {
+        DefaultFileTypeReadConfig readConfig;
+        if (m_outputFileType instanceof SdfFileTypeFactory) {
+            readConfig =
+                ((SdfFileTypeFactory)m_outputFileType).createNewReadConfig();
+        } else if (m_outputFileType instanceof Mol2FileTypeFactory) {
+            readConfig =
+                ((Mol2FileTypeFactory)m_outputFileType).createNewReadConfig();
+        } else {
+            throw new IllegalStateException("Unsupported output type: "
+                    + m_inputFileType);
+        }
+        return readConfig;
     }
 
 }

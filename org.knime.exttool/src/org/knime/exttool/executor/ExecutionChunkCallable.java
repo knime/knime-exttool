@@ -96,6 +96,9 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
     /** Executor for this job/chunk. */
     private final AbstractExttoolExecutor m_executor;
 
+    /** Config to the executor. */
+    private AbstractExttoolExecutorConfig m_executorConfig;
+
     /** Create new chunk callable based for the associated executor.
      * @param executor The (non-null) executor.
      */
@@ -222,10 +225,31 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
     }
 
     /**
+     * @return The executor config.
+     */
+    public final AbstractExttoolExecutorConfig getExecutorConfig() {
+        return m_executorConfig;
+    }
+
+    /**
      * @return the context
      */
     public ExecutionContext getExecutionContext() {
         return m_context;
+    }
+
+    /** Calls {@link DataHandle#cleanUp()} on all in/output handles. */
+    public void cleanUp() {
+        if (m_inputHandles != null) {
+            for (InputDataHandle in : m_inputHandles) {
+                in.cleanUp();
+            }
+        }
+        if (m_outputHandles != null) {
+            for (OutputDataHandle out : m_outputHandles) {
+                out.cleanUp();
+            }
+        }
     }
 
     /**
@@ -276,6 +300,13 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
                     + fileTypes.length + " vs. " + m_outputHandles.length);
         }
         m_outputFileTypes = fileTypes;
+    }
+
+    /**
+     * @param executorConfig the executorConfig to set
+     */
+    void setExecutorConfig(final AbstractExttoolExecutorConfig executorConfig) {
+        m_executorConfig = executorConfig;
     }
 
     /**

@@ -97,8 +97,20 @@ public class CSVFileTypeFactory extends AbstractFileTypeFactory {
 
     /** {@inheritDoc} */
     @Override
+    public CSVFileTypeReadConfig createNewReadConfig() {
+        return new CSVFileTypeReadConfig();
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public CSVFileTypeWrite createNewWriteInstance() {
         return new CSVFileTypeWrite(this);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public CSVFileTypeWriteConfig createNewWriteConfig() {
+        return new CSVFileTypeWriteConfig();
     }
 
     /** {@inheritDoc} */

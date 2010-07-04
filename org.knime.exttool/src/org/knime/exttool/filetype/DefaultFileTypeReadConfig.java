@@ -46,70 +46,42 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Mar 10, 2010 (wiswedel): created
+ *   Apr 13, 2010 (wiswedel): created
  */
-package org.knime.exttool.node;
+package org.knime.exttool.filetype;
 
-import java.awt.GridBagConstraints;
-
-import javax.swing.JPanel;
-
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 
-/**
- * GUI controller for {@link AbstractCommandlineSettings}. Objects of this
- * class are created using the corresponding factory method
- * {@link AbstractCommandlineSettings#createControl()}.
- *
+/** Default read config with no settings.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public abstract class AbstractCommandlineControl {
+public class DefaultFileTypeReadConfig extends AbstractFileTypeReadConfig {
 
-    /** Called from {@link #registerPanel(JPanel, GridBagConstraints)} to
-     * allow this control object to register a basic panel to the parent.
-     * Subclasses can alternatively overwrite
-     * {@link #registerPanel(JPanel, GridBagConstraints)} and beautify the
-     * layout a bit (two column layout). This abstract method should be
-     * implemented empty in this case.
-     * @param parent The panel where to add own GUI elements.
-     */
-    protected abstract void registerPanel(final JPanel parent);
-
-    /** Called from the framework to register custom GUI objects to the parent
-     * panel. The <code>parent</code> has a {@link java.awt.GridBagLayout}
-     * with two columns. In most cases it's easier to simply implement
-     * the {@link #registerPanel(JPanel)} method only.
-     * @param parent Where to register components
-     * @param gbc The constraints to layout the parent.
-     */
-    protected void registerPanel(final JPanel parent,
-            final GridBagConstraints gbc) {
-        registerPanel(parent);
+    /** {@inheritDoc} */
+    @Override
+    public AbstractFileTypeReadConfigPanel createConfigPanel() {
+        return new DefaultFileTypeReadConfigPanel();
     }
 
-    /** Load the settings from the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To load from.
-     * @param spec The input table specs
-     * @throws NotConfigurableException If no valid configuration is possible.
-     */
-    protected abstract void loadSettings(
-            final AbstractCommandlineSettings settings,
-            final DataTableSpec[] spec) throws NotConfigurableException;
+    /** {@inheritDoc} */
+    @Override
+    public void loadSettingsInDialog(final NodeSettingsRO settings) {
+        // no settings
+    }
 
-    /** Saves the settings to the associated command line settings. The
-     * argument can be safely type-casted to the class that created this
-     * control in its {@link AbstractCommandlineSettings#createControl()}
-     * method.
-     * @param settings To save to.
-     * @throws InvalidSettingsException If the current configuration is invalid.
-     */
-    protected abstract void saveSettings(
-            final AbstractCommandlineSettings settings)
-        throws InvalidSettingsException;
+    /** {@inheritDoc} */
+    @Override
+    public void loadSettingsInModel(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        // no settings
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void saveSettings(final NodeSettingsWO settings) {
+        // no settings
+    }
 
 }

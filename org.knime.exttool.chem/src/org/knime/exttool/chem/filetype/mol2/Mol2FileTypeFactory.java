@@ -53,9 +53,12 @@ package org.knime.exttool.chem.filetype.mol2;
 import org.knime.chem.types.Mol2Value;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataType;
+import org.knime.core.node.util.DataValueColumnFilter;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
+import org.knime.exttool.filetype.DefaultFileTypeReadConfig;
+import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 
 /**
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
@@ -77,20 +80,34 @@ public class Mol2FileTypeFactory extends AbstractFileTypeFactory {
 
     /** {@inheritDoc} */
     @Override
-    public boolean canWrite() {
-        return true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public AbstractFileTypeRead createNewReadInstance() {
         return new Mol2FileTypeRead(this);
     }
 
     /** {@inheritDoc} */
     @Override
+    public DefaultFileTypeReadConfig createNewReadConfig() {
+        return new DefaultFileTypeReadConfig();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean canWrite() {
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public AbstractFileTypeWrite createNewWriteInstance() {
         return new Mol2FileTypeWrite(this);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @SuppressWarnings("unchecked")
+    public DefaultFileTypeWriteConfig createNewWriteConfig() {
+        return new DefaultFileTypeWriteConfig(
+                new DataValueColumnFilter(Mol2Value.class));
     }
 
     /** {@inheritDoc} */
