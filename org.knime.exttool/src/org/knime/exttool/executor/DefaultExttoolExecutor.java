@@ -56,7 +56,6 @@ import java.util.Observer;
 
 import org.knime.base.node.util.exttool.CommandExecution;
 import org.knime.base.node.util.exttool.ViewUpdateNotice;
-import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.exttool.executor.InputDataHandle.FileInputDataHandle;
 import org.knime.exttool.executor.OutputDataHandle.FileOutputDataHandle;
@@ -105,7 +104,7 @@ public class DefaultExttoolExecutor extends AbstractExttoolExecutor {
         if (workingDir != null) {
             commandExecution.setExecutionDir(workingDir);
         }
-        return commandExecution.execute((ExecutionContext)monitor);
+        return commandExecution.execute(monitor);
     }
 
 }
