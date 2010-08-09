@@ -21,8 +21,7 @@
    <extension
          point="org.knime.exttool.executor">
       <executor
-            factory="org.knime.exttool.executor.DefaultExttoolExecutorFactory"
-            name="Default Executor">
+            factory="org.knime.exttool.executor.DefaultExttoolExecutorFactory">
       </executor>
    </extension>
    <extension
