@@ -1,15 +1,13 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: KNIME External Tool Node
-Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
-Bundle-Version: 2.2.0.0026408
-Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Bundle-ClassPath: knime-extTool-patches.jar,
- knime-extTool.jar
-Require-Bundle: org.knime.base,
- org.eclipse.core.runtime,
- org.knime.workbench.repository
-Eclipse-LazyStart: true
-Provide-Package: org.knime.base.node,
- org.knime.ext.exttool
 Export-Package: org.knime.ext.exttool
+Require-Bundle: org.knime.base,org.eclipse.core.runtime,org.knime.work
+ bench.repository
+Bundle-Vendor: KNIME GmbH, Konstanz, Germany
+Eclipse-LazyStart: true
+Bundle-ClassPath: knime-extTool-patches.jar,knime-extTool.jar
+Bundle-Version: 2.2.1.0026408
+Bundle-Name: KNIME External Tool Node
+Bundle-ManifestVersion: 2
+Provide-Package: org.knime.base.node,org.knime.ext.exttool
+Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
+
