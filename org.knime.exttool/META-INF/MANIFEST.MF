@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
+Require-Bundle: org.knime.base
 Export-Package: org.knime.exttool.executor,org.knime.exttool.filetype,
  org.knime.exttool.filetype.csv,org.knime.exttool.node
-Require-Bundle: org.knime.base
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Bundle-ClassPath: knime-exttool-patches.jar,knime-exttool.jar
 Bundle-Version: 2.2.1.0026408
