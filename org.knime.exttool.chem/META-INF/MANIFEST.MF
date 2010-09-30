@@ -1,16 +1,14 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: KNIME Chemistry extensions for external tool nodes
-Bundle-SymbolicName: org.knime.exttool.chem;singleton:=true
-Bundle-Version: 2.2.0.0026408
-Bundle-ClassPath: knime-exttool-chem-patches.jar,
- knime-exttool-chem.jar
+Export-Package: org.knime.exttool.chem.babel,org.knime.exttool.chem.fi
+ letype.mol2,org.knime.exttool.chem.filetype.sdf
+Require-Bundle: org.knime.base,org.knime.chem.types,org.knime.chem.bas
+ e,org.knime.exttool
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Require-Bundle: org.knime.base,
- org.knime.chem.types,
- org.knime.chem.base,
- org.knime.exttool
+Bundle-ClassPath: knime-exttool-chem-patches.jar,knime-exttool-chem.ja
+ r
+Bundle-Version: 2.2.2.0026408
+Bundle-Name: KNIME Chemistry extensions for external tool nodes
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.knime.exttool.chem;singleton:=true
 Eclipse-RegisterBuddy: org.knime.base
-Export-Package: org.knime.exttool.chem.babel,
- org.knime.exttool.chem.filetype.mol2,
- org.knime.exttool.chem.filetype.sdf
+
