@@ -3,11 +3,11 @@ Export-Package: org.knime.ext.exttool
 Require-Bundle: org.knime.base,org.eclipse.core.runtime,org.knime.work
  bench.repository
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Eclipse-LazyStart: true
-Bundle-ClassPath: knime-extTool-patches.jar,knime-extTool.jar
-Bundle-Version: 2.2.2.0026408
-Bundle-Name: KNIME External Tool Node
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: knime-extTool.jar
+Bundle-Version: 2.3.0.qualifier
+Bundle-Name: ExtToolNode for KNIME Base Nodes
 Bundle-ManifestVersion: 2
-Provide-Package: org.knime.base.node,org.knime.ext.exttool
 Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 

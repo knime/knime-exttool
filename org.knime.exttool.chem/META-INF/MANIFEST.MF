@@ -4,11 +4,12 @@ Export-Package: org.knime.exttool.chem.babel,org.knime.exttool.chem.fi
 Require-Bundle: org.knime.base,org.knime.chem.types,org.knime.chem.bas
  e,org.knime.exttool
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Bundle-ClassPath: knime-exttool-chem-patches.jar,knime-exttool-chem.ja
- r
-Bundle-Version: 2.2.2.0026408
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: knime-exttool-chem.jar
+Bundle-Version: 2.3.0.qualifier
 Bundle-Name: KNIME Chemistry extensions for external tool nodes
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.knime.exttool.chem;singleton:=true
 Eclipse-RegisterBuddy: org.knime.base
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 
