@@ -636,9 +636,15 @@ public class ExttoolSettings {
     /** Called from the node during its configure step. This method validates
      * the assigned executor and the input & output file types.
      * @param inSpecs The input specs to validate against.
+     * @return The output spec if possible. Returning null will cause the
+     * node to be configured without returning the output spec (analog to
+     * configure method in NodeModel). This default implementation will delegate
+     * to the commandline settings'
+     * {@link AbstractCommandlineSettings#configure(DataTableSpec[]) configure}
+     * method.
      * @throws InvalidSettingsException If any configuration is invalid.
      */
-    public void validateInput(final DataTableSpec[] inSpecs)
+    public DataTableSpec[] configure(final DataTableSpec[] inSpecs)
         throws InvalidSettingsException {
         for (int i = 0; i < inSpecs.length; i++) {
             AbstractFileTypeWrite writer = createInputFileType(i);
@@ -647,6 +653,7 @@ public class ExttoolSettings {
         for (int o = 0; o < m_customizer.getNrOutputs(); o++) {
             createOutputFileType(o);
         }
+        return m_commandlineSettings.configure(inSpecs);
     }
 
 

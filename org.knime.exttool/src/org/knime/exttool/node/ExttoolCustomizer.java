@@ -249,7 +249,7 @@ public class ExttoolCustomizer {
      * {@link #createPreprocessColumnRearranger(DataTableSpec[])} method.
      *
      * @param input The original input data.
-     * @param exec The execution context in case column are removed or new
+     * @param exec The execution context in case columns are removed or new
      *             data is generated.
      * @return The freshly prepared input data that is passed to the
      *         external tool framework (file writers and so on).
