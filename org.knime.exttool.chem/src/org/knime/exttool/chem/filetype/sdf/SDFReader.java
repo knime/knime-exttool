@@ -114,6 +114,9 @@ public class SDFReader {
     }
 
     /** Name of structure column. */
+    public static final String MOLECULE_COLUMN = "Molecule";
+
+    /** Name of structure name column. */
     public static final String MOLECULE_NAME_COLUMN = "Molecule Name";
 
     private final SDFReaderSettings m_settings;
@@ -182,8 +185,8 @@ public class SDFReader {
         List<DataColumnSpec> colSpecs = new ArrayList<DataColumnSpec>();
 
         if (m_settings.extractSDF()) {
-            colSpecs.add(new DataColumnSpecCreator("Molecule", SdfCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(
+                    MOLECULE_COLUMN, SdfCell.TYPE).createSpec());
         }
 
         if (m_settings.extractMol()) {
@@ -224,7 +227,8 @@ public class SDFReader {
             }
         }
 
-        return new DataTableSpec(colSpecs.toArray(new DataColumnSpec[1]));
+        return new DataTableSpec(colSpecs.toArray(
+                new DataColumnSpec[colSpecs.size()]));
     }
 
     /** Performs a node's execute method. Reads the data and returns

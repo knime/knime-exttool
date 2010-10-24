@@ -83,6 +83,7 @@ import org.knime.core.data.RowIterator;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 
@@ -347,8 +348,20 @@ public class SDFWriter {
                 }
                 if (isSDF) {
                     SdfValue sdfValue = (SdfValue)cell;
-                    SDFBlock sdf =
-                            SDFAnalyzer.analyzeSDF(sdfValue.getSdfValue());
+                    SDFBlock sdf;
+                    try {
+                        sdf = SDFAnalyzer.analyzeSDF(sdfValue.getSdfValue());
+                    } catch (Exception e) {
+                        NodeLogger.getLogger(getClass()).debug(
+                                "Parsing problem in SD record", e);
+                        if (m_settings.skipProblematicItems()) {
+                            m_warningMessage =
+                                "Skipped record(s) due to parsing problems";
+                            continue;
+                        } else {
+                            throw e;
+                        }
+                    }
                     if (titleIndex == -2) {
                         sdf.getMolfileBlock().setTitle(row.getKey().toString());
                     } else if (titleIndex != -1) {

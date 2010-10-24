@@ -54,15 +54,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.knime.chem.types.Mol2Value;
+import org.knime.chem.types.SdfCell;
 import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
+import org.knime.core.data.def.StringCell;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.exttool.chem.filetype.mol2.Mol2FileTypeFactory;
+import org.knime.exttool.chem.filetype.mol2.Mol2Reader;
+import org.knime.exttool.chem.filetype.sdf.SDFReader;
 import org.knime.exttool.chem.filetype.sdf.SdfFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
 import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
@@ -304,6 +309,27 @@ final class BabelCommandlineSettings
                     + m_inputFileType);
         }
         return readConfig;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected DataTableSpec[] configure(final DataTableSpec[] specs)
+            throws InvalidSettingsException {
+        DataColumnSpec idColSpec;
+        DataColumnSpec molColSpec;
+        if (m_outputFileType instanceof SdfFileTypeFactory) {
+            idColSpec = new DataColumnSpecCreator(
+                SDFReader.MOLECULE_NAME_COLUMN, StringCell.TYPE).createSpec();
+            molColSpec = new DataColumnSpecCreator(
+                SDFReader.MOLECULE_COLUMN, SdfCell.TYPE).createSpec();
+        } else if (m_outputFileType instanceof Mol2FileTypeFactory) {
+            idColSpec = Mol2Reader.MOLECULE_COLNAME_SPEC;
+            molColSpec = Mol2Reader.MOLECULE_COL_SPEC;
+        } else {
+            throw new IllegalStateException("Unsupported output type: "
+                    + m_inputFileType);
+        }
+        return new DataTableSpec[] {new DataTableSpec(idColSpec, molColSpec)};
     }
 
 }

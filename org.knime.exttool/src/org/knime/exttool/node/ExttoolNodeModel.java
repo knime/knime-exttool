@@ -91,8 +91,9 @@ public class ExttoolNodeModel extends NodeModel {
             throw new InvalidSettingsException("No settings available");
         }
         DataTableSpec[] newInSpecs = m_customizer.preprocessInput(inSpecs);
-        m_settings.validateInput(newInSpecs);
-        return null;
+        // have a new execution object create the output spec.
+        Execution execution = m_customizer.createExecution(m_settings);
+        return execution.configure(newInSpecs);
     }
 
     /** {@inheritDoc} */

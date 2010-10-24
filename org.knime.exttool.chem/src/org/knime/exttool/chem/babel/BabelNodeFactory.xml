@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="" type="Other">
-	<name>Call OpenBabel (BI)</name>
+<knimeNode icon="openbabel.png" type="Other">
+	<name>Call OpenBabel</name>
 	<shortDescription>
-		Molecular type conversion using OpenBabel toolkit.  
+		Molecular type conversion using OpenBabel toolkit.
+		(Example implementation for an extension of the external tool node.)  
 	</shortDescription>
 	
 	<fullDescription>
 		<intro>
-			Molecular type conversion using OpenBabel toolkit.
-			The documentation to node is currently pending as the node is still
-			under development.  
+           Molecular type conversion using OpenBabel toolkit.
+           (Example implementation for an extension of the external tool node.)
+           This node is not meant for real use but only demonstrates the 
+           extension of the external tool node.   
 		</intro>
 
 	</fullDescription>

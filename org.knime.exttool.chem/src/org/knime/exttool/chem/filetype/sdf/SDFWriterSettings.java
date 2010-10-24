@@ -83,6 +83,9 @@ public class SDFWriterSettings {
 
     private boolean m_includeAllColumns;
 
+    /** see {@link #skipProblematicItems(boolean)} for details. Added in v2.3 */
+    private boolean m_skipProblematicItems;
+
     /**
      * Returns the output file's name.
      *
@@ -199,6 +202,25 @@ public class SDFWriterSettings {
         return m_includeAllColumns;
     }
 
+    /** Whether to skip problematic structures, e.g. those with missing ctab.
+     * Detecting such problems is rather random and depends on the settings,
+     * e.g. if molecule name or properties are injected the structure is simply
+     * dumped to the output.
+     *
+     * @param skipProblematicItems If to skip items that can't be processed. If
+     * false, an error is thrown (given that a problem is detected).
+     */
+    public void skipProblematicItems(final boolean skipProblematicItems) {
+        m_skipProblematicItems = skipProblematicItems;
+    }
+
+    /** See {@link #skipProblematicItems(boolean) set method} for details.
+     * @return the skipProblematicItems
+     */
+    public boolean skipProblematicItems() {
+        return m_skipProblematicItems;
+    }
+
     /**
      * Saves all settings into the given node settings object.
      *
@@ -213,6 +235,7 @@ public class SDFWriterSettings {
         settings.addStringArray("properties", m_properties
                 .toArray(new String[m_properties.size()]));
         settings.addBoolean("includeAllColumns", m_includeAllColumns);
+        settings.addBoolean("skipProblematicItems", m_skipProblematicItems);
     }
 
     /**
@@ -235,6 +258,9 @@ public class SDFWriterSettings {
         }
         // added in v2.1
         m_includeAllColumns = settings.getBoolean("includeAllColumns", false);
+        // added in v2.3
+        m_skipProblematicItems =
+            settings.getBoolean("skipProblematicItems", false);
     }
 
     /**
@@ -255,5 +281,7 @@ public class SDFWriterSettings {
             m_properties.add(s);
         }
         m_includeAllColumns = settings.getBoolean("includeAllColumns", false);
+        m_skipProblematicItems =
+            settings.getBoolean("skipProblematicItems", false);
     }
 }

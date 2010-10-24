@@ -46,73 +46,85 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Jan 20, 2010 (wiswedel): created
+ *   Aug 10, 2010 (wiswedel): created
  */
 package org.knime.exttool.chem.filetype.sdf;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.knime.chem.types.SdfValue;
-import org.knime.core.data.DataColumnSpec;
-import org.knime.exttool.filetype.AbstractFileTypeFactory;
-import org.knime.exttool.filetype.DefaultFileTypeReadConfig;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.util.DataValueColumnFilter;
 import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 
-/**
+/** SDF file write config. Contains settings for target column and included
+ * properties. Only the target column can currently be set in the dialog.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public class SdfFileTypeFactory extends AbstractFileTypeFactory {
+public class SdfFileTypeWriteConfig extends DefaultFileTypeWriteConfig {
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean canWrite() {
-        return true;
+    private List<String> m_propertiesColumns;
+
+    /**
+     */
+    @SuppressWarnings("unchecked")
+    public SdfFileTypeWriteConfig() {
+        super(new DataValueColumnFilter(SdfValue.class));
+        m_propertiesColumns = Collections.emptyList();
+    }
+
+    /** @return the propertiesColumns */
+    public List<String> getPropertiesColumns() {
+        return m_propertiesColumns;
+    }
+
+    /**
+     * @param propertiesColumns the propertiesColumns to set
+     */
+    public void setPropertiesColumns(final List<String> propertiesColumns) {
+        if (propertiesColumns == null) {
+            throw new NullPointerException("Argument must not be null.");
+        }
+        m_propertiesColumns = propertiesColumns;
     }
 
     /** {@inheritDoc} */
     @Override
-    public SdfFileTypeWrite createNewWriteInstance() {
-        return new SdfFileTypeWrite(this);
+    public void loadSettingsInDialog(
+            final NodeSettingsRO settings, final DataTableSpec spec)
+            throws NotConfigurableException {
+        super.loadSettingsInDialog(settings, spec);
+        String[] props = settings.getStringArray("properties", new String[0]);
+        if (props != null) {
+            m_propertiesColumns = Arrays.asList(props);
+        }
     }
 
     /** {@inheritDoc} */
     @Override
-    public DefaultFileTypeWriteConfig createNewWriteConfig() {
-        return new SdfFileTypeWriteConfig();
+    public void loadSettingsInModel(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        super.loadSettingsInModel(settings);
+        // field added in later version, do not throw exception
+        String[] props = settings.getStringArray("properties", new String[0]);
+        if (props != null) {
+            m_propertiesColumns = Arrays.asList(props);
+        }
     }
 
     /** {@inheritDoc} */
     @Override
-    public boolean canRead() {
-        return true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SdfFileTypeRead createNewReadInstance() {
-        return new SdfFileTypeRead(this);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public DefaultFileTypeReadConfig createNewReadConfig() {
-        return new DefaultFileTypeReadConfig();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getSuffix() {
-        return "sdf";
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getUserFriendlyName() {
-        return "SDF";
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean accepts(final DataColumnSpec spec) {
-        return spec.getType().isCompatible(SdfValue.class);
+    public void saveSettings(final NodeSettingsWO settings) {
+        super.saveSettings(settings);
+        settings.addStringArray("properties", m_propertiesColumns.toArray(
+                new String[m_propertiesColumns.size()]));
     }
 
 }
