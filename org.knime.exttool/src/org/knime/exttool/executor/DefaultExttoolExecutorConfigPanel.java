@@ -84,6 +84,7 @@ public class DefaultExttoolExecutorConfigPanel extends
         m_autoThreaderChecker = new JCheckBox("Set automatically");
         m_autoThreaderChecker.addChangeListener(new ChangeListener() {
             /** {@inheritDoc} */
+            @Override
             public void stateChanged(final ChangeEvent e) {
                 m_threadCountSpinner.setEnabled(
                         !m_autoThreaderChecker.isSelected());

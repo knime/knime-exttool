@@ -96,6 +96,7 @@ public interface InputDataHandle extends DataHandle {
         }
 
         /** {@inheritDoc} */
+        @Override
         public void cleanUp() {
             if (m_inFile.exists() && !m_inFile.delete()) {
                 NodeLogger.getLogger(getClass()).warn("Could not delete file \""
@@ -104,11 +105,13 @@ public interface InputDataHandle extends DataHandle {
         }
 
         /** {@inheritDoc} */
+        @Override
         public OutputStream openInputFileOutStream() throws IOException {
             return new BufferedOutputStream(new FileOutputStream(m_inFile));
         }
 
         /** {@inheritDoc} */
+        @Override
         public String getLocation() {
             return m_inFile.getAbsolutePath();
         }

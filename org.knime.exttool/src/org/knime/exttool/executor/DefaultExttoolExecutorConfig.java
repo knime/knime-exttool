@@ -180,6 +180,7 @@ public class DefaultExttoolExecutorConfig extends
                 TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
                 new ThreadFactory() {
             /** {@inheritDoc} */
+            @Override
             public Thread newThread(final Runnable r) {
                 return new Thread(r, "KNIME-Exttool-"
                         + THREAD_COUNTER.incrementAndGet());

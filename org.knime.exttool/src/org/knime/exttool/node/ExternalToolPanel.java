@@ -117,6 +117,7 @@ public class ExternalToolPanel extends JPanel {
                 new SpinnerNumberModel(500, 2, Integer.MAX_VALUE, 50));
         m_chunkButtonChunkSize.addChangeListener(new ChangeListener() {
             /** {@inheritDoc} */
+            @Override
             public void stateChanged(final ChangeEvent e) {
                 m_chunkSizeSpinner.setEnabled(
                         m_chunkButtonChunkSize.isSelected());
@@ -127,6 +128,7 @@ public class ExternalToolPanel extends JPanel {
                 new SpinnerNumberModel(20, 1, Integer.MAX_VALUE, 2));
         m_chunkButtonNrChunks.addChangeListener(new ChangeListener() {
             /** {@inheritDoc} */
+            @Override
             public void stateChanged(final ChangeEvent e) {
                 m_nrChunksSpinner.setEnabled(
                         m_chunkButtonNrChunks.isSelected());
@@ -213,24 +215,6 @@ public class ExternalToolPanel extends JPanel {
         result.add(m_nrChunksSpinner, gbc);
 
         return result;
-    }
-
-    /** Allows this class to register a listener on the argument. This listener
-     * is notified when the input file type changes (which is then shown
-     * in a label).
-     * @param inputPanel the input file panel.
-     */
-    void addListenerToInputPanel(final InputFilePanel inputPanel) {
-        ChangeListener changeListener = new ChangeListener() {
-            /** {@inheritDoc} */
-            public void stateChanged(final ChangeEvent e) {
-                for (int i = 0; i < m_exttoolCustomizer.getNrInputs(); i++) {
-                    m_inputTypeSummaryLabels[i].setText(
-                            inputPanel.getInputFileSummary(i));
-                }
-            }
-        };
-        inputPanel.addChangeListener(changeListener);
     }
 
     /** Restores settings from a settings object, inits defaults if that fails.

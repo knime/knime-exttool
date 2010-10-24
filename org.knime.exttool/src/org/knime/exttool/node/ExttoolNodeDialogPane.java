@@ -89,7 +89,6 @@ public class ExttoolNodeDialogPane extends NodeDialogPane {
         m_externalToolPanel.initLayout();
         m_inputFilePanel = createInputFilePanel();
         m_inputFilePanel.initLayout();
-        m_externalToolPanel.addListenerToInputPanel(m_inputFilePanel);
         m_outputFilePanel = createOutputFilePanel();
         m_outputFilePanel.initLayout();
         m_executorPanel = createExecutorPanel();

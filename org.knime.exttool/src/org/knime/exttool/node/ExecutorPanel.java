@@ -110,6 +110,7 @@ public class ExecutorPanel extends JPanel {
         m_executorCombo.setRenderer(ExttoolFactoryRenderer.INSTANCE);
         m_executorCombo.addItemListener(new ItemListener() {
             /** {@inheritDoc} */
+            @Override
             public void itemStateChanged(final ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     onExecutorChanged();
