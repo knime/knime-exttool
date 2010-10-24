@@ -671,8 +671,8 @@ public class Execution {
                     new StringCell(inRow.getKey().getString());
                 DataRow missingRow =
                     new DefaultRow(inRow.getKey(), missingCells);
-                boolean add = addToContainerIfMatches(inRow, missingRow, idColInOutTable,
-                        cont, runningIndex++);
+                boolean add = addToContainerIfMatches(inRow, missingRow,
+                        idColInOutTable, cont, runningIndex++);
                 assert add : "Fill row was not added";
             }
         }
@@ -682,7 +682,8 @@ public class Execution {
             exec.checkCanceled();
             DataCell[] inMissingCells = new DataCell[inSpec.getNumColumns()];
             Arrays.fill(inMissingCells, DataType.getMissingCell());
-            RowKey key = new RowKey(lastFromRight.getCell(idColInOutTable).toString());
+            String keyS = lastFromRight.getCell(idColInOutTable).toString();
+            RowKey key = new RowKey(keyS);
             DataRow inMissing = new DefaultRow(key, inMissingCells);
             boolean add = addToContainerIfMatches(inMissing, lastFromRight,
                     idColInOutTable, cont, uniquifier++);

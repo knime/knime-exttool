@@ -63,6 +63,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
+import org.knime.exttool.node.ExttoolCustomizer;
 import org.knime.exttool.node.ExttoolSettings;
 
 /** Factory for a custom {@link AbstractExttoolExecutor executor}.
@@ -92,6 +93,27 @@ public abstract class AbstractExttoolExecutorFactory {
     public static final Set<String> keySet() {
         ensureInitExtensions();
         return factoryMap.keySet();
+    }
+
+    /** Get a default executor factory for a given customizer
+     * (i.e. node implementation). This will return the default executor factory
+     * unless any registered factory should be default according to its
+     * {@link #shouldBeDefault(ExttoolCustomizer)} method.
+     * @param customizer The customizer of the given node.
+     * @return The default to be used
+     * @throws InvalidSettingsException If the default executor isn't available.
+     */
+    public static final AbstractExttoolExecutorFactory getDefault(
+            final ExttoolCustomizer customizer)
+        throws InvalidSettingsException {
+        AbstractExttoolExecutorFactory def =
+            get(DefaultExttoolExecutorFactory.class.getName());
+        for (AbstractExttoolExecutorFactory fac : factoryMap.values()) {
+            if (fac.shouldBeDefault(customizer)) {
+                def = fac;
+            }
+        }
+        return def;
     }
 
     /** Look-up of registered executor.
@@ -200,6 +222,24 @@ public abstract class AbstractExttoolExecutorFactory {
      */
     public File getDefaultTempDirectory() {
         return new File(System.getProperty("java.io.tmpdir"));
+    }
+
+    /** Hook for sub-classes to indicate whether this concrete implementation
+     * should be the default executor for a given customizer. Sub-classes can
+     * hard-code this to <code>true</code>, make the decision depending upon
+     * the concrete class implementation of the argument customizer (e.g.
+     * because it implements a certain marker interface) or simply look at
+     * particular settings in the given customizer.
+     *
+     * <p>If there are multiple executors, which return <code>true</code> for
+     * a given customizer, the winning executor is undetermined.
+     *
+     * <p>This default implementation returns <code>false</code>.
+     * @param customizer The customizer of a given node.
+     * @return <code>false</code> (unless overwritten in sub-classes).
+     */
+    public boolean shouldBeDefault(final ExttoolCustomizer customizer) {
+        return false;
     }
 
 }

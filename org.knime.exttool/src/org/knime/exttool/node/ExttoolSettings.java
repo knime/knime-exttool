@@ -129,8 +129,8 @@ public class ExttoolSettings {
             m_outputConfigs[o] = new PathAndTypeConfigurationOutput();
         }
         try {
-            m_executorFactory = AbstractExttoolExecutorFactory.get(
-                    DefaultExttoolExecutorFactory.class.getName());
+            m_executorFactory =
+                AbstractExttoolExecutorFactory.getDefault(m_customizer);
             m_executorConfig = m_executorFactory.createConfig();
         } catch (InvalidSettingsException e) {
             LOGGER.error("No local executor available", e);
@@ -516,13 +516,10 @@ public class ExttoolSettings {
     public void loadSettingsFrom(final NodeSettingsRO settings,
             final DataTableSpec[] inSpecs) throws NotConfigurableException {
         AbstractExttoolExecutorFactory fallbackExecutor;
-        // first load default
-        try {
-            // the default executor must work (locally registered)
-            fallbackExecutor = AbstractExttoolExecutorFactory.get(
-                    DefaultExttoolExecutorFactory.class.getName());
-        } catch (InvalidSettingsException ise) {
-            LOGGER.error("Could not load default executor", ise);
+        if (m_executorFactory != null) {
+            fallbackExecutor = m_executorFactory;
+        } else {
+            LOGGER.error("Could not load default executor");
             fallbackExecutor = new DefaultExttoolExecutorFactory();
         }
 
