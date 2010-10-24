@@ -90,9 +90,10 @@ import org.knime.exttool.filetype.AbstractFileTypeRead;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
 import org.knime.exttool.node.AbstractCommandlineSettings;
 import org.knime.exttool.node.ExttoolCustomizer;
-import org.knime.exttool.node.ExttoolSettings;
 import org.knime.exttool.node.ExttoolCustomizer.Chunking;
 import org.knime.exttool.node.ExttoolCustomizer.DeleteTempFilePolicy;
+import org.knime.exttool.node.ExttoolNodeEnvironment;
+import org.knime.exttool.node.ExttoolSettings;
 import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfigurationInput;
 import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfigurationOutput;
 
@@ -117,6 +118,7 @@ public class Execution {
 
     private final ExttoolCustomizer m_customizer;
     private final ExttoolSettings m_settings;
+    private final ExttoolNodeEnvironment m_env;
 
     private final AbstractExttoolExecutorFactory m_executorFactory;
 
@@ -152,14 +154,17 @@ public class Execution {
      * settings.
      * @param customizer The customizer for this node ("static" information)
      * @param settings The node settings.
+     * @param env The current execution environment
      */
     public Execution(final ExttoolCustomizer customizer,
-            final ExttoolSettings settings) {
-        if (customizer == null || settings == null) {
+            final ExttoolSettings settings,
+            final ExttoolNodeEnvironment env) {
+        if (customizer == null || settings == null || env == null) {
             throw new NullPointerException("Arguments must not be null.");
         }
         m_customizer = customizer;
         m_settings = settings;
+        m_env = env;
         m_executorFactory = settings.getExecutorFactory();
     }
 
@@ -740,7 +745,7 @@ public class Execution {
             final InputDataHandle[] inputHandles,
             final OutputDataHandle[] outputHandles)
     throws InvalidSettingsException {
-        String[] args = m_settings.getCommandlineArgs();
+        String[] args = m_settings.getCommandlineArgs(m_env);
         String[] copy = Arrays.copyOf(args, args.length);
         // replace in each argument %inFile%, %inFile_x%",... by the full paths
         for (int i = 0; i < copy.length; i++) {
@@ -950,7 +955,7 @@ public class Execution {
         final ExttoolSettings settings = getSettings();
         String pathToExecutable = settings.getPathToExecutable();
         if (pathToExecutable == null || pathToExecutable.length() == 0) {
-            String[] cmdArgs = settings.getCommandlineArgs();
+            String[] cmdArgs = settings.getCommandlineArgs(m_env);
             if (cmdArgs.length > 0) {
                 pathToExecutable = cmdArgs[0];
             }

@@ -74,6 +74,7 @@ import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
 import org.knime.exttool.filetype.DefaultFileTypeReadConfig;
 import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 import org.knime.exttool.node.AbstractCommandlineSettings;
+import org.knime.exttool.node.ExttoolNodeEnvironment;
 import org.knime.exttool.node.ExttoolSettings;
 import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfigurationInput;
 import org.knime.exttool.node.ExttoolSettings.PathAndTypeConfigurationOutput;
@@ -91,7 +92,8 @@ final class BabelCommandlineSettings
 
     /** {@inheritDoc} */
     @Override
-    protected String[] getCommandlineArgs() throws InvalidSettingsException {
+    protected String[] getCommandlineArgs(
+            final ExttoolNodeEnvironment env) throws InvalidSettingsException {
         if (m_inputFileType == null || m_outputFileType == null) {
             throw new InvalidSettingsException("No input/output type selected");
         }

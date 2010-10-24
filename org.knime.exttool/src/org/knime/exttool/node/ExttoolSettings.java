@@ -270,12 +270,15 @@ public class ExttoolSettings {
     /** Get the current command line settings from the
      * {@link AbstractCommandlineSettings}. The command line args potentially
      * contain place holders.
+     * @param env The current execution environment (providing flow vars, e.g.)
      * @return The command line arguments
      * @throws InvalidSettingsException If the get-method on the
-     * {@link AbstractCommandlineSettings#getCommandlineArgs() get-method} fails
+     * {@link AbstractCommandlineSettings#
+     *  getCommandlineArgs(ExttoolNodeEnvironment) get-method} fails
      */
-    public String[] getCommandlineArgs() throws InvalidSettingsException {
-        return m_commandlineSettings.getCommandlineArgs();
+    public String[] getCommandlineArgs(final ExttoolNodeEnvironment env)
+        throws InvalidSettingsException {
+        return m_commandlineSettings.getCommandlineArgs(env);
     }
 
     /** Get the current input configuration for an input port.

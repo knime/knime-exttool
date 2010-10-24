@@ -122,13 +122,14 @@ public abstract class AbstractCommandlineSettings {
             final DataTableSpec[] inSpecs) throws NotConfigurableException;
 
     /** Get the command line arguments to the external process.
+     * @param env The current execution environment (providing flow vars, e.g.)
      * @return The array of the command line args, the different values may
      *         contain place holders %inFile% or %outFile% to represent the
      *         respective in/output.
      * @throws InvalidSettingsException If the settings are invalid.
      */
-    protected abstract String[] getCommandlineArgs()
-        throws InvalidSettingsException;
+    protected abstract String[] getCommandlineArgs(
+            final ExttoolNodeEnvironment env) throws InvalidSettingsException;
 
     /** Create a new controller that will put GUI elements into a panel.
      * The {@link AbstractCommandlineControl#saveSettings(

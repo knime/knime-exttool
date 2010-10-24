@@ -216,10 +216,12 @@ public class ExttoolCustomizer {
     /** Create a new {@link Execution} that performs the run. This method
      * is called during the node's execution.
      * @param settings The current settings to the node.
+     * @param env The current execution environment
      * @return A new execution object.
      */
-    protected Execution createExecution(final ExttoolSettings settings) {
-        return new Execution(this, settings);
+    protected Execution createExecution(final ExttoolSettings settings,
+            final ExttoolNodeEnvironment env) {
+        return new Execution(this, settings, env);
     }
 
     /** Modifies the input tables that are passed to the external tool
