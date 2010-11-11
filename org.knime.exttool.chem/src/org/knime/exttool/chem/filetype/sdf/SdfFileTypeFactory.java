@@ -52,7 +52,6 @@ package org.knime.exttool.chem.filetype.sdf;
 
 import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
-import org.knime.core.node.util.DataValueColumnFilter;
 import org.knime.exttool.filetype.AbstractFileTypeFactory;
 import org.knime.exttool.filetype.DefaultFileTypeReadConfig;
 import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
@@ -76,10 +75,8 @@ public class SdfFileTypeFactory extends AbstractFileTypeFactory {
 
     /** {@inheritDoc} */
     @Override
-    @SuppressWarnings("unchecked")
     public DefaultFileTypeWriteConfig createNewWriteConfig() {
-        return new DefaultFileTypeWriteConfig(
-                new DataValueColumnFilter(SdfValue.class));
+        return new SdfFileTypeWriteConfig();
     }
 
     /** {@inheritDoc} */

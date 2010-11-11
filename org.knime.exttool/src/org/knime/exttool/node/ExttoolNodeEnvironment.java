@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright (C) 2003 - 2010
+ *  Copyright (C) 2003 - 2009
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -45,75 +45,54 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
  *
- * History
- *   Mar 2, 2010 (wiswedel): created
  */
-package org.knime.exttool.executor;
+package org.knime.exttool.node;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.util.NoSuchElementException;
 
-import org.knime.core.node.NodeLogger;
-
-/** Input handle to the external tool. It represents the data that is written
- * by KNIME and which is then provided as input to the external process. The
- * {@link DataHandle#getLocation() location} returned by objects of this
- * interface replaces the stub %inFile% in the commandline.
+/** Represents properties that are available at node execution time. This
+ * includes so far only getters for the current flow variables. Future versions
+ * may provide more (e.g. credentials).
  *
- * <p><b>Warning:</b> API needs review, subclassing outside this package
- * is currently not encouraged.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public interface InputDataHandle extends DataHandle {
+public class ExttoolNodeEnvironment {
 
-    /** Open a new stream, which is filled with the input data.
-     * @return A new output stream, which is used by the framework to write
-     *         the data.
-     * @throws IOException In case of I/O problems.
+    private final ExttoolNodeModel m_model;
+
+    /** Creates new environment, which reads the property from the argument
+     * model.
+     * @param model The node model of the execution.
      */
-    public OutputStream openInputFileOutStream() throws IOException;
-
-    /** Default implementation using local files. */
-    public static class FileInputDataHandle implements InputDataHandle {
-
-        private final File m_inFile;
-
-        /** New input handle for a given file.
-         * @param inFile The input file, must not be null. */
-        public FileInputDataHandle(final File inFile) {
-            if (inFile == null) {
-                throw new NullPointerException("Argument must not be null");
-            }
-            m_inFile = inFile;
-        }
-
-        /** @return the inFile passed in constructor. */
-        public File getInFile() {
-            return m_inFile;
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public void cleanUp() {
-            if (m_inFile.exists() && !m_inFile.delete()) {
-                NodeLogger.getLogger(getClass()).warn("Could not delete file \""
-                        + m_inFile.getAbsolutePath() + "\"");
-            }
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public OutputStream openInputFileOutStream() throws IOException {
-            return new BufferedOutputStream(new FileOutputStream(m_inFile));
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public String getLocation() {
-            return m_inFile.getAbsolutePath();
-        }
+    ExttoolNodeEnvironment(final ExttoolNodeModel model) {
+        m_model = model;
     }
+
+    /** Read string flow variable in current execution.
+     * @param name Name of variable.
+     * @return Value of variable
+     * @throws NoSuchElementException If variable is not available
+     */
+    public String readFlowVariableString(final String name) {
+        return m_model.readFlowVariableString(name);
+    }
+
+    /** Read double flow variable in current execution.
+     * @param name Name of variable.
+     * @return Value of variable
+     * @throws NoSuchElementException If variable is not available
+     */
+    public double readFlowVariableDouble(final String name) {
+        return m_model.readFlowVariableDouble(name);
+    }
+
+    /** Read int flow variable in current execution.
+     * @param name Name of variable.
+     * @return Value of variable
+     * @throws NoSuchElementException If variable is not available
+     */
+    public int readFlowVariableInt(final String name) {
+        return m_model.readFlowVariableInt(name);
+    }
+
 }

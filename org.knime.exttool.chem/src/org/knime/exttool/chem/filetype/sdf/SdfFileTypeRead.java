@@ -89,6 +89,7 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
             final ExecutionContext exec) throws Exception {
         SDFReaderSettings settings = new SDFReaderSettings();
         settings.extractName(true);
+        settings.useRowID(false);
         SDFReader reader = new SDFReader(settings) {
             private boolean m_isCalled = false;;
             /** {@inheritDoc} */

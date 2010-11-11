@@ -64,7 +64,6 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
 import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
-import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 
 /**
  * SDF write support.
@@ -82,14 +81,17 @@ public class SdfFileTypeWrite extends AbstractFileTypeWrite {
         m_settings = new SDFWriterSettings();
         m_settings.overwriteOK(true);
         m_settings.titleColumn(SDFWriterSettings.ROW_KEY_IDENTIFIER);
+        m_settings.skipProblematicItems(true);
     }
 
     /** {@inheritDoc} */
     @Override
     public void prepare(final AbstractFileTypeWriteConfig config) {
-        String targetColumn =
-            ((DefaultFileTypeWriteConfig)config).getColumn();
+        SdfFileTypeWriteConfig conf = (SdfFileTypeWriteConfig)config;
+        String targetColumn = conf.getColumn();
         m_settings.structureColumn(targetColumn);
+        m_settings.clearProperties();
+        m_settings.addProperyColumns(conf.getPropertiesColumns());
     }
 
     /** {@inheritDoc} */

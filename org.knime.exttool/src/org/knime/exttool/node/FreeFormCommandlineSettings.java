@@ -52,6 +52,7 @@ package org.knime.exttool.node;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
@@ -125,7 +126,8 @@ public class FreeFormCommandlineSettings extends AbstractCommandlineSettings {
 
     /** {@inheritDoc} */
     @Override
-    protected String[] getCommandlineArgs() throws InvalidSettingsException {
+    protected String[] getCommandlineArgs(
+            final ExttoolNodeEnvironment env) throws InvalidSettingsException {
         if (m_commandline == null) {
             return null;
         }
@@ -143,6 +145,33 @@ public class FreeFormCommandlineSettings extends AbstractCommandlineSettings {
                     b.append(c);
                 }
                 escaped = !escaped;
+                break;
+            case '$': // start of variable?
+                if (escaped) {
+                    b.append(c);
+                    escaped = false;
+                } else {
+                    // variable is "$(name-of-var)"
+                    int start = m_commandline.indexOf('(', i);
+                    if (start != i + 1) {
+                        throw new InvalidSettingsException(
+                                "Invalid variable placeholder at position " + i
+                                + "(near \""
+                                + getSubStringAroundPosition(m_commandline, i)
+                                + "\") -- no starting '('");
+                    }
+                    int end = m_commandline.indexOf(')', i);
+                    if (end < 0) {
+                        throw new InvalidSettingsException(
+                                "Invalid variable placeholder at position " + i
+                                + "(near \""
+                                + getSubStringAroundPosition(m_commandline, i)
+                                + "\") -- no closing ')'");
+                    }
+                    String varName = m_commandline.substring(start + 1, end);
+                    b.append(readVariable(varName, env));
+                    i = end;
+                }
                 break;
             case '\"':
                 if (escaped) {
@@ -192,6 +221,34 @@ public class FreeFormCommandlineSettings extends AbstractCommandlineSettings {
                 + "(' " + character + "') does not need to be escaped, "
                 + "use two backslashes (\\\\) to insert a single"
                 + "backslash in the expression.");
+    }
+
+    private String getSubStringAroundPosition(final String str,
+            final int pos) {
+        int start = Math.max(0, pos - 10);
+        int end = Math.min(str.length(), pos + 10);
+        return str.substring(start, end);
+    }
+
+    private String readVariable(final String varName,
+            final ExttoolNodeEnvironment env) throws InvalidSettingsException {
+        try {
+            return Double.toString(env.readFlowVariableDouble(varName));
+        } catch (NoSuchElementException ne) {
+            // ignore
+        }
+        try {
+            return Integer.toString(env.readFlowVariableInt(varName));
+        } catch (NoSuchElementException ne) {
+            // ignore
+        }
+        try {
+            return env.readFlowVariableString(varName);
+        } catch (NoSuchElementException ne) {
+            // ignore
+        }
+        throw new InvalidSettingsException("Unable to read variable \""
+                + varName + "\"");
     }
 
 }

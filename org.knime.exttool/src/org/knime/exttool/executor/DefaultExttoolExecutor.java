@@ -72,6 +72,7 @@ public class DefaultExttoolExecutor extends AbstractExttoolExecutor {
         String[] cmds = getCommandlineArgs();
         final Observer commandObserver = new Observer() {
             /** {@inheritDoc} */
+            @Override
             public void update(final Observable o, final Object arg) {
                 if (arg instanceof ViewUpdateNotice) {
                     DefaultExttoolExecutor.this.setChanged();

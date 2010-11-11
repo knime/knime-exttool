@@ -46,74 +46,85 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Mar 2, 2010 (wiswedel): created
+ *   Aug 10, 2010 (wiswedel): created
  */
-package org.knime.exttool.executor;
+package org.knime.exttool.chem.filetype.sdf;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-import org.knime.core.node.NodeLogger;
+import org.knime.chem.types.SdfValue;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.util.DataValueColumnFilter;
+import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 
-/** Input handle to the external tool. It represents the data that is written
- * by KNIME and which is then provided as input to the external process. The
- * {@link DataHandle#getLocation() location} returned by objects of this
- * interface replaces the stub %inFile% in the commandline.
+/** SDF file write config. Contains settings for target column and included
+ * properties. Only the target column can currently be set in the dialog.
  *
- * <p><b>Warning:</b> API needs review, subclassing outside this package
- * is currently not encouraged.
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public interface InputDataHandle extends DataHandle {
+public class SdfFileTypeWriteConfig extends DefaultFileTypeWriteConfig {
 
-    /** Open a new stream, which is filled with the input data.
-     * @return A new output stream, which is used by the framework to write
-     *         the data.
-     * @throws IOException In case of I/O problems.
+    private List<String> m_propertiesColumns;
+
+    /**
      */
-    public OutputStream openInputFileOutStream() throws IOException;
+    @SuppressWarnings("unchecked")
+    public SdfFileTypeWriteConfig() {
+        super(new DataValueColumnFilter(SdfValue.class));
+        m_propertiesColumns = Collections.emptyList();
+    }
 
-    /** Default implementation using local files. */
-    public static class FileInputDataHandle implements InputDataHandle {
+    /** @return the propertiesColumns */
+    public List<String> getPropertiesColumns() {
+        return m_propertiesColumns;
+    }
 
-        private final File m_inFile;
-
-        /** New input handle for a given file.
-         * @param inFile The input file, must not be null. */
-        public FileInputDataHandle(final File inFile) {
-            if (inFile == null) {
-                throw new NullPointerException("Argument must not be null");
-            }
-            m_inFile = inFile;
+    /**
+     * @param propertiesColumns the propertiesColumns to set
+     */
+    public void setPropertiesColumns(final List<String> propertiesColumns) {
+        if (propertiesColumns == null) {
+            throw new NullPointerException("Argument must not be null.");
         }
+        m_propertiesColumns = propertiesColumns;
+    }
 
-        /** @return the inFile passed in constructor. */
-        public File getInFile() {
-            return m_inFile;
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public void cleanUp() {
-            if (m_inFile.exists() && !m_inFile.delete()) {
-                NodeLogger.getLogger(getClass()).warn("Could not delete file \""
-                        + m_inFile.getAbsolutePath() + "\"");
-            }
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public OutputStream openInputFileOutStream() throws IOException {
-            return new BufferedOutputStream(new FileOutputStream(m_inFile));
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public String getLocation() {
-            return m_inFile.getAbsolutePath();
+    /** {@inheritDoc} */
+    @Override
+    public void loadSettingsInDialog(
+            final NodeSettingsRO settings, final DataTableSpec spec)
+            throws NotConfigurableException {
+        super.loadSettingsInDialog(settings, spec);
+        String[] props = settings.getStringArray("properties", new String[0]);
+        if (props != null) {
+            m_propertiesColumns = Arrays.asList(props);
         }
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public void loadSettingsInModel(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        super.loadSettingsInModel(settings);
+        // field added in later version, do not throw exception
+        String[] props = settings.getStringArray("properties", new String[0]);
+        if (props != null) {
+            m_propertiesColumns = Arrays.asList(props);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void saveSettings(final NodeSettingsWO settings) {
+        super.saveSettings(settings);
+        settings.addStringArray("properties", m_propertiesColumns.toArray(
+                new String[m_propertiesColumns.size()]));
+    }
+
 }

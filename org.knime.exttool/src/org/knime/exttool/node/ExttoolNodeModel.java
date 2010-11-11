@@ -52,6 +52,7 @@ package org.knime.exttool.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.BufferedDataTable;
@@ -91,15 +92,18 @@ public class ExttoolNodeModel extends NodeModel {
             throw new InvalidSettingsException("No settings available");
         }
         DataTableSpec[] newInSpecs = m_customizer.preprocessInput(inSpecs);
-        m_settings.validateInput(newInSpecs);
-        return null;
+        // have a new execution object create the output spec.
+        ExttoolNodeEnvironment env = new ExttoolNodeEnvironment(this);
+        Execution execution = m_customizer.createExecution(m_settings, env);
+        return execution.configure(newInSpecs);
     }
 
     /** {@inheritDoc} */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        Execution execution = m_customizer.createExecution(m_settings);
+        ExttoolNodeEnvironment env = new ExttoolNodeEnvironment(this);
+        Execution execution = m_customizer.createExecution(m_settings, env);
         BufferedDataTable[] newInData = m_customizer.preprocessInput(
                 inData, exec.createSubExecutionContext(0.0));
         BufferedDataTable[] result;
@@ -160,6 +164,33 @@ public class ExttoolNodeModel extends NodeModel {
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // nothing to load (might need to save execution status messages?)
+    }
+
+    /** Delegate to super to read flow variable.
+     * @param name Name of variable
+     * @return Value of variable
+     * @throws NoSuchElementException as super throws exception (invalid var)
+     */
+    String readFlowVariableString(final String name) {
+        return peekFlowVariableString(name);
+    }
+
+    /** Delegate to super to read flow variable.
+     * @param name Name of variable
+     * @return Value of variable
+     * @throws NoSuchElementException as super throws exception (invalid var)
+     */
+    double readFlowVariableDouble(final String name) {
+        return peekFlowVariableDouble(name);
+    }
+
+    /** Delegate to super to read flow variable.
+     * @param name Name of variable
+     * @return Value of variable
+     * @throws NoSuchElementException as super throws exception (invalid var)
+     */
+    int readFlowVariableInt(final String name) {
+        return peekFlowVariableInt(name);
     }
 
 }

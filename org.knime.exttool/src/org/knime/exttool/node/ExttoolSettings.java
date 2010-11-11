@@ -129,8 +129,8 @@ public class ExttoolSettings {
             m_outputConfigs[o] = new PathAndTypeConfigurationOutput();
         }
         try {
-            m_executorFactory = AbstractExttoolExecutorFactory.get(
-                    DefaultExttoolExecutorFactory.class.getName());
+            m_executorFactory =
+                AbstractExttoolExecutorFactory.getDefault(m_customizer);
             m_executorConfig = m_executorFactory.createConfig();
         } catch (InvalidSettingsException e) {
             LOGGER.error("No local executor available", e);
@@ -270,12 +270,15 @@ public class ExttoolSettings {
     /** Get the current command line settings from the
      * {@link AbstractCommandlineSettings}. The command line args potentially
      * contain place holders.
+     * @param env The current execution environment (providing flow vars, e.g.)
      * @return The command line arguments
      * @throws InvalidSettingsException If the get-method on the
-     * {@link AbstractCommandlineSettings#getCommandlineArgs() get-method} fails
+     * {@link AbstractCommandlineSettings#
+     *  getCommandlineArgs(ExttoolNodeEnvironment) get-method} fails
      */
-    public String[] getCommandlineArgs() throws InvalidSettingsException {
-        return m_commandlineSettings.getCommandlineArgs();
+    public String[] getCommandlineArgs(final ExttoolNodeEnvironment env)
+        throws InvalidSettingsException {
+        return m_commandlineSettings.getCommandlineArgs(env);
     }
 
     /** Get the current input configuration for an input port.
@@ -516,13 +519,10 @@ public class ExttoolSettings {
     public void loadSettingsFrom(final NodeSettingsRO settings,
             final DataTableSpec[] inSpecs) throws NotConfigurableException {
         AbstractExttoolExecutorFactory fallbackExecutor;
-        // first load default
-        try {
-            // the default executor must work (locally registered)
-            fallbackExecutor = AbstractExttoolExecutorFactory.get(
-                    DefaultExttoolExecutorFactory.class.getName());
-        } catch (InvalidSettingsException ise) {
-            LOGGER.error("Could not load default executor", ise);
+        if (m_executorFactory != null) {
+            fallbackExecutor = m_executorFactory;
+        } else {
+            LOGGER.error("Could not load default executor");
             fallbackExecutor = new DefaultExttoolExecutorFactory();
         }
 
@@ -636,9 +636,15 @@ public class ExttoolSettings {
     /** Called from the node during its configure step. This method validates
      * the assigned executor and the input & output file types.
      * @param inSpecs The input specs to validate against.
+     * @return The output spec if possible. Returning null will cause the
+     * node to be configured without returning the output spec (analog to
+     * configure method in NodeModel). This default implementation will delegate
+     * to the commandline settings'
+     * {@link AbstractCommandlineSettings#configure(DataTableSpec[]) configure}
+     * method.
      * @throws InvalidSettingsException If any configuration is invalid.
      */
-    public void validateInput(final DataTableSpec[] inSpecs)
+    public DataTableSpec[] configure(final DataTableSpec[] inSpecs)
         throws InvalidSettingsException {
         for (int i = 0; i < inSpecs.length; i++) {
             AbstractFileTypeWrite writer = createInputFileType(i);
@@ -647,6 +653,7 @@ public class ExttoolSettings {
         for (int o = 0; o < m_customizer.getNrOutputs(); o++) {
             createOutputFileType(o);
         }
+        return m_commandlineSettings.configure(inSpecs);
     }
 
 
