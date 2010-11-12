@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
 <knimeNode icon="exttool.png" type="Other">
-	<name>External Tool</name>
+	<name>External Tool (Labs)</name>
 	<shortDescription>
 		Process the input data using an external application.  
 	</shortDescription>
