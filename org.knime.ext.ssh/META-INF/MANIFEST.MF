@@ -5,7 +5,6 @@ Require-Bundle: org.knime.base,org.eclipse.core.runtime,com.jcraft.jsc
  ch.ui
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: knime-sshnode.jar
 Bundle-Version: 2.3.0.qualifier
 Bundle-Name: KNIME Ext SSH Node Plug-in
 Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
