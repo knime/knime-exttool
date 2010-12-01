@@ -4,17 +4,6 @@
    <extension-point id="filetype" name="FileType" schema="schema/filetype.exsd"/>
    <extension-point id="executor" name="Executor" schema="schema/executor.exsd"/>
    <extension
-         point="org.knime.workbench.repository.categories">
-      <category
-            after="misc"
-            description="Nodes provided on labs.knime.org"
-            icon="icons/labs.png"
-            level-id="labs"
-            name="KNIME Labs"
-            path="/">
-      </category>
-   </extension>
-   <extension
          point="org.knime.workbench.repository.nodes">
 <!--
     The "String to Smiles" parser node is deprecated. It's been replaced by
