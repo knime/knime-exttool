@@ -1,14 +1,14 @@
 Manifest-Version: 1.0
-Export-Package: org.knime.ext.ssh,org.knime.ext.ssh.node
 Require-Bundle: org.knime.base,org.eclipse.core.runtime,com.jcraft.jsc
  h,org.knime.workbench.repository,org.eclipse.jsch.core,org.eclipse.js
  ch.ui
+Export-Package: org.knime.ext.ssh,org.knime.ext.ssh.node
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Bundle-ActivationPolicy: lazy
-Bundle-Version: 2.3.0.qualifier
+Bundle-Version: 2.4.0.qualifier
 Bundle-Name: KNIME Ext SSH Node Plug-in
-Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
 Bundle-ManifestVersion: 2
+Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
 Bundle-SymbolicName: org.knime.ext.ssh;singleton:=true
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 

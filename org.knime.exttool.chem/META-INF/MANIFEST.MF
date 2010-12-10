@@ -1,11 +1,11 @@
 Manifest-Version: 1.0
-Export-Package: org.knime.exttool.chem.babel,org.knime.exttool.chem.fi
- letype.mol2,org.knime.exttool.chem.filetype.sdf
 Require-Bundle: org.knime.base,org.knime.chem.types,org.knime.chem.bas
  e,org.knime.exttool
+Export-Package: org.knime.exttool.chem.babel,org.knime.exttool.chem.fi
+ letype.mol2,org.knime.exttool.chem.filetype.sdf
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Bundle-ActivationPolicy: lazy
-Bundle-Version: 2.3.0.qualifier
+Bundle-Version: 2.4.0.qualifier
 Bundle-Name: KNIME Chemistry extensions for external tool nodes
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.knime.exttool.chem;singleton:=true
