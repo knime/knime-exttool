@@ -1,12 +1,12 @@
 Manifest-Version: 1.0
-Export-Package: org.knime.ext.exttool
-Require-Bundle: org.knime.base,org.eclipse.core.runtime,org.knime.work
- bench.repository
-Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Bundle-ActivationPolicy: lazy
-Bundle-Version: 2.3.0.qualifier
-Bundle-Name: ExtToolNode for KNIME Base Nodes
 Bundle-ManifestVersion: 2
+Bundle-Name: ExtToolNode for KNIME Base Nodes
 Bundle-SymbolicName: org.knime.ext.exttool;singleton:=true
+Bundle-Version: 2.3.1.qualifier
+Bundle-Vendor: KNIME GmbH, Konstanz, Germany
+Export-Package: org.knime.ext.exttool
+Require-Bundle: org.knime.base,
+ org.eclipse.core.runtime,
+ org.knime.workbench.repository
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-
+Bundle-ActivationPolicy: lazy
