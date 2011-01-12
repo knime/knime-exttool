@@ -1,14 +1,16 @@
 Manifest-Version: 1.0
-Require-Bundle: org.knime.base,org.eclipse.core.runtime,com.jcraft.jsc
- h,org.knime.workbench.repository,org.eclipse.jsch.core,org.eclipse.js
- ch.ui
-Export-Package: org.knime.ext.ssh,org.knime.ext.ssh.node
-Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Bundle-ActivationPolicy: lazy
-Bundle-Version: 2.4.0.qualifier
-Bundle-Name: KNIME Ext SSH Node Plug-in
 Bundle-ManifestVersion: 2
-Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
+Bundle-Name: KNIME Ext SSH Node Plug-in
 Bundle-SymbolicName: org.knime.ext.ssh;singleton:=true
+Bundle-Version: 2.3.1.qualifier
+Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
+Bundle-Vendor: KNIME GmbH, Konstanz, Germany
+Export-Package: org.knime.ext.ssh,org.knime.ext.ssh.node
+Require-Bundle: org.knime.base,
+ org.eclipse.core.runtime,
+ com.jcraft.jsch,
+ org.knime.workbench.repository,
+ org.eclipse.jsch.core,
+ org.eclipse.jsch.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-
+Bundle-ActivationPolicy: lazy
