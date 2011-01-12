@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.ext.exttool"
       label="KNIME External Tool Support"
-      version="2.4.0.qualifier"
+      version="2.3.1.qualifier"
       provider-name="KNIME GmbH, Konstanz, Germany">
 
    <description url="http://www.knime.org/downloads/extensions">
@@ -10,13 +10,13 @@
    </description>
 
    <copyright>
-      Copyright, 2003 - 2010
+      Copyright, 2003 - 2011
       University of Konstanz, Germany
       KNIME GmbH, Konstanz, Germany
    </copyright>
 
    <license>
-GNU GENERAL PUBLIC LICENSE with Additional Permissions according to Sec. 7
+      GNU GENERAL PUBLIC LICENSE with Additional Permissions according to Sec. 7
 *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** 
 Please see below the General Public License (GPL), Version 3, 
 and the Additional Permissions according to Sec. 7 
