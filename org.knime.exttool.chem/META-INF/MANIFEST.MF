@@ -14,3 +14,4 @@ Require-Bundle: org.knime.base,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Eclipse-RegisterBuddy: org.knime.base
+Bundle-ClassPath: .
