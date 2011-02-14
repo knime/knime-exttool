@@ -87,7 +87,7 @@ import org.knime.exttool.executor.Execution;
  */
 public class ExttoolCustomizer {
 
-    /** Wether (and which) temp files are deleted after execution. */
+    /** Whether (and which) temp files are deleted after execution. */
     public enum DeleteTempFilePolicy {
         /** Delete all files, independent of success of failure. */
         All,
