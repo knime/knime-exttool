@@ -54,6 +54,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.knime.chem.base.node.io.sdf.DefaultSDFReader;
+import org.knime.chem.base.node.io.sdf.SDFReaderSettings;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.node.BufferedDataContainer;
@@ -90,8 +92,8 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
         SDFReaderSettings settings = new SDFReaderSettings();
         settings.extractName(true);
         settings.useRowID(false);
-        SDFReader reader = new SDFReader(settings) {
-            private boolean m_isCalled = false;;
+        DefaultSDFReader reader = new DefaultSDFReader(settings) {
+            private boolean m_isCalled = false;
             /** {@inheritDoc} */
             @Override
             protected BufferedReader openInputReader() throws IOException,
@@ -115,7 +117,7 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
         BufferedDataTable successPort = result[0];
         DataTableSpec spec = successPort.getDataTableSpec();
         ColumnRearranger rearranger = new ColumnRearranger(spec);
-        rearranger.move(SDFReader.MOLECULE_NAME_COLUMN, 0);
+        rearranger.move(DefaultSDFReader.MOLECULE_NAME_COLUMN, 0);
         return exec.createColumnRearrangeTable(successPort, rearranger, exec);
     }
 

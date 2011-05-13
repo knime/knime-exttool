@@ -55,6 +55,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
+import org.knime.chem.base.node.io.sdf.DefaultSDFWriter;
+import org.knime.chem.base.node.io.sdf.SDFWriterSettings;
 import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
@@ -116,13 +118,7 @@ public class SdfFileTypeWrite extends AbstractFileTypeWrite {
             final int rowCount, final OutputStream out,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-        SDFWriter writer = new SDFWriter(m_settings) {
-            /** {@inheritDoc} */
-            @Override
-            protected void checkFileAccess() throws InvalidSettingsException {
-                // ignore
-            }
-
+        DefaultSDFWriter writer = new DefaultSDFWriter(m_settings) {
             /** {@inheritDoc} */
             @Override
             protected BufferedWriter openOutputWriter()
