@@ -106,7 +106,7 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
             }
             if (!foundMatch) {
                 throw new InvalidSettingsException(
-                        "No approriate columns for CSV format");
+                        "No appropriate columns for CSV format");
             }
         } else {
             String[] includeColumns = m_csvConfig.getIncludeColumns();
