@@ -50,9 +50,8 @@
  */
 package org.knime.exttool.chem.filetype.sdf;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.Collections;
 
 import org.knime.chem.base.node.io.sdf.DefaultSDFReader;
 import org.knime.chem.base.node.io.sdf.SDFReaderSettings;
@@ -61,18 +60,20 @@ import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.InvalidSettingsException;
 import org.knime.exttool.executor.OutputDataHandle;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 import org.knime.exttool.filetype.AbstractFileTypeReadConfig;
 
 /**
  * SDF read support.
+ *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
 public class SdfFileTypeRead extends AbstractFileTypeRead {
 
-    /** Create new reader from a given factory (for meta information).
+    /**
+     * Create new reader from a given factory (for meta information).
+     *
      * @param factory passed to super class, must not be nul.
      */
     SdfFileTypeRead(final SdfFileTypeFactory factory) {
@@ -92,23 +93,11 @@ public class SdfFileTypeRead extends AbstractFileTypeRead {
         SDFReaderSettings settings = new SDFReaderSettings();
         settings.extractName(true);
         settings.useRowID(false);
+        settings.urls(Collections.singletonList(new URL("file:"
+                + in.getLocation())));
         DefaultSDFReader reader = new DefaultSDFReader(settings) {
-            private boolean m_isCalled = false;
-            /** {@inheritDoc} */
             @Override
-            protected BufferedReader openInputReader() throws IOException,
-                    InvalidSettingsException {
-                if (m_isCalled) {
-                    throw new IOException("Can open input stream only once");
-                }
-                m_isCalled = true;
-                return new BufferedReader(new InputStreamReader(
-                        in.openOutputFileInStream()));
-            }
-
-            /** {@inheritDoc} */
-            @Override
-            protected BufferedDataContainer createOutputContainerPort0(
+            protected BufferedDataContainer createSuccessfulOutputContainer(
                     final ExecutionContext derExec, final DataTableSpec spec) {
                 return derExec.createDataContainer(spec, true, 0);
             }
