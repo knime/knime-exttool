@@ -257,12 +257,15 @@ public class Execution {
                 rowsPerChunkFirstPort = 1;
                 break;
             case ChunksOfSize:
-                chunkCount = (int)Math.ceil(rowCount / (double)chunkValue);
+                // have at least one chunk (empty input table --> 1 chunk)
+                chunkCount = Math.max(
+                        1, (int)Math.ceil(rowCount / (double)chunkValue));
                 rowsPerChunkFirstPort =
                     (int)Math.ceil(rowCount / (double)chunkCount);
                 break;
             case NrChunks:
-                chunkCount = Math.min(rowCount, chunkValue);
+                // have at least one chunk (empty input table --> 1 chunk)
+                chunkCount = Math.max(1, Math.min(rowCount, chunkValue));
                 rowsPerChunkFirstPort =
                     (int)Math.ceil(rowCount / (double)chunkCount);
                 break;
