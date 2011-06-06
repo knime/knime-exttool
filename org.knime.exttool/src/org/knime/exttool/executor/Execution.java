@@ -945,6 +945,26 @@ public class Execution {
         m_toBeDeletedFolders.clear();
     }
 
+    /** Get WD or null if {@link #createWorkingDirectory()} has not been called.
+     * @return the workingDirectory */
+    protected final File getWorkingDirectory() {
+        return m_workingDirectory;
+    }
+
+    /** Get input directory or null if {@link #createWorkingDirectory()}
+     * has not been called.
+     * @return the inputDirectory */
+    protected final File getInputDirectory() {
+        return m_inputDirectory;
+    }
+
+    /** Get output directory or null if {@link #createWorkingDirectory()}
+     * has not been called.
+     * @return the outputDirectory */
+    protected final File getOutputDirectory() {
+        return m_outputDirectory;
+    }
+
     /** the temp file will have a time stamp in its name. */
     private static final SimpleDateFormat DATE_FORMAT =
         new SimpleDateFormat("yyyyMMdd");
