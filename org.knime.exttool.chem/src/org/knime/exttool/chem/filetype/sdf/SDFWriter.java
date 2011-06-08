@@ -75,7 +75,7 @@ public class SDFWriter extends DefaultSDFWriter {
      * @see org.knime.core.node.NodeModel
      */
     @Override
-    protected void configure(final DataTableSpec inSpec)
+    public void configure(final DataTableSpec inSpec)
             throws InvalidSettingsException {
         super.configure(inSpec);
         checkFileAccess();
