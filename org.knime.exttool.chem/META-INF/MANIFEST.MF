@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: KNIME Chemistry extensions for external tool nodes
 Bundle-SymbolicName: org.knime.exttool.chem;singleton:=true
-Bundle-Version: 2.4.0.qualifier
+Bundle-Version: 2.5.0.qualifier
+Bundle-ClassPath: .
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Export-Package: org.knime.exttool.chem.babel,
  org.knime.exttool.chem.filetype.mol2,
@@ -12,6 +13,5 @@ Require-Bundle: org.knime.base,
  org.knime.chem.base,
  org.knime.exttool
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ActivationPolicy: lazy
 Eclipse-RegisterBuddy: org.knime.base
-Bundle-ClassPath: .
+Bundle-ActivationPolicy: lazy
