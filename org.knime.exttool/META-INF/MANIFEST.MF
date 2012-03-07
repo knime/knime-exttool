@@ -10,7 +10,7 @@ Export-Package: org.knime.exttool,
  org.knime.exttool.filetype,
  org.knime.exttool.filetype.csv,
  org.knime.exttool.node
-Require-Bundle: org.knime.base
+Require-Bundle: org.knime.base;bundle-version="[2.5.0,3.0.0)"
 Eclipse-RegisterBuddy: org.knime.base
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
