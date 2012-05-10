@@ -104,6 +104,7 @@ public class ExttoolSettings {
     private String m_pathToExecutable;
     private Chunking m_chunking = Chunking.EntireTable;
     private int m_chunkValue;
+    private String m_multipleResultRowKeySeparator = "_";
 
     /** Create a new settings object from the given customizer.
      * @param customizer The corresponding customizer.
@@ -237,6 +238,33 @@ public class ExttoolSettings {
         }
         m_chunking = chunking;
         m_chunkValue = newValue;
+    }
+
+    /** The string to include in new row keys when more than one result is
+     * returned, default is '_', e.g. Row1_1, Row1_2, etc.
+     * @param value the multipleResultRowKeySeparator to set
+     * @throws NullPointerException If argument is null
+     * @throws IllegalArgumentException If argument is an empty string
+     * @noreference This method is currently not intended to be referenced
+     * by clients (pending API).
+     */
+    public void setMultipleResultRowKeySeparator(
+            final String value) {
+        if (value == null) {
+            throw new NullPointerException("Argument must not be null.");
+        }
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException("Invalid (empty) separator");
+        }
+        m_multipleResultRowKeySeparator = value;
+    }
+
+    /** See {@link #setMultipleResultRowKeySeparator(String)} for details.
+     * @return the multipleResultRowKeySeparator
+     * @noreference This method is not intended to be referenced by clients
+     * (pending API). */
+    public String getMultipleResultRowKeySeparator() {
+        return m_multipleResultRowKeySeparator;
     }
 
     /**

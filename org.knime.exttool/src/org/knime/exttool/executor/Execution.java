@@ -714,7 +714,8 @@ public class Execution {
         if (leftKey.getString().equals(idCellRight.toString())) {
             RowKey newKey = leftKey;
             if (runningIndex > 0) {
-                newKey = new RowKey(leftKey + "_" + runningIndex);
+                String sep = m_settings.getMultipleResultRowKeySeparator();
+                newKey = new RowKey(leftKey + sep + runningIndex);
             }
             int leftCount = left.getNumCells();
             int rightCount = right.getNumCells();
