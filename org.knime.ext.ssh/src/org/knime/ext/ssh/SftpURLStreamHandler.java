@@ -1,4 +1,5 @@
-/* ------------------------------------------------------------------------
+/*
+ * ------------------------------------------------------------------------
  *
  *  Copyright (C) 2003 - 2013
  *  University of Konstanz, Germany and
@@ -42,67 +43,35 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * Created on 18.03.2013 by meinl
  */
-
 package org.knime.ext.ssh;
 
-import org.eclipse.core.runtime.Plugin;
-import org.eclipse.jsch.core.IJSchService;
-import org.knime.core.node.NodeLogger;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+
+import org.osgi.service.url.AbstractURLStreamHandlerService;
 
 /**
- * The activator class controls the plug-in life cycle.
+ * {@link URLStreamHandler} for the {@link SftpURLConnection}.
+ *
+ * @author Thorsten Meinl, University of Konstanz
  */
-public class ExtSSHNodeActivator extends Plugin {
-
-    /** The plug-in ID. */
-    public static final String PLUGIN_ID = "org.knime.ext.ssh";
-
-    // The shared instance
-    private static ExtSSHNodeActivator plugin;
-
-    private IJSchService m_ijschService;
-
+public class SftpURLStreamHandler extends AbstractURLStreamHandlerService {
     /**
      * {@inheritDoc}
      */
     @Override
-    public void start(final BundleContext context) throws Exception {
-        super.start(context);
-        plugin = this;
-        NodeLogger.getLogger(ExtSSHNodeActivator.class).info(
-                "Starting Plug-in " + PLUGIN_ID);
-        BundleContext bundleContext = getBundle().getBundleContext();
-        ServiceReference<IJSchService> service = bundleContext.getServiceReference(IJSchService.class);
-        m_ijschService = bundleContext.getService(service);
-    }
+    public URLConnection openConnection(final URL u) throws IOException {
+        if (!SftpURLConnection.SCHEME.equals(u.getProtocol())) {
+            throw new IOException("This handler only supports the " + SftpURLConnection.SCHEME + " protocol but not "
+                    + u.getProtocol());
+        }
 
-    /**
-     * @return the JSch service.
-     */
-    public IJSchService getIJSchService() {
-        return m_ijschService;
+        return new SftpURLConnection(u);
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop(final BundleContext context) throws Exception {
-        plugin = null;
-        super.stop(context);
-    }
-
-    /**
-     * Returns the shared instance.
-     *
-     * @return the shared instance
-     */
-    public static ExtSSHNodeActivator getDefault() {
-        return plugin;
-    }
-
 }

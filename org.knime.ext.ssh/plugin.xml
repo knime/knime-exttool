@@ -8,4 +8,11 @@
             factory-class="org.knime.ext.ssh.node.ExtSSHToolNodeFactory"
             id="org.knime.ext.ssh.node.ExtSSHToolNodeFactory"/>
    </extension>
+  <extension
+        point="org.eclipse.ecf.filetransfer.urlStreamHandlerService">
+     <urlStreamHandlerService
+           protocol="sftp"
+           serviceClass="org.knime.ext.ssh.SftpURLStreamHandler">
+     </urlStreamHandlerService>
+  </extension>   
 </plugin>
