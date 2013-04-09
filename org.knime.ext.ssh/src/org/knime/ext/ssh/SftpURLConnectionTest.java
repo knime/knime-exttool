@@ -175,9 +175,7 @@ public class SftpURLConnectionTest {
         URLConnection conn = url.openConnection();
         assertThat("Size without connect is not 0", conn.getContentLength(), is(-1));
         conn.connect();
-        // TODO Thorsten:
-        //  The method getContentLengthLong() is undefined for the type URLConnection
-        // assertThat("Size is not correct", conn.getContentLengthLong(), is(tempFile.length()));
+        assertThat("Size is not correct", (long) conn.getContentLength(), is(tempFile.length()));
     }
 
     @Test
