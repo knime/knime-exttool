@@ -68,10 +68,14 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.knime.core.util.FileUtil;
+
+import com.jcraft.jsch.JSch;
 
 /**
  * Testcase for {@link SftpURLConnection}. It assumes that the handler is already registered for the sftp protocol.
@@ -82,6 +86,19 @@ import org.knime.core.util.FileUtil;
 public class SftpURLConnectionTest {
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
+
+    private static String strictHostChecking;
+
+    @BeforeClass
+    public static void setup() {
+        strictHostChecking = JSch.getConfig("StrictHostKeyChecking");
+        JSch.setConfig("StrictHostKeyChecking", "no");
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        JSch.setConfig("StrictHostKeyChecking", strictHostChecking);
+    }
 
     /**
      * Checks if the input stream via the sftp protocol works properly.
