@@ -72,6 +72,7 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.property.hilite.HiLiteHandler;
+import org.knime.core.util.FileUtil;
 import org.knime.ext.ssh.SSHUtil;
 
 import com.jcraft.jsch.ChannelExec;
@@ -168,7 +169,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
             ftpChannel = SSHUtil.createNewSFTPChannel(m_settings, session);
             exec.checkCanceled();
             File tmpInFile =
-                    File.createTempFile("ExtSSHNodeInputTable", ".txt");
+                    FileUtil.createTempFile("ExtSSHNodeInputTable", ".txt");
             exec.checkCanceled();
 
             CSVWriter csvWriter = null;
@@ -238,7 +239,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
 
             exec.setMessage("Transferring result output file...");
             File outTableFile =
-                    File.createTempFile("ExtSSHNodeOutputTable", ".txt");
+                    FileUtil.createTempFile("ExtSSHNodeOutputTable", ".txt");
             LOGGER.debug("ftp getting result file "
                     + m_settings.getRemoteOutputFile() + " to "
                     + outTableFile.getAbsolutePath());
