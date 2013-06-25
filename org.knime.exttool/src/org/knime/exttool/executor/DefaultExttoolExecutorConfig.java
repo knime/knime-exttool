@@ -61,6 +61,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.core.util.ThreadUtils;
 
 /** A default configuration class for executors. It allows setting the number
  * of threads for the execution.
@@ -176,16 +177,14 @@ public class DefaultExttoolExecutorConfig extends
     public ExecutorService createExecutorService() {
         int threadcount = m_isAutoThreadCount ? getAutoThreadCount()
                 : m_maxThreads;
-        return new ThreadPoolExecutor(threadcount, threadcount, 60L,
-                TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-                new ThreadFactory() {
-            /** {@inheritDoc} */
-            @Override
-            public Thread newThread(final Runnable r) {
-                return new Thread(r, "KNIME-Exttool-"
-                        + THREAD_COUNTER.incrementAndGet());
-            }
-        });
+        return ThreadUtils.executorServiceWithContext(new ThreadPoolExecutor(threadcount, threadcount, 60L,
+            TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+                /** {@inheritDoc} */
+                @Override
+                public Thread newThread(final Runnable r) {
+                    return new Thread(r, "KNIME-Exttool-" + THREAD_COUNTER.incrementAndGet());
+                }
+            }));
     }
 
 }

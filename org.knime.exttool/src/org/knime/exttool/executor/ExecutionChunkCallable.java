@@ -62,6 +62,7 @@ import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
+import org.knime.core.util.ThreadUtils.CallableWithContext;
 import org.knime.exttool.filetype.AbstractFileTypeRead;
 
 /**
@@ -71,7 +72,7 @@ import org.knime.exttool.filetype.AbstractFileTypeRead;
  *
  * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
  */
-public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
+public class ExecutionChunkCallable extends CallableWithContext<BufferedDataTable[]> {
 
     /** input handles, length equals number of input ports. */
     private InputDataHandle[] m_inputHandles;
@@ -114,9 +115,10 @@ public class ExecutionChunkCallable implements Callable<BufferedDataTable[]> {
      * @return The output data
      * @exception Exception Any exception.
      * @see Callable#call()
+     * @since 2.8
      */
     @Override
-    public final BufferedDataTable[] call() throws Exception {
+    protected final BufferedDataTable[] internalCall() throws Exception {
         m_executor.setExecutionChunkCallable(this);
         ExecutionMonitor mainMon;
         ExecutionContext readContext;
