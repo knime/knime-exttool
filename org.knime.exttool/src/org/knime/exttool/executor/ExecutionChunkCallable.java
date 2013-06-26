@@ -118,7 +118,7 @@ public class ExecutionChunkCallable extends CallableWithContext<BufferedDataTabl
      * @since 2.8
      */
     @Override
-    protected final BufferedDataTable[] internalCall() throws Exception {
+    protected final BufferedDataTable[] callWithContext() throws Exception {
         m_executor.setExecutionChunkCallable(this);
         ExecutionMonitor mainMon;
         ExecutionContext readContext;
