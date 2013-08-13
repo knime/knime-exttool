@@ -68,6 +68,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.core.runtime.Platform;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -115,8 +116,7 @@ public class SftpURLConnectionTest {
         out.write(writtenContents);
         out.close();
 
-        String path = tempFile.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile));
         BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
         String readContents = in.readLine();
         in.close();
@@ -134,8 +134,7 @@ public class SftpURLConnectionTest {
         tempFile.deleteOnExit();
 
         String writtenContents = new Date().toString();
-        String path = tempFile.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile));
         URLConnection conn = url.openConnection();
         OutputStream out = conn.getOutputStream();
         out.write(writtenContents.getBytes());
@@ -152,8 +151,7 @@ public class SftpURLConnectionTest {
     public void testWriteToDirectory() throws IOException {
         File dir = FileUtil.createTempDir("SFTPURLTest");
 
-        String path = dir.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(dir));
         URLConnection conn = url.openConnection();
         expectedEx.expect(IOException.class);
         expectedEx.expectMessage("Cannot write to a directory");
@@ -166,8 +164,7 @@ public class SftpURLConnectionTest {
         tempFile.deleteOnExit();
 
 
-        String path = tempFile.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile));
         URLConnection conn = url.openConnection();
         assertThat("Modification date without connect is not 0", conn.getDate(), is(0L));
         conn.connect();
@@ -191,8 +188,7 @@ public class SftpURLConnectionTest {
         out.write(writtenContents);
         out.close();
 
-        String path = tempFile.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile));
         URLConnection conn = url.openConnection();
         assertThat("Size without connect is not 0", conn.getContentLength(), is(-1));
         conn.connect();
@@ -212,8 +208,7 @@ public class SftpURLConnectionTest {
         filesInDir.add(".");
         filesInDir.add("..");
 
-        String path = dir.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path + ";type=d");
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(dir) + ";type=d");
         BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
         int count = 0;
         String line;
@@ -229,8 +224,7 @@ public class SftpURLConnectionTest {
     public void testReadDirContentsNoType() throws Exception {
         File dir = FileUtil.createTempDir("SFTPURLTest");
 
-        String path = dir.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(dir));
         expectedEx.expect(IOException.class);
         expectedEx.expectMessage("Cannot read from a directory");
         url.openStream();
@@ -241,8 +235,7 @@ public class SftpURLConnectionTest {
         File tempFile = File.createTempFile("SFTPURLTest", ".txt");
         tempFile.deleteOnExit();
 
-        String path = tempFile.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path + ";type=d");
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile) + ";type=d");
         expectedEx.expect(IOException.class);
         expectedEx.expectMessage("does not denote a directory");
         url.openStream();
@@ -259,8 +252,7 @@ public class SftpURLConnectionTest {
         out.write(writtenContents);
         out.close();
 
-        String path = tempFile.getAbsoluteFile().toURI().getPath();
-        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + path);
+        URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile));
         URLConnection conn = url.openConnection();
         assertThat("Non-null date received before connect", conn.getHeaderField("date"), is(nullValue()));
         assertThat("Non-null size received before connect", conn.getHeaderField("content-length"), is(nullValue()));
@@ -270,5 +262,14 @@ public class SftpURLConnectionTest {
 
         // content encoding (and some others) are not supported
         assertThat("Non-null content encoding received", conn.getContentEncoding(), is(nullValue()));
+    }
+
+    private static String getPath(final File file) {
+        String path = file.getAbsoluteFile().toURI().getPath();
+        if (Platform.OS_WIN32.equals(Platform.getOS())) {
+            return path.replaceFirst("^/([a-zA-Z]):/", "/cygdrive/$1/");
+        } else {
+            return path;
+        }
     }
 }
