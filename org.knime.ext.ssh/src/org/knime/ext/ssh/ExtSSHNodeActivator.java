@@ -49,7 +49,6 @@ package org.knime.ext.ssh;
 
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.jsch.core.IJSchService;
-import org.knime.core.node.NodeLogger;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -73,8 +72,6 @@ public class ExtSSHNodeActivator extends Plugin {
     public void start(final BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
-        NodeLogger.getLogger(ExtSSHNodeActivator.class).info(
-                "Starting Plug-in " + PLUGIN_ID);
         BundleContext bundleContext = getBundle().getBundleContext();
         ServiceReference<IJSchService> service = bundleContext.getServiceReference(IJSchService.class);
         m_ijschService = bundleContext.getService(service);
