@@ -103,7 +103,6 @@ public final class SSHUtil {
         Session session = null;
         try {
             session = service.createSession(location, userInfo);
-            session.setConfig("StrictHostKeyChecking", "no");
             session.connect(s.getTimeoutMilliSec());
 
             return session;
