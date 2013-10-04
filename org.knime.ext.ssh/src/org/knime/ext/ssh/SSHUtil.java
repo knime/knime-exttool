@@ -62,11 +62,11 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.ext.ssh.node.ExtSSHToolSettings;
 
 import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UserInfo;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
 
 /**
  *
@@ -103,6 +103,7 @@ public final class SSHUtil {
         Session session = null;
         try {
             session = service.createSession(location, userInfo);
+            session.setConfig("StrictHostKeyChecking", "no");
             session.connect(s.getTimeoutMilliSec());
 
             return session;
