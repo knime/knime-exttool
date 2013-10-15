@@ -83,6 +83,8 @@ public class ExtSSHToolSettings {
 
     private static final String CFG_REMOTEOUTPUT = "remoteOutputFile";
 
+    private static final String CFG_DISABLE_KNOWN_HOSTS = "disableKnownHosts";
+
     private String m_remoteHost;
 
     private int m_portNumber;
@@ -101,6 +103,8 @@ public class ExtSSHToolSettings {
 
     private String m_remoteOutputFile;
 
+    private boolean m_disableKnownHosts;
+
     /**
      * Default constructor with default settings, possibly invalid settings.
      */
@@ -114,6 +118,7 @@ public class ExtSSHToolSettings {
         m_command = "";
         m_remoteInputFile = "";
         m_remoteOutputFile = "";
+        m_disableKnownHosts = false;
     }
 
     /**
@@ -133,6 +138,7 @@ public class ExtSSHToolSettings {
         m_command = settings.getString(CFG_COMMAND);
         m_remoteInputFile = settings.getString(CFG_REMOTEINPUT);
         m_remoteOutputFile = settings.getString(CFG_REMOTEOUTPUT);
+        m_disableKnownHosts = settings.getBoolean(CFG_DISABLE_KNOWN_HOSTS, false);
     }
 
     /**
@@ -159,6 +165,7 @@ public class ExtSSHToolSettings {
         settings.addString(CFG_COMMAND, m_command);
         settings.addString(CFG_REMOTEINPUT, m_remoteInputFile);
         settings.addString(CFG_REMOTEOUTPUT, m_remoteOutputFile);
+        settings.addBoolean(CFG_DISABLE_KNOWN_HOSTS, m_disableKnownHosts);
     }
 
     /**
@@ -346,6 +353,20 @@ public class ExtSSHToolSettings {
      */
     public void setRemoteOutputFile(final String remoteOutputFile) {
         m_remoteOutputFile = remoteOutputFile;
+    }
+
+    /**
+     * @return the disableKnownHosts
+     */
+    public boolean getDisableKnownHosts() {
+        return m_disableKnownHosts;
+    }
+
+    /**
+     * @param disableKnownHosts the disableKnownHosts to set
+     */
+    public void setDisableKnownHosts(final boolean disableKnownHosts) {
+        m_disableKnownHosts = disableKnownHosts;
     }
 
     /**

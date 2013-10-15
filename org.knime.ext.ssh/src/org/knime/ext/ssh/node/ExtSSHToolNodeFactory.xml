@@ -21,7 +21,7 @@
     "General" - "Network Connections" - "SSH2". There the directory with the
     known_hosts file and the private key file can be specified.
     </intro>
-    <option name="Remote Execution Host">Name or IP address of the computer the 
+    <option name="Host">Name or IP address of the computer the 
     command should be executed on. This host must be in the list of known hosts
     (see SSH2 preference page).
     </option>       
@@ -39,7 +39,14 @@
     </option>
     <option name="Passphrase">If your private key file requires a passphrase, enter
     it here.
-    </option>       
+    </option> 
+    <option name="Use known host">The host and its fingerprint have to be known. Further
+    configuration can be found in the "SSH2" preference page. If this is unchecked the
+    check will be bypassed.
+    </option>
+    <option name="Check Connection"> Checks if the current configuration can be used to
+    open a connection to the host.
+    </option>
     <option name="Remote Command">Specify the command that is executed on the
     remote host. It must be found in the remote environment. You can specify 
     arguments (space separated). Use the placeholders &quot;$inFile&quot; and

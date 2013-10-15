@@ -1,4 +1,5 @@
-/* ------------------------------------------------------------------
+/*
+ * ------------------------------------------------------------------------
  *
  *  Copyright (C) 2003 - 2013
  *  University of Konstanz, Germany and
@@ -44,26 +45,29 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  *
- * History
- *   05.06.2009 (ohl): created
+ * Created on Oct 11, 2013 by Patrick Winter, KNIME.com AG, Zurich, Switzerland
  */
 package org.knime.ext.ssh.node;
 
-import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
@@ -72,81 +76,42 @@ import org.knime.ext.ssh.SSHUtil;
 
 /**
  *
- * @author ohl, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME.com AG, Zurich, Switzerland
  */
 public class ExtSSHToolSettingsPanel extends JPanel {
 
-    private static final NodeLogger LOGGER =
-            NodeLogger.getLogger(ExtSSHToolSettingsPanel.class);
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(ExtSSHToolSettingsPanel.class);
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -752825081032880103L;
 
-    private final JTextField m_host = new JTextField(30);
+    private JTextField m_host = new JTextField();
 
-    private final JTextField m_port = new JTextField(5);
+    private JSpinner m_port = new JSpinner(new SpinnerNumberModel(ExtSSHToolSettings.DEFAULT_SSH_PORT, 0, 65535, 1));
 
-    private final JTextField m_timeout = new JTextField(5);
+    private JTextField m_timeout = new JTextField();
 
-    private final JTextField m_user = new JTextField(30);
+    private JTextField m_user = new JTextField();
 
-    private final JPasswordField m_password = new JPasswordField(30);
+    private JPasswordField m_password = new JPasswordField();
+
+    private JPasswordField m_passphrase = new JPasswordField();
+
+    private JTextField m_command = new JTextField();
+
+    private JTextField m_remoteInFile = new JTextField();
+
+    private JTextField m_remoteOutFile = new JTextField();
+
+    private JCheckBox m_useKnownHosts = new JCheckBox();
 
     private boolean m_passwordChanged = false;
 
-    private final JPasswordField m_keyPassphrase = new JPasswordField(30);
-
-    private boolean m_keyPassphraseChanged = false;
-
-    private final JTextField m_command = new JTextField(50);
-
-    private final JTextField m_remoteInFile = new JTextField(50);
-
-    private final JTextField m_remoteOutFile = new JTextField(50);
+    private boolean m_passphraseChanged = false;
 
     /**
-     * Creates a new tab.
+     * Creates the configuration panel.
      */
     ExtSSHToolSettingsPanel() {
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
-        /*
-         * Bordered box for connection controls
-         */
-        Box connectBox = Box.createVerticalBox();
-        connectBox.setBorder(BorderFactory.createTitledBorder(BorderFactory
-                .createEtchedBorder(), "Connect Info:"));
-
-        // Host + Port + Timeout
-        Box hostBox = Box.createHorizontalBox();
-        hostBox.add(new JLabel("Host:"));
-        hostBox.add(Box.createHorizontalStrut(3));
-        hostBox.add(m_host);
-        m_host.setToolTipText("Enter hostname or IP address");
-        hostBox.add(Box.createHorizontalStrut(15));
-        hostBox.add(new JLabel("Port:"));
-        hostBox.add(Box.createHorizontalStrut(3));
-        hostBox.add(m_port);
-        m_port.setToolTipText("Leave empty for default port #"
-                + ExtSSHToolSettings.DEFAULT_SSH_PORT);
-        hostBox.add(Box.createHorizontalStrut(15));
-        hostBox.add(new JLabel("Timeout (sec):"));
-        hostBox.add(Box.createHorizontalStrut(3));
-        hostBox.add(m_timeout);
-        hostBox.add(Box.createHorizontalGlue());
-
-        connectBox.add(Box.createVerticalStrut(5));
-        connectBox.add(hostBox);
-
-        // User + password
-        Box userBox = Box.createHorizontalBox();
-        userBox.add(new JLabel("Username:"));
-        userBox.add(Box.createHorizontalStrut(3));
-        userBox.add(m_user);
-        m_user.setToolTipText("Leave empty for current user");
-        userBox.add(Box.createHorizontalStrut(15));
-        userBox.add(new JLabel("Password:"));
-        userBox.add(Box.createHorizontalStrut(3));
-        userBox.add(m_password);
         m_password.addFocusListener(new FocusAdapter() {
             /** {@inheritDoc} */
             @Override
@@ -156,141 +121,158 @@ public class ExtSSHToolSettingsPanel extends JPanel {
             }
         });
         m_password.setToolTipText("Leave empty if not needed");
-        userBox.add(Box.createHorizontalGlue());
-
-        connectBox.add(Box.createVerticalStrut(5));
-        connectBox.add(userBox);
-
-        // passphrase + check button
-        Box phraseBox = Box.createHorizontalBox();
-        phraseBox.add(new JLabel("Passphrase for private key file:"));
-        phraseBox.add(Box.createHorizontalStrut(3));
-        phraseBox.add(m_keyPassphrase);
-        m_keyPassphrase.addFocusListener(new FocusAdapter() {
+        m_passphrase.addFocusListener(new FocusAdapter() {
             /** {@inheritDoc} */
             @Override
             public void focusGained(final FocusEvent e) {
-                m_keyPassphrase.setText("");
-                m_keyPassphraseChanged = true;
+                m_passphrase.setText("");
+                m_passphraseChanged = true;
             }
         });
+        m_passphrase.setToolTipText("Leave empty if not used or required");
+        m_useKnownHosts.setText("Use known host (as configured in the \"SSH2\" preference page)");
+        m_useKnownHosts.setSelected(true);
+        initPanel();
+    }
 
-        m_keyPassphrase.setToolTipText("Leave empty if not used or required");
-        phraseBox.add(Box.createHorizontalGlue());
-
-        phraseBox.add(Box.createHorizontalGlue());
-        phraseBox.add(Box.createHorizontalGlue());
-
-        JButton checkButton = new JButton("Check Connection");
-        checkButton.setPreferredSize(new Dimension(120, 25));
-        checkButton.setMaximumSize(new Dimension(120, 25));
-        checkButton.setMinimumSize(new Dimension(120, 25));
-        checkButton.addActionListener(new ActionListener() {
+    private void initPanel() {
+        JLabel hostLabel = new JLabel("Host:");
+        JLabel portLabel = new JLabel("Port:");
+        JLabel timeoutLabel = new JLabel("Timeout (seconds):");
+        JLabel userLabel = new JLabel("Username:");
+        JLabel passwordLabel = new JLabel("Password:");
+        JLabel passphraseLabel = new JLabel("Passphrase (key file):");
+        JLabel commandLabel = new JLabel("Remote command:");
+        JLabel remoteInFileLabel = new JLabel("Remote input file:");
+        JLabel remoteOutFileLabel = new JLabel("Remote output file:");
+        JButton checkConnection = new JButton("Check Connection");
+        checkConnection.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 checkConnection();
             }
         });
-        phraseBox.add(checkButton);
-
-        connectBox.add(Box.createVerticalStrut(5));
-        connectBox.add(phraseBox);
-
-        connectBox.add(Box.createVerticalStrut(8));
-        connectBox.add(new JLabel("Please make sure the hostname appears in "
-                + "the list of known hosts in the \"SSH2\" preference page"));
-        /*
-         * Bordered box containing all remote command controls
-         */
-        Box commandBox = Box.createVerticalBox();
-        commandBox.setBorder(BorderFactory.createTitledBorder(BorderFactory
-                .createEtchedBorder(), "Remote Command:"));
-
-        // command line
-        Box cmdBox = Box.createHorizontalBox();
-        cmdBox.add(new JLabel("Remote command line:"));
-        cmdBox.add(Box.createHorizontalStrut(3));
-        cmdBox.add(m_command);
-        m_command.setToolTipText("Command plus arguments. $inFile and "
-                + "$outFile is replaced by the corresp. file name");
-        cmdBox.add(Box.createHorizontalGlue());
-
-        commandBox.add(Box.createVerticalStrut(5));
-        commandBox.add(cmdBox);
-
-        // remote temp input file
-        Box inFileBox = Box.createHorizontalBox();
-        inFileBox.add(new JLabel("Temp. remote input filename:"));
-        inFileBox.add(Box.createHorizontalStrut(3));
-        inFileBox.add(m_remoteInFile);
-        m_remoteInFile.setToolTipText("Input data is written into this file. "
-                + "Enter full remote path and filename.");
-        inFileBox.add(Box.createHorizontalGlue());
-
-        commandBox.add(Box.createVerticalStrut(5));
-        commandBox.add(inFileBox);
-
-        // remote temp output file
-        Box outFileBox = Box.createHorizontalBox();
-        outFileBox.add(new JLabel("Temp. remote output filename:"));
-        outFileBox.add(Box.createHorizontalStrut(3));
-        outFileBox.add(m_remoteOutFile);
-        m_remoteOutFile.setToolTipText("Output data must be in this file. "
-                + "Enter full remote path and filename.");
-        outFileBox.add(Box.createHorizontalGlue());
-
-        commandBox.add(Box.createVerticalStrut(5));
-        commandBox.add(outFileBox);
-
-        // create the panel
-        add(Box.createVerticalStrut(5));
-        add(connectBox);
-        add(Box.createVerticalStrut(10));
-        add(commandBox);
-
+        GridBagConstraints gbc = new GridBagConstraints();
+        // Connection panel
+        JPanel connectionPanel = new JPanel(new GridBagLayout());
+        connectionPanel.setBorder(new TitledBorder(new EtchedBorder(), "Connection Information:"));
+        resetGBC(gbc);
+        connectionPanel.add(hostLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        connectionPanel.add(m_host, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        connectionPanel.add(portLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        connectionPanel.add(m_port, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        connectionPanel.add(timeoutLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        connectionPanel.add(m_timeout, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        connectionPanel.add(userLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        connectionPanel.add(m_user, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        connectionPanel.add(passwordLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        connectionPanel.add(m_password, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        connectionPanel.add(passphraseLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        connectionPanel.add(m_passphrase, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        connectionPanel.add(m_useKnownHosts, gbc);
+        gbc.gridy++;
+        gbc.anchor = GridBagConstraints.NORTHEAST;
+        connectionPanel.add(checkConnection, gbc);
+        // Remote panel
+        JPanel remotePanel = new JPanel(new GridBagLayout());
+        remotePanel.setBorder(new TitledBorder(new EtchedBorder(), "Remote Command:"));
+        resetGBC(gbc);
+        remotePanel.add(commandLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        remotePanel.add(m_command, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        remotePanel.add(remoteInFileLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        remotePanel.add(m_remoteInFile, gbc);
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        remotePanel.add(remoteOutFileLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        remotePanel.add(m_remoteOutFile, gbc);
+        // Outer panel
+        this.setLayout(new GridBagLayout());
+        resetGBC(gbc);
+        gbc.weightx = 1;
+        this.add(connectionPanel, gbc);
+        gbc.gridy++;
+        this.add(remotePanel, gbc);
     }
 
     /**
-     * Called by the parent to load new settings into the tab.
+     * Load the settings.
      *
-     * @param settings the new settings to take over
+     * @param settings Object containing the settings.
      */
     void loadSettings(final ExtSSHToolSettings settings) {
-        transferSettingsIntoComponents(settings);
-    }
-
-    /**
-     * Called by the parent to get current values saved into the settings
-     * object.
-     *
-     * @param settings the object to write the currently entered values into
-     */
-    void saveSettings(final ExtSSHToolSettings settings)
-            throws InvalidSettingsException {
-        transferComponentsValuesIntoSettings(settings);
-    }
-
-    /**
-     * Transfers the currently entered values from this tab's components into
-     * the provided settings object.
-     */
-    private void transferComponentsValuesIntoSettings(
-            final ExtSSHToolSettings settings) throws InvalidSettingsException {
-
-        settings.setRemoteHost(m_host.getText().trim());
-
-        try {
-            String portnumber = m_port.getText().trim();
-            if (!portnumber.isEmpty()) {
-                int portNr = Integer.parseInt(portnumber);
-                settings.setPortNumber(portNr);
-            } else {
-                settings.setPortNumber(-1);
-            }
-        } catch (NumberFormatException nfe) {
-            throw new InvalidSettingsException(
-                    "Invalid port number (please enter a number).");
+        m_host.setText(settings.getRemoteHost());
+        if (settings.getPortNumber() >= 0) {
+            m_port.setValue(settings.getPortNumber());
+        } else {
+            m_port.setValue(ExtSSHToolSettings.DEFAULT_SSH_PORT);
         }
+        if (settings.getTimeout() > 0) {
+            m_timeout.setText("" + settings.getTimeout());
+        } else {
+            m_timeout.setText("");
+        }
+        m_user.setText(settings.getUser());
+        m_password.setText(settings.getEncryptPassword());
+        m_passwordChanged = false;
+        m_passphrase.setText(settings.getEncryptKeyPassphrase());
+        m_passphraseChanged = false;
+        m_command.setText(settings.getCommand());
+        m_remoteInFile.setText(settings.getRemoteInputFile());
+        m_remoteOutFile.setText(settings.getRemoteOutputFile());
+        m_useKnownHosts.setSelected(!settings.getDisableKnownHosts());
+    }
 
+    /**
+     * Save the current settings.
+     *
+     * @param settings Object to put the settings in.
+     * @throws InvalidSettingsException If the current configuration is invalid.
+     */
+    void saveSettings(final ExtSSHToolSettings settings) throws InvalidSettingsException {
+        settings.setRemoteHost(m_host.getText().trim());
+        settings.setPortNumber((Integer)m_port.getValue());
         try {
             String timeout = m_timeout.getText().trim();
             if (!timeout.isEmpty()) {
@@ -300,15 +282,11 @@ public class ExtSSHToolSettingsPanel extends JPanel {
                 settings.setTimeout(-1);
             }
         } catch (NumberFormatException nfe) {
-            throw new InvalidSettingsException(
-                    "Invalid timeout (please enter a number).");
+            throw new InvalidSettingsException("Invalid timeout (please enter a number).");
         }
-
         settings.setUser(m_user.getText().trim());
         if (!m_passwordChanged) {
-            String pass =
-                    m_password.getPassword().length == 0 ? null : new String(
-                            m_password.getPassword());
+            String pass = m_password.getPassword().length == 0 ? null : new String(m_password.getPassword());
             settings.setEncryptPassword(pass);
         } else {
             try {
@@ -323,82 +301,44 @@ public class ExtSSHToolSettingsPanel extends JPanel {
                 if (e.getMessage() != null) {
                     msg = e.getMessage();
                 }
-                LOGGER.error("Encryption of password failed. Not stored! ("
-                        + msg + ")", e);
+                LOGGER.error("Encryption of password failed. Not stored! (" + msg + ")", e);
                 settings.setEncryptPassword(null);
             }
         }
-        if (!m_keyPassphraseChanged) {
-            String keyPhrase =
-                    m_keyPassphrase.getPassword().length == 0 ? null
-                            : new String(m_keyPassphrase.getPassword());
+        if (!m_passphraseChanged) {
+            String keyPhrase = m_passphrase.getPassword().length == 0 ? null : new String(m_passphrase.getPassword());
             settings.setEncryptKeyPassphrase(keyPhrase);
         } else {
             try {
-                char[] pass = m_keyPassphrase.getPassword();
+                char[] pass = m_passphrase.getPassword();
                 if (pass == null || pass.length == 0) {
                     settings.setEncryptKeyPassphrase(null);
                 } else {
-                    settings.setEncryptKeyPassphrase(KnimeEncryption
-                            .encrypt(pass));
+                    settings.setEncryptKeyPassphrase(KnimeEncryption.encrypt(pass));
                 }
             } catch (Exception e) {
                 String msg = "<no details>";
                 if (e.getMessage() != null) {
                     msg = e.getMessage();
                 }
-                LOGGER.error("Encryption of passphrase failed. Not stored! ("
-                        + msg + ")", e);
+                LOGGER.error("Encryption of passphrase failed. Not stored! (" + msg + ")", e);
                 settings.setEncryptKeyPassphrase(null);
             }
         }
-
         settings.setCommand(m_command.getText());
         settings.setRemoteInputFile(m_remoteInFile.getText());
         settings.setRemoteOutputFile(m_remoteOutFile.getText());
-    }
-
-    /**
-     * Simply reads all values from the settings object and transfers them into
-     * the dialog's components.
-     *
-     * @param settings the settings values to display
-     */
-    private void transferSettingsIntoComponents(
-            final ExtSSHToolSettings settings) {
-
-        m_host.setText(settings.getRemoteHost());
-
-        if (settings.getPortNumber() >= 0) {
-            m_port.setText("" + settings.getPortNumber());
-        } else {
-            m_port.setText("");
-        }
-        if (settings.getTimeout() > 0) {
-            m_timeout.setText("" + settings.getTimeout());
-        } else {
-            m_timeout.setText("");
-        }
-        m_user.setText(settings.getUser());
-        m_password.setText(settings.getEncryptPassword());
-        m_passwordChanged = false;
-        m_keyPassphrase.setText(settings.getEncryptKeyPassphrase());
-        m_keyPassphraseChanged = false;
-        m_command.setText(settings.getCommand());
-        m_remoteInFile.setText(settings.getRemoteInputFile());
-        m_remoteOutFile.setText(settings.getRemoteOutputFile());
-
+        settings.setDisableKnownHosts(!m_useKnownHosts.isSelected());
     }
 
     private void checkConnection() {
-        ExtSSHToolSettings s = new ExtSSHToolSettings();
+        ExtSSHToolSettings settings = new ExtSSHToolSettings();
         try {
-            transferComponentsValuesIntoSettings(s);
-            SSHUtil.getConnectedSession(s);
+            saveSettings(settings);
+            SSHUtil.getConnectedSession(settings);
             JOptionPane.showMessageDialog(this, "Looks good.");
         } catch (InvalidSettingsException ise) {
-            JOptionPane.showMessageDialog(this,
-                    "Can't connect - invalid settings: " + ise.getMessage());
+            JOptionPane.showMessageDialog(this, "Can't connect - invalid settings: " + ise.getMessage());
         } catch (Throwable t) {
             String msg = "<no details>";
             if (t.getMessage() != null && !t.getMessage().isEmpty()) {
@@ -406,6 +346,18 @@ public class ExtSSHToolSettingsPanel extends JPanel {
             }
             JOptionPane.showMessageDialog(this, "Connection failed:\n" + msg);
         }
+    }
+
+    private static void resetGBC(final GridBagConstraints gbc) {
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
     }
 
 }
