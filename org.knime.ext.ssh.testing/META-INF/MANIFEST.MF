@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Unit-Tests for org.knime.ext.ssh
 Bundle-SymbolicName: org.knime.ext.ssh.testing;singleton:=true
-Bundle-Version: 2.8.0.qualifier
-Fragment-Host: org.knime.ext.ssh;bundle-version="[2.8.0,3.0.0)"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-Version: 2.9.0.qualifier
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
+Fragment-Host: org.knime.ext.ssh;bundle-version="[2.8.0,3.0.0)"
+Export-Package: org.knime.ext.ssh
 Require-Bundle: org.junit4;bundle-version="[4.8.1,5.0.0)",
  org.knime.testing;bundle-version="[2.7.0,3.0.0)"
-Export-Package: org.knime.ext.ssh
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
