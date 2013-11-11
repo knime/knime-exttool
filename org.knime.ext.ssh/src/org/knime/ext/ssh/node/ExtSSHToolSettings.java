@@ -49,6 +49,8 @@
  */
 package org.knime.ext.ssh.node;
 
+import java.io.File;
+
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -61,6 +63,9 @@ import com.jcraft.jsch.UserInfo;
  * @author ohl, University of Konstanz
  */
 public class ExtSSHToolSettings {
+
+    // Windows accepts windows and unix paths, unix only accepts unix paths
+    private static final String VALID_PATH_REGEX = File.separatorChar == '/' ? "/.*" : "[\\\\/].*|[a-zA-Z]:\\\\.*";
 
     /** default port. */
     public static final int DEFAULT_SSH_PORT = 22;
@@ -187,6 +192,12 @@ public class ExtSSHToolSettings {
         }
         if (m_remoteOutputFile.isEmpty()) {
             return "The remote path for the output table file must be set.";
+        }
+        if (!m_remoteInputFile.matches(VALID_PATH_REGEX)) {
+            return "'" + m_remoteInputFile + "' is not a valid absolute path for the remote input file.";
+        }
+        if (!m_remoteOutputFile.matches(VALID_PATH_REGEX)) {
+            return "'" + m_remoteOutputFile + "' is not a valid absolute path for the remote output file.";
         }
         return null;
     }
