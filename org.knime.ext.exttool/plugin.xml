@@ -4,7 +4,6 @@
    <extension
          point="org.knime.workbench.repository.nodes">
       <node
-            after="org.knime.ext.sun.nodes.script.JavaScriptingNodeFactory"
             category-path="/misc"
             factory-class="org.knime.ext.exttool.ExtToolNodeFactory"
             id="org.knime.ext.externaltool.ExtToolNodeFactory"/>         
