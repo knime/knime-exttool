@@ -12,5 +12,5 @@ Export-Package: org.knime.exttool,
  org.knime.exttool.node
 Require-Bundle: org.knime.base;bundle-version="[2.5.0,3.0.0)"
 Eclipse-RegisterBuddy: org.knime.base
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
