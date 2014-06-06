@@ -50,11 +50,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
-import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +83,8 @@ import com.jcraft.jsch.SftpException;
  * @author Thorsten Meinl, University of Konstanz
  */
 public class SftpURLConnection extends URLConnection {
-    private static final WeakHashMap<String, Session> sessionCache = new WeakHashMap<String, Session>();
+    private static final Map<String, SoftReference<Session>> sessionCache =
+        new HashMap<String, SoftReference<Session>>();
 
     /** Protocol scheme for SFTP connection: {@value} . */
     public static final String SCHEME = "sftp";
@@ -117,8 +120,9 @@ public class SftpURLConnection extends URLConnection {
 
     private Session getSession() throws JSchException {
         String key = url.getUserInfo() + "@" + url.getHost();
-        Session s = sessionCache.get(key);
-        if ((s == null) || !s.isConnected()) {
+        SoftReference<Session> ref = sessionCache.get(key);
+        Session s;
+        if ((ref == null) || ((s = ref.get()) == null) || !s.isConnected()) {
             IJSchService service = ExtSSHNodeActivator.getDefault().getIJSchService();
             String userInfo = url.getUserInfo();
             int colonIndex = userInfo.indexOf(':');
@@ -135,7 +139,7 @@ public class SftpURLConnection extends URLConnection {
             s.setPassword(password);
             s.setTimeout(getReadTimeout());
             s.connect(getConnectTimeout());
-            sessionCache.put(key, s);
+            sessionCache.put(key, new SoftReference<Session>(s));
         }
         return s;
     }
