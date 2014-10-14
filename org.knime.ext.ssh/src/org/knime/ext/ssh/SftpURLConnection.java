@@ -235,10 +235,10 @@ public class SftpURLConnection extends URLConnection {
         }
     }
 
-    private InputStream createFileInputStream() throws JSchException, SftpException {
+    private InputStream createFileInputStream() throws JSchException, SftpException, UnsupportedEncodingException {
         final ChannelSftp channel = (ChannelSftp)m_session.openChannel("sftp");
         channel.connect(getConnectTimeout());
-        final InputStream in = channel.get(url.getPath());
+        final InputStream in = channel.get(URLDecoder.decode(url.getPath(), "UTF-8"));
 
         return new InputStream() {
             /**
