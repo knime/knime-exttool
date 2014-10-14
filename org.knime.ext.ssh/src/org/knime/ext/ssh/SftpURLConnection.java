@@ -138,6 +138,7 @@ public class SftpURLConnection extends URLConnection {
             s = service.createSession(url.getHost(), url.getPort(), username);
             s.setPassword(password);
             s.setTimeout(getReadTimeout());
+            s.setHostKeyRepository(service.getJSch().getHostKeyRepository());
             s.connect(getConnectTimeout());
             sessionCache.put(key, new SoftReference<Session>(s));
         }
@@ -149,17 +150,23 @@ public class SftpURLConnection extends URLConnection {
      */
     @Override
     public void connect() throws IOException {
+        ChannelSftp channel = null;
         try {
             m_session = getSession();
-            ChannelSftp channel = (ChannelSftp)m_session.openChannel("sftp");
+            channel = (ChannelSftp)m_session.openChannel("sftp");
             channel.connect(getConnectTimeout());
             m_attrs = channel.lstat(getPath());
-            channel.disconnect();
-            connected = true;
         } catch (JSchException ex) {
             throw new IOException(ex);
         } catch (SftpException ex) {
-            throw new IOException(ex);
+            if (!ex.getMessage().equals("No such file")) {
+                throw new IOException(ex);
+            }
+        } finally {
+            connected = true;
+            if (channel != null) {
+                channel.disconnect();
+            }
         }
     }
 
@@ -200,7 +207,7 @@ public class SftpURLConnection extends URLConnection {
             connect();
         }
         try {
-            if (m_attrs.isDir()) {
+            if ((m_attrs != null) && m_attrs.isDir()) {
                 if (dirContentsRequested()) {
                     return createDirContentsInputStream();
                 } else {
@@ -307,7 +314,7 @@ public class SftpURLConnection extends URLConnection {
         if (!connected) {
             connect();
         }
-        if (m_attrs.isDir()) {
+        if ((m_attrs != null) && m_attrs.isDir()) {
             throw new IOException("Cannot write to a directory");
         }
         try {

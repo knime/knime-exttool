@@ -127,21 +127,26 @@ public class SftpURLConnectionTest {
      */
     @Test
     public void testWrite() throws Exception {
-        File tempFile = File.createTempFile("SFTPURLTest", ".txt");
-        tempFile.deleteOnExit();
+        File tempDir = FileUtil.createTempDir("SFTPURLTest");
+        File tempFile = new File(tempDir, "test.txt");
 
+        writeAndCheck(tempFile); // test non-existing file
+        writeAndCheck(tempFile); // test existing file
+    }
+
+    private void writeAndCheck(final File tempFile) throws IOException {
         String writtenContents = new Date().toString();
         URL url = new URL("sftp://" + System.getProperty("user.name") + "@localhost" + getPath(tempFile));
         URLConnection conn = url.openConnection();
-        OutputStream out = conn.getOutputStream();
-        out.write(writtenContents.getBytes());
-        out.flush();
-        out.close();
+        try (OutputStream out = conn.getOutputStream()) {
+            out.write(writtenContents.getBytes());
+            out.flush();
+        }
 
-        BufferedReader in = new BufferedReader(new FileReader(tempFile));
-        String readContents = in.readLine();
-        in.close();
-        assertThat("Unexpected data written via sftp protocol", readContents, is(writtenContents));
+        try (BufferedReader in = new BufferedReader(new FileReader(tempFile))) {
+            String readContents = in.readLine();
+            assertThat("Unexpected data written via sftp protocol", readContents, is(writtenContents));
+        }
     }
 
     @Test
