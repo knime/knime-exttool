@@ -50,9 +50,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -125,13 +127,18 @@ public class SftpURLConnection extends URLConnection {
         if ((ref == null) || ((s = ref.get()) == null) || !s.isConnected()) {
             IJSchService service = ExtSSHNodeActivator.getDefault().getIJSchService();
             String userInfo = url.getUserInfo();
-            int colonIndex = userInfo.indexOf(':');
             String username, password;
-            if (colonIndex >= 0) {
-                username = userInfo.substring(0, colonIndex);
-                password = userInfo.substring(colonIndex + 1);
+            if (userInfo != null) {
+                int colonIndex = userInfo.indexOf(':');
+                if (colonIndex >= 0) {
+                    username = userInfo.substring(0, colonIndex);
+                    password = userInfo.substring(colonIndex + 1);
+                } else {
+                    username = userInfo;
+                    password = null;
+                }
             } else {
-                username = userInfo;
+                username = System.getProperty("user.name");
                 password = null;
             }
 
@@ -326,10 +333,10 @@ public class SftpURLConnection extends URLConnection {
         }
     }
 
-    private OutputStream createFileOutputStream() throws SftpException, JSchException {
+    private OutputStream createFileOutputStream() throws SftpException, JSchException, UnsupportedEncodingException {
         final ChannelSftp channel = (ChannelSftp)m_session.openChannel("sftp");
         channel.connect(getConnectTimeout());
-        final OutputStream out = channel.put(url.getPath());
+        final OutputStream out = channel.put(URLDecoder.decode(url.getPath(), "UTF-8"));
 
         return new OutputStream() {
             /**
