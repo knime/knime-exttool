@@ -120,10 +120,19 @@ public class SftpURLConnection extends URLConnection {
         return m.matches() && "d".equals(m.group(2));
     }
 
-    private Session getSession() throws JSchException {
+    private Session getSession(final boolean forceNewSession) throws JSchException {
         String key = url.getUserInfo() + "@" + url.getHost();
         SoftReference<Session> ref = sessionCache.get(key);
         Session s;
+
+        if ((ref != null) && forceNewSession) {
+            if ((s = ref.get()) != null) {
+                s.disconnect();
+            }
+            sessionCache.remove(key);
+            ref = null;
+        }
+
         if ((ref == null) || ((s = ref.get()) == null) || !s.isConnected()) {
             IJSchService service = ExtSSHNodeActivator.getDefault().getIJSchService();
             String userInfo = url.getUserInfo();
@@ -159,10 +168,9 @@ public class SftpURLConnection extends URLConnection {
     public void connect() throws IOException {
         ChannelSftp channel = null;
         try {
-            m_session = getSession();
-            channel = (ChannelSftp)m_session.openChannel("sftp");
-            channel.connect(getConnectTimeout());
+            channel = openChannel();
             m_attrs = channel.lstat(getPath());
+            connected = true;
         } catch (JSchException ex) {
             throw new IOException(ex);
         } catch (SftpException ex) {
@@ -170,11 +178,29 @@ public class SftpURLConnection extends URLConnection {
                 throw new IOException(ex);
             }
         } finally {
-            connected = true;
             if (channel != null) {
                 channel.disconnect();
             }
         }
+    }
+
+    private ChannelSftp openChannel() throws JSchException {
+        // the retry is a workaround for when there are too many open connections in one session
+        ChannelSftp channel;
+        int retries = 1;
+        do {
+            m_session = getSession(retries == 0);
+            channel = (ChannelSftp)m_session.openChannel("sftp");
+            try {
+                channel.connect(getConnectTimeout());
+                retries = 0;
+            } catch (JSchException ex) {
+                if (channel.getExitStatus() != 1) {
+                    throw ex;
+                } // otherwise try again
+            }
+        } while (retries-- > 0);
+        return channel;
     }
 
     /**
@@ -236,8 +262,7 @@ public class SftpURLConnection extends URLConnection {
     }
 
     private InputStream createFileInputStream() throws JSchException, SftpException, UnsupportedEncodingException {
-        final ChannelSftp channel = (ChannelSftp)m_session.openChannel("sftp");
-        channel.connect(getConnectTimeout());
+        final ChannelSftp channel = openChannel();
         final InputStream in = channel.get(URLDecoder.decode(url.getPath(), "UTF-8"));
 
         return new InputStream() {
@@ -334,8 +359,7 @@ public class SftpURLConnection extends URLConnection {
     }
 
     private OutputStream createFileOutputStream() throws SftpException, JSchException, UnsupportedEncodingException {
-        final ChannelSftp channel = (ChannelSftp)m_session.openChannel("sftp");
-        channel.connect(getConnectTimeout());
+        final ChannelSftp channel = openChannel();
         final OutputStream out = channel.put(URLDecoder.decode(url.getPath(), "UTF-8"));
 
         return new OutputStream() {
