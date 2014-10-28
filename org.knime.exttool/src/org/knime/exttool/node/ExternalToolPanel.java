@@ -279,6 +279,7 @@ public class ExternalToolPanel extends JPanel {
         AbstractCommandlineSettings cmdSets = settings.getCommandlineSettings();
 //        m_commandlineControl.saveGlobalSettingsGlobal(settings);
         m_commandlineControl.saveSettings(cmdSets);
+        m_executablePanel.addToHistory();
     }
 
     /** Test method for this panel.
