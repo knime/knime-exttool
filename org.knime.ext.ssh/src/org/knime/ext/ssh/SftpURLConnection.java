@@ -186,21 +186,22 @@ public class SftpURLConnection extends URLConnection {
 
     private ChannelSftp openChannel() throws JSchException {
         // the retry is a workaround for when there are too many open connections in one session
-        ChannelSftp channel;
         int retries = 1;
+        JSchException lastException = null;
         do {
             m_session = getSession(retries == 0);
-            channel = (ChannelSftp)m_session.openChannel("sftp");
+            ChannelSftp channel = (ChannelSftp)m_session.openChannel("sftp");
             try {
                 channel.connect(getConnectTimeout());
-                retries = 0;
+                return channel;
             } catch (JSchException ex) {
-                if (channel.getExitStatus() != 1) {
+                lastException = ex;
+                if (m_session.isConnected() && (channel.getExitStatus() != 1)) {
                     throw ex;
-                } // otherwise try again
+                } // otherwise try again, e.g. if session is down
             }
         } while (retries-- > 0);
-        return channel;
+        throw lastException;
     }
 
     /**
