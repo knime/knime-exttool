@@ -15,7 +15,6 @@
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/labs"
-            expert-flag="false"
             factory-class="org.knime.exttool.chem.babel.BabelNodeFactory"
             id="org.knime.exttool.chem.babel.BabelNodeFactory">
       </node>
