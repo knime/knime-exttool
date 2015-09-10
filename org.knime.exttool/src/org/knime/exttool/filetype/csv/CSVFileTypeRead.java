@@ -102,7 +102,6 @@ class CSVFileTypeRead extends AbstractFileTypeRead {
         settings.setDelimiterUserSet(true);
 
         settings.setDataFileLocationAndUpdateTableName(input.toURI().toURL());
-        settings.setTableName("exttool input");
 
         settings.addRowDelimiter(m_csvReadConfig.getRowDelimiter(), true);
 
