@@ -73,6 +73,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.property.hilite.HiLiteHandler;
 import org.knime.core.util.tokenizer.SettingsStatus;
+import org.knime.core.util.tokenizer.TokenizerSettings;
 
 /**
  * Implements a node that launches an external executable. Most of its
@@ -258,7 +259,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
 
         FileWriterSettings settings = new FileWriterSettings();
 
-        String escInSep = FileReaderSettings.unescapeString(m_inSeparator);
+        String escInSep = TokenizerSettings.unescapeString(m_inSeparator);
         settings.setColSeparator(escInSep);
         settings.setWriteColumnHeader(m_includeColHdr);
         settings.setWriteRowID(m_includeRowHdr);
@@ -314,14 +315,13 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
 
         // prepare the settings for the file analyzer
         FileReaderNodeSettings settings = new FileReaderNodeSettings();
-        String escOutSep = FileReaderSettings.unescapeString(m_outSeparator);
+        String escOutSep = TokenizerSettings.unescapeString(m_outSeparator);
         settings.addDelimiterPattern(escOutSep, false, false, false);
         settings.addRowDelimiter("\n", true);
         settings.addQuotePattern("\"", "\"");
         settings.setCommentUserSet(true);
         settings.setDataFileLocationAndUpdateTableName(m_outFile.toURI()
                 .toURL());
-        settings.setTableName(m_extExecutable.getName() + " output");
         settings.setDelimiterUserSet(true);
         settings.setFileHasColumnHeaders(m_hasColHdr);
         settings.setFileHasColumnHeadersUserSet(true);
@@ -521,7 +521,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
                     + " file is invalid (empty)");
         }
         // replace \t \\, etc.
-        String escInSep = FileReaderSettings.unescapeString(tmpInSeparator);
+        String escInSep = TokenizerSettings.unescapeString(tmpInSeparator);
         if (escInSep.length() > 1) {
             throw new InvalidSettingsException("The separator for the input"
                     + " file can only be one character.");
