@@ -60,7 +60,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
-import org.knime.chem.types.Mol2Cell;
+import org.knime.chem.types.Mol2AdapterCell;
 import org.knime.chem.types.Mol2CellFactory;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -90,7 +90,7 @@ public class Mol2Reader {
 
     /** Column spec for the structure column. */
     public static final DataColumnSpec MOLECULE_COL_SPEC =
-            new DataColumnSpecCreator("Molecule", Mol2Cell.TYPE).createSpec();
+            new DataColumnSpecCreator("Molecule", Mol2AdapterCell.RAW_TYPE).createSpec();
 
     /** Column spec for name column (if {@link #isExtractMolName()}). */
     public static final DataColumnSpec MOLECULE_COLNAME_SPEC =
@@ -258,7 +258,7 @@ public class Mol2Reader {
      */
     private void addMol(final StringBuilder buf, final String title,
             final String moleculeName, final DataContainer cont) {
-        DataCell mol2Cell = Mol2CellFactory.create(buf.toString());
+        DataCell mol2Cell = Mol2CellFactory.createAdapterCell(buf.toString());
         RowKey key = new RowKey(title);
         DataCell[] cells;
         if (m_extractMolName) {
