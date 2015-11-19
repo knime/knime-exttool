@@ -52,8 +52,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-import org.knime.chem.base.node.io.sdf.DefaultSDFWriter;
-import org.knime.chem.base.node.io.sdf.SDFWriterSettings;
+import org.knime.chem.base.node.io.sdfwriter2.DefaultSDFWriter;
+import org.knime.chem.base.node.io.sdfwriter2.SDFWriterSettings;
 import org.knime.chem.types.SdfValue;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
@@ -61,6 +61,8 @@ import org.knime.core.data.RowIterator;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.util.filter.InputFilter;
+import org.knime.core.node.util.filter.column.DataColumnSpecFilterConfiguration;
 import org.knime.exttool.filetype.AbstractFileTypeWrite;
 import org.knime.exttool.filetype.AbstractFileTypeWriteConfig;
 
@@ -89,8 +91,13 @@ public class SdfFileTypeWrite extends AbstractFileTypeWrite {
         SdfFileTypeWriteConfig conf = (SdfFileTypeWriteConfig)config;
         String targetColumn = conf.getColumn();
         m_settings.structureColumn(targetColumn);
-        m_settings.clearProperties();
-        m_settings.addProperyColumns(conf.getPropertiesColumns());
+        m_settings.setFilterConfiguration(
+            new DataColumnSpecFilterConfiguration("column-filter", new InputFilter<DataColumnSpec>() {
+                @Override
+                public boolean include(final DataColumnSpec colSpec) {
+                    return conf.getPropertiesColumns().contains(colSpec.getName());
+                }
+            }));
     }
 
     /** {@inheritDoc} */
