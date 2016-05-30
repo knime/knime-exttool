@@ -5,8 +5,6 @@
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/toolintegration"
-            factory-class="org.knime.ext.exttool.ExtToolNodeFactory"
-            id="org.knime.ext.externaltool.ExtToolNodeFactory"/>         
+            factory-class="org.knime.ext.exttool.ExtToolNodeFactory"/>         
    </extension>
-
 </plugin>

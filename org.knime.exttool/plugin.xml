@@ -5,18 +5,9 @@
    <extension-point id="executor" name="Executor" schema="schema/executor.exsd"/>
    <extension
          point="org.knime.workbench.repository.nodes">
-<!--
-    The "String to Smiles" parser node is deprecated. It's been replaced by
-    the more generic MolParser (which allows also conversion to SDF, Mol2,...)
-	<node
-          category-path="/chemistry/translators"
-          factory-class="org.knime.chem.exttool.node.converter.string2smiles.String2SmilesNodeFactory"
-          id="org.knime.chem.exttool.node.converter.string2smiles.String2SmilesNodeFactory"/> -->
     <node
           category-path="/labs"
-          factory-class="org.knime.exttool.node.ExttoolNodeFactory"
-          id="org.knime.exttool.node.base.ExttoolNodeFactory"/>
-            
+          factory-class="org.knime.exttool.node.ExttoolNodeFactory"/>
 	</extension>
    <extension
          point="org.knime.exttool.executor">

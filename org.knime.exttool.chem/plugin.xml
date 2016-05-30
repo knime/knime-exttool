@@ -10,14 +10,11 @@
             factory="org.knime.exttool.chem.filetype.mol2.Mol2FileTypeFactory">
       </type>
    </extension>
-   <!--
    <extension
          point="org.knime.workbench.repository.nodes">
-      <node
+      <node deprecated="true"
             category-path="/labs"
-            factory-class="org.knime.exttool.chem.babel.BabelNodeFactory"
-            id="org.knime.exttool.chem.babel.BabelNodeFactory">
+            factory-class="org.knime.exttool.chem.babel.BabelNodeFactory">
       </node>
-   </extension>-->
-
+   </extension>
 </plugin>
