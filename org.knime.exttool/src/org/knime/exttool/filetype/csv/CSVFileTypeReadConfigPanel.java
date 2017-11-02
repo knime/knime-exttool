@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ import org.knime.exttool.filetype.AbstractFileTypeReadConfigPanel;
 /** Configuration panel to CSV input files. It has controls for column header
  * (flag), row and column delimiters and quote characters.
  *
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 @SuppressWarnings("serial")
 final class CSVFileTypeReadConfigPanel extends AbstractFileTypeReadConfigPanel {

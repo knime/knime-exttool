@@ -4,7 +4,7 @@ Bundle-Name: KNIME Ext SSH Node Plug-in
 Bundle-SymbolicName: org.knime.ext.ssh;singleton:=true
 Bundle-Version: 3.5.0.qualifier
 Bundle-Activator: org.knime.ext.ssh.ExtSSHNodeActivator
-Bundle-Vendor: KNIME GmbH, Konstanz, Germany
+Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Export-Package: org.knime.ext.ssh,
  org.knime.ext.ssh.node
 Require-Bundle: org.knime.base;bundle-version="[3.0.0,4.0.0)",

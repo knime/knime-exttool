@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,7 @@ import org.knime.exttool.node.AbstractCommandlineSettings;
 /** GUI control elements for the Babel control panel. It has a column selection
  * combo box (choosing Mol2 and Sdf type columns) and button group, in which
  * the user can choose the output format.
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 final class BabelCommandlineControl extends AbstractCommandlineControl {
 

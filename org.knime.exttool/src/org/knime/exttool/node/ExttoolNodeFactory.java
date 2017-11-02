@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ import org.knime.core.node.NodeView;
  * different extension options see the {@link ExttoolCustomizer} class
  * description and the {@link ExttoolNodeFactory#ExttoolNodeFactory() example}
  * in the constructor documentation.
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 public class ExttoolNodeFactory extends NodeFactory<ExttoolNodeModel> {
 

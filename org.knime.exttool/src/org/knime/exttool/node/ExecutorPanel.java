@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,7 @@ import org.knime.exttool.executor.AbstractExttoolExecutorFactory;
  * Panel that allows the user to select and customize an executor.
  * @see AbstractExttoolExecutorFactory
  * @see AbstractExttoolExecutorConfigPanel
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 @SuppressWarnings("serial")
 public class ExecutorPanel extends JPanel {

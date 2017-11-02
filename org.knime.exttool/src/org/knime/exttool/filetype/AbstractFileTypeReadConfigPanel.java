@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ import org.knime.core.node.InvalidSettingsException;
  * A panel allowing the user to customize the reading of the generated
  * output files. It is the view to {@link AbstractFileTypeReadConfig}.
  *
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 @SuppressWarnings("serial")
 public abstract class AbstractFileTypeReadConfigPanel extends JPanel {

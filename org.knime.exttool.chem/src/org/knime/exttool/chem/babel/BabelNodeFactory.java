@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ import org.knime.exttool.node.ExttoolNodeFactory;
  * in- and output panels from the default external tool dialog. It also
  * registers a custom command line settings object to replace the default
  * free format text area by appropriate GUI elements.
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 public class BabelNodeFactory extends ExttoolNodeFactory {
 

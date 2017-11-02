@@ -4,7 +4,7 @@ Bundle-Name: KNIME External Tool nodes
 Bundle-SymbolicName: org.knime.exttool;singleton:=true
 Bundle-Version: 3.5.0.qualifier
 Bundle-ClassPath: .
-Bundle-Vendor: KNIME GmbH, Konstanz, Germany
+Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Export-Package: org.knime.exttool,
  org.knime.exttool.executor,
  org.knime.exttool.filetype,

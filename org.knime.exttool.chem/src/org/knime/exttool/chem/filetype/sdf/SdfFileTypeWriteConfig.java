@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ import org.knime.exttool.filetype.DefaultFileTypeWriteConfig;
 /** SDF file write config. Contains settings for target column and included
  * properties. Only the target column can currently be set in the dialog.
  *
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 public class SdfFileTypeWriteConfig extends DefaultFileTypeWriteConfig {
 

@@ -3,7 +3,7 @@
       id="org.knime.features.exttool"
       label="KNIME External Tool Support (Labs)"
       version="3.5.0.qualifier"
-      provider-name="KNIME GmbH, Konstanz, Germany"
+      provider-name="KNIME AG, Zurich, Switzerland"
       plugin="org.knime.exttool">
 
    <description>
@@ -12,7 +12,7 @@
    </description>
 
    <copyright>
-      Copyright by KNIME GmbH, Konstanz, Germany
+      Copyright by KNIME AG, Zurich, Switzerland
    </copyright>
 
    <license>

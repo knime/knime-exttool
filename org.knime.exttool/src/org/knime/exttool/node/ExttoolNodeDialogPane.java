@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ import org.knime.core.node.NotConfigurableException;
 /**
  * Dialog of the external tool node. It combines a main panel and additional
  * panels for input and output selection.
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 public class ExttoolNodeDialogPane extends NodeDialogPane {
 

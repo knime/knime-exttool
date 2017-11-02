@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,7 @@ import org.knime.exttool.node.ExttoolCustomizer.Chunking;
  * command line controls}. Some of this panels can be switched on/off depending
  * upon their setting in the {@link ExttoolCustomizer}.
  *
- * @author Bernd Wiswedel, KNIME.com, Zurich, Switzerland
+ * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 @SuppressWarnings("serial")
 public class ExternalToolPanel extends JPanel {
