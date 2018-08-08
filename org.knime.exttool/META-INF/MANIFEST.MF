@@ -2,14 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: KNIME External Tool nodes
 Bundle-SymbolicName: org.knime.exttool;singleton:=true
-Bundle-Version: 3.6.0.qualifier
+Bundle-Version: 3.7.0.qualifier
 Bundle-ClassPath: .
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Export-Package: org.knime.exttool,
- org.knime.exttool.executor,
- org.knime.exttool.filetype,
- org.knime.exttool.filetype.csv,
- org.knime.exttool.node
+  org.knime.exttool.executor,
+  org.knime.exttool.filetype,
+  org.knime.exttool.filetype.csv,
+  org.knime.exttool.node
 Require-Bundle: org.knime.base;bundle-version="[3.0.0,4.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Eclipse-RegisterBuddy: org.knime.base
