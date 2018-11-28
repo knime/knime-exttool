@@ -264,79 +264,84 @@ public class SftpURLConnection extends URLConnection {
 
     private InputStream createFileInputStream() throws JSchException, SftpException, UnsupportedEncodingException {
         final ChannelSftp channel = openChannel();
-        final InputStream in = channel.get(URLDecoder.decode(url.getPath(), "UTF-8"));
+        try {
+            final InputStream in = channel.get(URLDecoder.decode(url.getPath(), "UTF-8"));
 
-        return new InputStream() {
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public int available() throws IOException {
-                return in.available();
-            }
+            return new InputStream() {
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public int available() throws IOException {
+                    return in.available();
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void close() throws IOException {
-                in.close();
-                channel.disconnect();
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void close() throws IOException {
+                    in.close();
+                    channel.disconnect();
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public synchronized void mark(final int readlimit) {
-                in.mark(readlimit);
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public synchronized void mark(final int readlimit) {
+                    in.mark(readlimit);
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public boolean markSupported() {
-                return in.markSupported();
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public boolean markSupported() {
+                    return in.markSupported();
+                }
 
-            @Override
-            public int read() throws IOException {
-                return in.read();
-            }
+                @Override
+                public int read() throws IOException {
+                    return in.read();
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public int read(final byte[] b) throws IOException {
-                return in.read(b);
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public int read(final byte[] b) throws IOException {
+                    return in.read(b);
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public int read(final byte[] b, final int off, final int len) throws IOException {
-                return in.read(b, off, len);
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public int read(final byte[] b, final int off, final int len) throws IOException {
+                    return in.read(b, off, len);
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public synchronized void reset() throws IOException {
-                in.reset();
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public synchronized void reset() throws IOException {
+                    in.reset();
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public long skip(final long n) throws IOException {
-                return in.skip(n);
-            }
-        };
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public long skip(final long n) throws IOException {
+                    return in.skip(n);
+                }
+            };
+        } catch (SftpException ex) {
+            channel.disconnect();
+            throw ex;
+        }
     }
 
     /**
@@ -361,47 +366,52 @@ public class SftpURLConnection extends URLConnection {
 
     private OutputStream createFileOutputStream() throws SftpException, JSchException, UnsupportedEncodingException {
         final ChannelSftp channel = openChannel();
-        final OutputStream out = channel.put(URLDecoder.decode(url.getPath(), "UTF-8"));
+        try {
+            final OutputStream out = channel.put(URLDecoder.decode(url.getPath(), "UTF-8"));
 
-        return new OutputStream() {
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void close() throws IOException {
-                out.close();
-                channel.disconnect();
-            }
+            return new OutputStream() {
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void close() throws IOException {
+                    out.close();
+                    channel.disconnect();
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void flush() throws IOException {
-                out.flush();
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void flush() throws IOException {
+                    out.flush();
+                }
 
-            @Override
-            public void write(final int b) throws IOException {
-                out.write(b);
-            }
+                @Override
+                public void write(final int b) throws IOException {
+                    out.write(b);
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void write(final byte[] b) throws IOException {
-                out.write(b);
-            }
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void write(final byte[] b) throws IOException {
+                    out.write(b);
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void write(final byte[] b, final int off, final int len) throws IOException {
-                out.write(b, off, len);
-            }
-        };
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void write(final byte[] b, final int off, final int len) throws IOException {
+                    out.write(b, off, len);
+                }
+            };
+        } catch (SftpException ex) {
+            channel.disconnect();
+            throw ex;
+        }
 
     }
 
