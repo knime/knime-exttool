@@ -4,7 +4,7 @@ Bundle-Name: Unit-Tests for org.knime.ext.ssh
 Bundle-SymbolicName: org.knime.ext.ssh.testing;singleton:=true
 Bundle-Version: 4.0.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
-Fragment-Host: org.knime.ext.ssh;bundle-version="[3,4)"
+Fragment-Host: org.knime.ext.ssh;bundle-version="[4.0.0,5.0.0)"
 Export-Package: org.knime.ext.ssh
 Require-Bundle: org.junit;bundle-version="[4.8.1,5.0.0)",
   org.knime.testing;bundle-version="[4.0.0,5.0.0)"
