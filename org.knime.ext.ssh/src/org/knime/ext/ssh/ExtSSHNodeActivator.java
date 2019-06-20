@@ -45,9 +45,6 @@
 
 package org.knime.ext.ssh;
 
-import java.security.Security;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.jsch.core.IJSchService;
 import org.osgi.framework.BundleContext;
@@ -76,7 +73,6 @@ public class ExtSSHNodeActivator extends Plugin {
         BundleContext bundleContext = getBundle().getBundleContext();
         ServiceReference<IJSchService> service = bundleContext.getServiceReference(IJSchService.class);
         m_ijschService = bundleContext.getService(service);
-        Security.addProvider(new BouncyCastleProvider());
     }
 
     /**
