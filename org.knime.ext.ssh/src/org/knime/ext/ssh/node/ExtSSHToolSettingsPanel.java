@@ -342,6 +342,7 @@ public class ExtSSHToolSettingsPanel extends JPanel {
                 msg = t.getMessage();
             }
             JOptionPane.showMessageDialog(this, "Connection failed:\n" + msg);
+            LOGGER.warn(msg, t);
         }
     }
 
