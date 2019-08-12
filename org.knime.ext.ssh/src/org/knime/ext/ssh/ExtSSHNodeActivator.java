@@ -47,8 +47,13 @@ package org.knime.ext.ssh;
 
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.jsch.core.IJSchService;
+import org.knime.core.node.NodeLogger;
+import org.knime.core.node.NodeLogger.LEVEL;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Logger;
 
 /**
  * The activator class controls the plug-in life cycle.
@@ -73,6 +78,10 @@ public class ExtSSHNodeActivator extends Plugin {
         BundleContext bundleContext = getBundle().getBundleContext();
         ServiceReference<IJSchService> service = bundleContext.getServiceReference(IJSchService.class);
         m_ijschService = bundleContext.getService(service);
+
+        // Set the logger
+        final JSchLogger jSchLogger = new JSchLogger();
+        JSch.setLogger(jSchLogger);
     }
 
     /**
@@ -100,4 +109,62 @@ public class ExtSSHNodeActivator extends Plugin {
         return plugin;
     }
 
+    /** A {@link Logger} implementation that logs to the KNIME log. */
+    private static final class JSchLogger implements Logger {
+
+        final NodeLogger LOGGER = NodeLogger.getLogger("JSch");
+
+        @Override
+        public boolean isEnabled(final int jschLevel) {
+            return LOGGER.isEnabledFor(getLevel(jschLevel));
+        }
+
+        @Override
+        public void log(final int jschLevel, final String message) {
+            final LEVEL level = getLevel(jschLevel);
+            switch (level) {
+                case DEBUG:
+                    LOGGER.debug(message);
+                    break;
+                case INFO:
+                    LOGGER.info(message);
+                    break;
+                case WARN:
+                    LOGGER.warn(message);
+                    break;
+                case ERROR:
+                    LOGGER.error(message);
+                    break;
+                case FATAL:
+                    LOGGER.fatal(message);
+                    break;
+                default:
+                    // All cases handled
+                    break;
+            }
+
+        }
+
+        private static NodeLogger.LEVEL getLevel(final int jschLevel) {
+            switch (jschLevel) {
+                case Logger.DEBUG:
+                    return LEVEL.DEBUG;
+
+                case Logger.INFO:
+                    return LEVEL.INFO;
+
+                case Logger.WARN:
+                    return LEVEL.WARN;
+
+                case Logger.ERROR:
+                    return LEVEL.ERROR;
+
+                case Logger.FATAL:
+                    return LEVEL.FATAL;
+
+                default:
+                    throw new IllegalStateException("Invalide JSch log level: " + jschLevel);
+            }
+        }
+    }
 }
