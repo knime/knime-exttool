@@ -45,6 +45,8 @@
 
 package org.knime.ext.ssh;
 
+import org.apache.commons.lang3.concurrent.ConcurrentException;
+import org.apache.commons.lang3.concurrent.LazyInitializer;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.jsch.core.IJSchService;
 import org.knime.core.node.NodeLogger;
@@ -66,7 +68,7 @@ public class ExtSSHNodeActivator extends Plugin {
     // The shared instance
     private static ExtSSHNodeActivator plugin;
 
-    private IJSchService m_ijschService;
+    private LazyInitializer<IJSchService> m_ijschServiceInitializer;
 
     /**
      * {@inheritDoc}
@@ -75,20 +77,32 @@ public class ExtSSHNodeActivator extends Plugin {
     public void start(final BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
-        BundleContext bundleContext = getBundle().getBundleContext();
-        ServiceReference<IJSchService> service = bundleContext.getServiceReference(IJSchService.class);
-        m_ijschService = bundleContext.getService(service);
+        m_ijschServiceInitializer = new LazyInitializer<IJSchService>() {
 
-        // Set the logger
-        final JSchLogger jSchLogger = new JSchLogger();
-        JSch.setLogger(jSchLogger);
+            @Override
+            protected IJSchService initialize() throws ConcurrentException {
+                BundleContext bundleContext = getBundle().getBundleContext();
+                ServiceReference<IJSchService> service = bundleContext.getServiceReference(IJSchService.class);
+                IJSchService ijschService = bundleContext.getService(service);
+
+                // Set the logger
+                final JSchLogger jSchLogger = new JSchLogger();
+                JSch.setLogger(jSchLogger);
+
+                return ijschService;
+            }
+        };
     }
 
     /**
      * @return the JSch service.
      */
     public IJSchService getIJSchService() {
-        return m_ijschService;
+        try {
+            return m_ijschServiceInitializer.get();
+        } catch (ConcurrentException e) {
+            throw new RuntimeException(e.getMessage(), e.getCause());
+        }
     }
 
     /**
