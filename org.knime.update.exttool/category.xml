@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="org.knime.features.ext.exttool" version="0.0.0">
+       <category name="knime-exttool" />
+   </feature>
+   <feature id="org.knime.features.exttool" version="0.0.0">
+       <category name="knime-exttool" />
+   </feature>
+
+   <category-def name="knime-exttool" label="Build artifacts from knime-exttool">
+       <description>Build artifacts from knime-exttool</description>
+   </category-def>
+</site>
