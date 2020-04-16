@@ -6,6 +6,12 @@
    <feature id="org.knime.features.exttool" version="0.0.0">
        <category name="knime-exttool" />
    </feature>
+    <feature id="org.knime.features.ext.exttool.source" version="0.0.0">
+       <category name="knime-exttool" />
+   </feature>
+   <feature id="org.knime.features.exttool.source" version="0.0.0">
+       <category name="knime-exttool" />
+   </feature>
 
    <category-def name="knime-exttool" label="Build artifacts from knime-exttool">
        <description>Build artifacts from knime-exttool</description>
