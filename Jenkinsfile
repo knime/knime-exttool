@@ -13,6 +13,15 @@ properties([
 
 try {
     knimetools.defaultTychoBuild('org.knime.update.exttool')
+
+    workflowTests.runTests(
+        dependencies: [ repositories: ['knime-exttool', 'knime-chemistry', 'knime-streaming']]
+    )
+
+    stage('Sonarqube analysis') {
+        env.lastStage = env.STAGE_NAME
+        workflowTests.runSonar()
+    }
 } catch (ex) {
     currentBuild.result = 'FAILURE'
     throw ex
