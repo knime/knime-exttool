@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
@@ -23,16 +23,33 @@
 		<feature-branch-extension.appendArtifactoryProperties>false</feature-branch-extension.appendArtifactoryProperties>
 	</properties>
 
-	<modules>
-		<module>org.knime.ext.exttool</module>
-		<module>org.knime.ext.ssh</module>
-		<module>org.knime.ext.ssh.testing</module>
-		<module>org.knime.exttool</module>
-		<module>org.knime.exttool.chem</module>
-		<module>org.knime.features.ext.exttool</module>
-		<module>org.knime.features.exttool</module>
-		<module>org.knime.update.exttool</module>
-	</modules>
+
+	<profiles>
+		<profile>
+			<id>build</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>org.knime.ext.exttool</module>
+				<module>org.knime.ext.ssh</module>
+				<module>org.knime.exttool</module>
+				<module>org.knime.exttool.chem</module>
+				<module>org.knime.features.ext.exttool</module>
+				<module>org.knime.features.exttool</module>
+				<module>org.knime.update.exttool</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<id>test</id>
+			<modules>
+				<module>org.knime.ext.ssh</module>
+				<module>org.knime.ext.ssh.tests</module>
+			</modules>
+		</profile>
+
+	</profiles>
 
 	<repositories>
 		<repository>
