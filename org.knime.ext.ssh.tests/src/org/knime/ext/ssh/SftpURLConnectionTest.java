@@ -93,6 +93,8 @@ public class SftpURLConnectionTest {
 
     private static String host;
 
+    private static String user;
+
     private static int port;
 
     private static String keyfilePath;
@@ -103,8 +105,11 @@ public class SftpURLConnectionTest {
         JSch.setConfig("StrictHostKeyChecking", "no");
 
         String hostString = System.getenv("KNIME_SSHD_HOST");
-        if (hostString == null) {
+        if (hostString == null) { // Run against localhost (old buildsystem)
             hostString = "localhost:22";
+            user = System.getenv("user.name");
+        } else {
+            user = "jenkins";
         }
         final String[] sshdHostInfo = hostString.split(":");
 
@@ -112,7 +117,7 @@ public class SftpURLConnectionTest {
         port = Integer.parseInt(sshdHostInfo[1]);
 
         final Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
-        keyfilePath = sshDir.resolve("id_rsa").toString(); // FIXME remove the 2!
+        keyfilePath = sshDir.resolve("id_rsa").toString();
     }
 
     @AfterClass
@@ -127,7 +132,7 @@ public class SftpURLConnectionTest {
      */
     @Test
     public void testRead() throws Exception {
-        final String tempFileName = "/data/SftpURLConnectionTestRead" + System.currentTimeMillis() + ".txt";
+        final String tempFileName = getTestRoot() + "SftpURLConnectionTestRead" + System.currentTimeMillis() + ".txt";
         final String writtenContents = new Date().toString();
 
         // write tempfile to remote host
@@ -135,7 +140,7 @@ public class SftpURLConnectionTest {
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
 
-        final URL url = new URL("sftp://jenkins@" + host + tempFileName);
+        final URL url = new URL("sftp://" + user + "@" + host + tempFileName);
         try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
             final String readContents = in.readLine();
             assertThat("Unexpected data read via sftp protocol", readContents, is(writtenContents));
@@ -149,7 +154,7 @@ public class SftpURLConnectionTest {
      */
     @Test
     public void testWrite() throws Exception {
-        final String tempFile = "/data/SftpURLConnectionTestWrite" + System.currentTimeMillis();
+        final String tempFile = getTestRoot() + "SftpURLConnectionTestWrite" + System.currentTimeMillis();
 
         writeAndCheck(tempFile); // test non-existing file
         writeAndCheck(tempFile); // test existing file
@@ -159,7 +164,7 @@ public class SftpURLConnectionTest {
         final String writtenContents = new Date().toString();
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
-        final URL url = new URL("sftp://jenkins@" + host + tempFile);
+        final URL url = new URL("sftp://" + user + "@" + host + tempFile);
         final URLConnection conn = url.openConnection();
         try (OutputStream out = conn.getOutputStream()) {
             out.write(writtenContents.getBytes());
@@ -173,7 +178,7 @@ public class SftpURLConnectionTest {
     @Test
     public void testWriteToDirectory() throws IOException {
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
-        final URL url = new URL("sftp://jenkins@" + host + "/data/");
+        final URL url = new URL("sftp://" + user + "@" + host + getTestRoot());
         final URLConnection conn = url.openConnection();
         expectedEx.expect(IOException.class);
         expectedEx.expectMessage("Cannot write to a directory");
@@ -182,13 +187,13 @@ public class SftpURLConnectionTest {
 
     @Test
     public void testDate() throws Exception {
-        final String tempFile = "/data/SftpURLConnectionTest_testDate" + System.currentTimeMillis() + ".txt";
+        final String tempFile = getTestRoot() + "SftpURLConnectionTest_testDate" + System.currentTimeMillis() + ".txt";
 
         final String output = runCommands("touch " + tempFile + "; date +%s -r " + tempFile).replaceAll("\\s", "");
         final long creationTimeStamp = Integer.parseInt(output);
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
-        final URL url = new URL("sftp://jenkins@" + host + tempFile);
+        final URL url = new URL("sftp://" + user + "@" + host + tempFile);
 
         final URLConnection conn = url.openConnection();
         assertThat("Modification date without connect is not 0", conn.getDate(), is(0L));
@@ -205,16 +210,16 @@ public class SftpURLConnectionTest {
      */
     @Test
     public void testSize() throws Exception {
-        final String tempFile = "/data/SftpURLConnectionTest_testSize" + System.currentTimeMillis() + ".txt";
+        final String tempFile = getTestRoot() + "SftpURLConnectionTest_testSize" + System.currentTimeMillis() + ".txt";
 
         final String writtenContents = new Date().toString();
-        final String result = runCommands("echo \"" + writtenContents + "\" >> " + tempFile + ";stat -c %s " + tempFile);
+        final String result =
+            runCommands("echo \"" + writtenContents + "\" >> " + tempFile + ";stat -c %s " + tempFile);
         final long expectedSize = Long.parseLong(result.replaceAll("\\s", "").replaceAll("\\n", ""));
-
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
 
-        final URL url = new URL("sftp://jenkins@" + host + tempFile);
+        final URL url = new URL("sftp://" + user + "@" + host + tempFile);
         final URLConnection conn = url.openConnection();
         assertThat("Size without connect is not 0", conn.getContentLength(), is(-1));
         conn.connect();
@@ -223,7 +228,7 @@ public class SftpURLConnectionTest {
 
     @Test
     public void testReadDirContents() throws Exception {
-        final String dir = "/data/SftpURLConnectionsTest_testReadDirContents" + System.currentTimeMillis();
+        final String dir = getTestRoot() + "SftpURLConnectionsTest_testReadDirContents" + System.currentTimeMillis();
 
         final String fileA = dir + "/fileA";
         final String fileB = dir + "/fileB";
@@ -237,7 +242,7 @@ public class SftpURLConnectionTest {
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
 
-        final URL url = new URL("sftp://jenkins@" + host + dir + ";type=d");
+        final URL url = new URL("sftp://" + user + "@" + host + dir + ";type=d");
         try (final BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
             int count = 0;
             String line;
@@ -253,11 +258,11 @@ public class SftpURLConnectionTest {
     @Test
     public void testReadDirContentsNoType() throws Exception {
 
-        final String dir = "/data/SftpURLConnectionsTest_testDirContentsNoType" + System.currentTimeMillis();
+        final String dir = getTestRoot() + "SftpURLConnectionsTest_testDirContentsNoType" + System.currentTimeMillis();
         runCommands("mkdir " + dir);
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
-        final URL url = new URL("sftp://jenkins@" + host + dir);
+        final URL url = new URL("sftp://" + user + "@" + host + dir);
         expectedEx.expect(IOException.class);
         expectedEx.expectMessage("Cannot read from a directory");
         url.openStream();
@@ -266,11 +271,11 @@ public class SftpURLConnectionTest {
     @SuppressWarnings("resource")
     @Test
     public void testReadWithDirType() throws Exception {
-        final String file = "/data/SftpURLConnectionsTest_testReadWithDirType" + System.currentTimeMillis() + ".txt";
+        final String file = getTestRoot() + "SftpURLConnectionsTest_testReadWithDirType" + System.currentTimeMillis() + ".txt";
         runCommands("touch " + file);
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
-        final URL url = new URL("sftp://jenkins@" + host + file + ";type=d");
+        final URL url = new URL("sftp://" + user + "@" + host + file + ";type=d");
         expectedEx.expect(IOException.class);
         expectedEx.expectMessage("does not denote a directory");
         url.openStream();
@@ -279,13 +284,12 @@ public class SftpURLConnectionTest {
     @Test
     public void testGetHeaderFields() throws Exception {
 
-        final String file = "/data/SftpURLConnectionsTest_testGetHeaderFields" + System.currentTimeMillis() + ".txt";
-
+        final String file = getTestRoot() + "SftpURLConnectionsTest_testGetHeaderFields" + System.currentTimeMillis() + ".txt";
         final String writtenContents = new Date().toString();
         runCommands("echo \"" + writtenContents + "\" >> " + file);
 
         FileUtil.getWorkflowTempDir(); // dummy call to ensure sftp url is understood
-        final URL url = new URL("sftp://jenkins@" + host + file);
+        final URL url = new URL("sftp://" + user + "@" + host + file);
         final URLConnection conn = url.openConnection();
         assertThat("Non-null date received before connect", conn.getHeaderField("date"), is(nullValue()));
         assertThat("Non-null size received before connect", conn.getHeaderField("content-length"), is(nullValue()));
@@ -310,7 +314,7 @@ public class SftpURLConnectionTest {
         final JSch j = new JSch();
         j.addIdentity(keyfilePath);
 
-        final Session s = j.getSession("jenkins", host, port);
+        final Session s = j.getSession(user, host, port);
         s.connect();
         final ChannelExec c = (ChannelExec)s.openChannel("exec");
         c.setCommand(command);
@@ -324,6 +328,17 @@ public class SftpURLConnectionTest {
         c.disconnect();
         s.disconnect();
         return result;
+    }
+
+    private static String getTestRoot() {
+        String root;
+        if ("localhost".equals(host)) {
+            // Fix windows paths on localhost
+            root = System.getProperty("java.io.tmpdir").replace("C:", "cygdrive/c") + "/";
+        } else {
+            root = "/tmp/";
+        }
+        return root;
     }
 
 }
