@@ -15,7 +15,7 @@ try {
     knimetools.defaultTychoBuild('org.knime.update.exttool')
 
     workflowTests.runTests(
-        dependencies: [ repositories: ['knime-exttool', 'knime-chemistry', 'knime-streaming']]
+        dependencies: [ repositories: ['knime-exttool', 'knime-chemistry', 'knime-streaming', 'knime-distance']]
     )
 
     stage('Sonarqube analysis') {
