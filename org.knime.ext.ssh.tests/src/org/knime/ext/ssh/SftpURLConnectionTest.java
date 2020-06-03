@@ -51,6 +51,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -105,12 +106,9 @@ public class SftpURLConnectionTest {
         JSch.setConfig("StrictHostKeyChecking", "no");
 
         String hostString = System.getenv("KNIME_SSHD_HOST");
-        if (hostString == null) { // Run against localhost (old buildsystem)
-            hostString = "localhost:22";
-            user = System.getenv("user.name");
-        } else {
-            user = "jenkins";
-        }
+        assumeNotNull(hostString); // only run on new jenkins
+        user = "jenkins";
+
         final String[] sshdHostInfo = hostString.split(":");
 
         host = sshdHostInfo[0];
