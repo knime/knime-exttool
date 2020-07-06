@@ -25,7 +25,7 @@ try {
     parallel buildConfigs
 
     workflowTests.runTests(
-        dependencies: [ repositories: ['knime-exttool', 'knime-chemistry', 'knime-streaming', 'knime-distance']]
+        dependencies: [ repositories: ['knime-exttool', 'knime-chemistry', 'knime-streaming', 'knime-distance', 'knime-sas', 'knime-filehandling']]
     )
 
     stage('Sonarqube analysis') {
