@@ -91,7 +91,7 @@ public class SftpURLConnectionOldJenkinsTest {
     @BeforeClass
     public static void setup() {
         strictHostChecking = JSch.getConfig("StrictHostKeyChecking");
-        String hostString = System.getenv("KNIME_SSHD_HOST");
+        String hostString = System.getenv("KNIME_SSHD_ADDRESS");
         assumeTrue(hostString == null); // only run on old jenkins
         JSch.setConfig("StrictHostKeyChecking", "no");
     }

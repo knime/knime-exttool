@@ -105,7 +105,7 @@ public class SftpURLConnectionTest {
         strictHostChecking = JSch.getConfig("StrictHostKeyChecking");
         JSch.setConfig("StrictHostKeyChecking", "no");
 
-        String hostString = System.getenv("KNIME_SSHD_HOST");
+        String hostString = System.getenv("KNIME_SSHD_ADDRESS");
         assumeNotNull(hostString); // only run on new jenkins
         user = "jenkins";
 
