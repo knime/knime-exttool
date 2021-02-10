@@ -18,7 +18,7 @@ try {
             knimetools.defaultTychoBuild('org.knime.update.exttool')
         },
         UnitTests: {
-            workflowTests.runIntegratedWorkflowTests(configurations: ['ubuntu18.04'],
+            workflowTests.runIntegratedWorkflowTests(configurations: workflowTests.DEFAULT_FEATURE_BRANCH_CONFIGURATIONS,
                 profile: "test", sidecarContainers: [
                     [ image: "${dockerTools.ECR}/knime/sshd:alpine3.11", namePrefix: "SSHD", port: 22 ]
                 ])
