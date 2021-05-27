@@ -35,7 +35,8 @@ try {
                 'knime-streaming',
                 'knime-distance',
                 'knime-sas',
-                'knime-filehandling'
+                'knime-filehandling',
+                'knime-kerberos'
             ]
         ]
     )
