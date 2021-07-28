@@ -47,6 +47,8 @@ package org.knime.ext.exttool;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -68,9 +70,10 @@ import org.knime.core.node.util.InvocationTargetRuntimeException;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.util.FilelistAccessory;
 import org.knime.core.util.MutableBoolean;
+import org.knime.core.util.Pair;
 
 /**
- * 
+ *
  * @author ohl, University of Konstanz
  */
 public class ExtToolNodeDialogPane extends NodeDialogPane {
@@ -132,6 +135,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         m_inFileName.setPreferredSize(new Dimension(350, 25));
         JButton browse = new JButton("Browse...");
         browse.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 browseInFileName();
             }
@@ -199,7 +203,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
     /**
      * Transfers the stored settings into the input data file panel - or sets
      * default values if the settings do not contain the corresponding key.
-     * 
+     *
      * @param settings the object to read the settings from
      * @param inSpecs the input specs from the input ports.
      * @throws NotConfigurableException currently not.
@@ -207,6 +211,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
     private void loadInportDataFile(final NodeSettingsRO settings) {
         try {
             ViewUtils.invokeAndWaitInEDT(new Runnable() {
+                @Override
                 public void run() {
                     m_inFileName.setText(settings.getString(
                             ExtToolNodeModel.CFGKEY_INFILENAME, ""));
@@ -224,7 +229,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
     }
 
-    private void saveInportDataFile(final NodeSettingsWO settings)
+    private Path saveInportDataFile(final NodeSettingsWO settings)
             throws InvalidSettingsException {
         final StringBuilder filename = new StringBuilder();
         final StringBuilder separator = new StringBuilder();
@@ -233,6 +238,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
         try {
             ViewUtils.invokeAndWaitInEDT(new Runnable() {
+                @Override
                 public void run() {
                     filename.append(m_inFileName.getText());
                     separator.append(m_inSeparator.getText());
@@ -264,6 +270,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         settings.addBoolean(ExtToolNodeModel.CFGKEY_INCLROWHDR, inclRowHdr
                 .booleanValue());
 
+        return Paths.get(filename.toString());
     }
 
     /**
@@ -290,6 +297,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         m_toolArgs.setMinimumSize(new Dimension(35, 25));
         JButton pathButton = new JButton("Browse...");
         pathButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 browseExecPath();
             }
@@ -297,6 +305,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         JButton dirButton = new JButton("Browse...");
         dirButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 browseDirPath();
             }
@@ -335,6 +344,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
     private void loadExternalTool(final NodeSettingsRO settings) {
         try {
             ViewUtils.invokeAndWaitInEDT(new Runnable() {
+                @Override
                 public void run() {
                     m_toolPath.setText(settings.getString(
                             ExtToolNodeModel.CFGKEY_EXTTOOLPATH, ""));
@@ -350,7 +360,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
     }
 
-    private void saveExternalTool(final NodeSettingsWO settings)
+    private Pair<Path, Path> saveExternalTool(final NodeSettingsWO settings)
             throws InvalidSettingsException {
         final StringBuilder filename = new StringBuilder();
         final StringBuilder cwd = new StringBuilder();
@@ -358,6 +368,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
         try {
             ViewUtils.invokeAndWaitInEDT(new Runnable() {
+                @Override
                 public void run() {
                     filename.append(m_toolPath.getText());
                     cwd.append(m_toolCwd.getText());
@@ -377,8 +388,9 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         settings.addString(ExtToolNodeModel.CFGKEY_EXTTOOLPATH, filename
                 .toString());
         settings.addString(ExtToolNodeModel.CFGKEY_EXTTOOLCWD, cwd.toString());
-        settings.addString(ExtToolNodeModel.CFGKEY_EXTTOOLARGS, 
+        settings.addString(ExtToolNodeModel.CFGKEY_EXTTOOLARGS,
                 args.toString());
+        return new Pair<>(Paths.get(filename.toString()), Paths.get(cwd.toString()));
 
     }
 
@@ -398,6 +410,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         JButton browse = new JButton("Browse...");
         browse.setPreferredSize(new Dimension(100, 25));
         browse.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 browseOutFileName();
             }
@@ -466,6 +479,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
     private void loadOutportDataFile(final NodeSettingsRO settings) {
         try {
             ViewUtils.invokeAndWaitInEDT(new Runnable() {
+                @Override
                 public void run() {
                     m_outFileName.setText(settings.getString(
                             ExtToolNodeModel.CFGKEY_OUTFILENAME, ""));
@@ -483,7 +497,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
     }
 
-    private void saveOutportDataFile(final NodeSettingsWO settings)
+    private Path saveOutportDataFile(final NodeSettingsWO settings)
             throws InvalidSettingsException {
         final StringBuilder filename = new StringBuilder();
         final StringBuilder separator = new StringBuilder();
@@ -492,6 +506,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
 
         try {
             ViewUtils.invokeAndWaitInEDT(new Runnable() {
+                @Override
                 public void run() {
                     filename.append(m_outFileName.getText());
                     separator.append(m_outSeparator.getText());
@@ -523,6 +538,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         settings.addBoolean(ExtToolNodeModel.CFGKEY_HASROWHDR, hasRowHdr
                 .booleanValue());
 
+        return Paths.get(filename.toString());
     }
 
     /**
@@ -576,7 +592,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
     /**
      * Opens the file chooser dialog and returns the selected file - or null if
      * the user canceled.
-     * 
+     *
      * @param startingDir the directory to start the chooser in.
      * @param filesOnly if true only files are accepted as selection, if false,
      *            only directories are accepted.
@@ -604,7 +620,7 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
         return null;
 
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -622,9 +638,10 @@ public class ExtToolNodeDialogPane extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        saveInportDataFile(settings);
-        saveExternalTool(settings);
-        saveOutportDataFile(settings);
+        final var in = saveInportDataFile(settings);
+        final var toolAndCwd = saveExternalTool(settings);
+        final var out = saveOutportDataFile(settings);
+        ExtToolNodeModel.validatePaths(toolAndCwd.getFirst(), toolAndCwd.getSecond(), in, out);
     }
 
 }
