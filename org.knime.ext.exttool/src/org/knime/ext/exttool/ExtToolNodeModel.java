@@ -47,6 +47,8 @@ package org.knime.ext.exttool;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
@@ -55,7 +57,6 @@ import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
 import org.knime.base.node.io.filereader.FileAnalyzer;
 import org.knime.base.node.io.filereader.FileReaderNodeSettings;
-import org.knime.base.node.io.filereader.FileReaderSettings;
 import org.knime.base.node.io.filereader.FileTable;
 import org.knime.base.node.util.exttool.CommandExecution;
 import org.knime.base.node.util.exttool.ExtToolOutputNodeModel;
@@ -68,29 +69,25 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.property.hilite.HiLiteHandler;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.tokenizer.SettingsStatus;
 import org.knime.core.util.tokenizer.TokenizerSettings;
 
 /**
- * Implements a node that launches an external executable. Most of its
- * implementation reuses code from the {@link org.knime.base.node.util.exttool}
- * package. The classes in there provide functionality to execute an external
+ * Implements a node that launches an external executable. Most of its implementation reuses code from the
+ * {@link org.knime.base.node.util.exttool} package. The classes in there provide functionality to execute an external
  * tool, to catch its output, and to display it in NodeViews.<br>
- * This part takes care of user settings (locations of files and arguments), and
- * of writing out the data and reading the results back in.
+ * This part takes care of user settings (locations of files and arguments), and of writing out the data and reading the
+ * results back in.
  *
  * @author ohl, University of Konstanz
  */
-public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
-        Observer {
+public class ExtToolNodeModel extends ExtToolOutputNodeModel implements Observer {
     /**
-     * the maximum number of lines stored for stdout and stderr output of the
-     * external tool. (Keeping default scope so views and buffers here have the
-     * same length.)
+     * the maximum number of lines stored for stdout and stderr output of the external tool. (Keeping default scope so
+     * views and buffers here have the same length.)
      */
     static final int MAX_OUTLINES_STORED = 500;
 
@@ -177,21 +174,18 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * A constructor to construct a new instance.
      */
     public ExtToolNodeModel() {
-        super(new PortType[]{BufferedDataTable.TYPE},
-                new PortType[]{BufferedDataTable.TYPE});
+        super(new PortType[]{BufferedDataTable.TYPE}, new PortType[]{BufferedDataTable.TYPE});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
 
         // we assume that if the file is not null it is good to use.
         if (m_extExecutable == null) {
-            throw new InvalidSettingsException("No external executable "
-                    + "specified.");
+            throw new InvalidSettingsException("No external executable specified.");
         }
         if (m_inFile == null) {
             throw new InvalidSettingsException("No input filename specified.");
@@ -203,18 +197,14 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
             throw new InvalidSettingsException("No infile separator specified");
         }
         if ((m_outSeparator == null) || (m_outSeparator.length() < 1)) {
-            throw new InvalidSettingsException("No outfile separator "
-                    + "specified");
+            throw new InvalidSettingsException("No outfile separator specified");
         }
 
-        if (m_inFile.exists() && m_outFile.exists()) {
-            setWarningMessage("Existing input and output files will be "
-                    + "overridden");
-        }
-        if (m_inFile.exists()) {
+        if (Files.exists(m_inFile.toPath()) && Files.exists(m_outFile.toPath())) {
+            setWarningMessage("Existing input and output files will be overridden");
+        } else if (Files.exists(m_inFile.toPath())) {
             setWarningMessage("Existing input file will be overridden!");
-        }
-        if (m_outFile.exists()) {
+        } else if (Files.exists(m_outFile.toPath())) {
             setWarningMessage("Existing output file will be overridden!");
         }
 
@@ -227,12 +217,14 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inData,
-            final ExecutionContext exec) throws Exception {
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+        throws Exception {
+
+        validatePaths(m_extExecutable.toPath(), m_extCwd.toPath(), m_inFile.toPath(), m_outFile.toPath());
 
         // blow away the output of any previous (failed) runs
-        setFailedExternalErrorOutput(new LinkedList<String>());
-        setFailedExternalOutput(new LinkedList<String>());
+        setFailedExternalErrorOutput(new LinkedList<>());
+        setFailedExternalOutput(new LinkedList<>());
 
         // clear the views
         notifyViews(null); // null clears.
@@ -241,18 +233,8 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
         exec.setProgress("Creating data directory");
         File inParent = m_inFile.getParentFile();
         File outParent = m_outFile.getParentFile();
-        if (!inParent.exists()) {
-            if (!inParent.mkdirs()) {
-                throw new IllegalStateException("Couldn't create directory"
-                        + " for input file.");
-            }
-        }
-        if (!outParent.exists()) {
-            if (!outParent.mkdirs()) {
-                throw new IllegalStateException("Couldn't create directory"
-                        + " for output file.");
-            }
-        }
+        CheckUtils.checkState(inParent.exists() || inParent.mkdirs(), "Couldn't create directory for input file.");
+        CheckUtils.checkState(outParent.exists() || outParent.mkdirs(), "Couldn't create directory for output file.");
 
         // writing input file
         exec.setProgress("Writing data to input file");
@@ -266,29 +248,31 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
 
         CSVWriter csvWriter = new CSVWriter(new FileWriter(m_inFile), settings);
 
-        csvWriter.write((BufferedDataTable)inData[0], exec);
+        csvWriter.write(inData[0], exec);
         csvWriter.close();
 
-        String cmdString = m_extExecutable.getAbsolutePath();
+        final String[] cmdandargs;
         if ((m_extExecArgs != null) && (m_extExecArgs.length() > 0)) {
-            cmdString += " " + m_extExecArgs;
+            final var args = m_extExecArgs.split("[ \t\f\n\r]+"); // NOSONAR: easier to read and only called once/execution
+            cmdandargs = new String[args.length + 1];
+            cmdandargs[0] = m_extExecutable.getAbsolutePath();
+            System.arraycopy(args, 0, cmdandargs, 1, args.length);
+        } else {
+            cmdandargs = new String[] {m_extExecutable.getAbsolutePath()};
         }
-        CommandExecution cmdExec = new CommandExecution(cmdString);
+        final var cmdExec = new CommandExecution(cmdandargs);
         cmdExec.setExecutionDir(m_extCwd);
         cmdExec.addObserver(this);
 
         try {
             int exitVal = cmdExec.execute(exec);
             if (exitVal != 0) {
-                throw new IllegalStateException("Execution failed (exit code "
-                        + exitVal + ")");
+                throw new IllegalStateException("Execution failed (exit code " + exitVal + ")");
             }
         } catch (Exception e) {
             // before we return, we save the output in the failing list
-            setFailedExternalOutput(new LinkedList<String>(cmdExec
-                    .getStdOutput()));
-            setFailedExternalErrorOutput(new LinkedList<String>(cmdExec
-                    .getStdErr()));
+            setFailedExternalOutput(new LinkedList<String>(cmdExec.getStdOutput()));
+            setFailedExternalErrorOutput(new LinkedList<String>(cmdExec.getStdErr()));
             throw e;
         }
 
@@ -304,13 +288,10 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
 
     }
 
-    private BufferedDataTable readOutputFile(final ExecutionContext exec)
-            throws Exception {
+    private BufferedDataTable readOutputFile(final ExecutionContext exec) throws Exception {
         if (!(m_outFile.exists() && m_outFile.isFile())) {
-            throw new IllegalStateException("External executable '"
-                    + m_extExecutable.getName() + " didn't produce any output"
-                    + " at the specified location ('"
-                    + m_outFile.getAbsolutePath() + "')");
+            throw new IllegalStateException("External executable '" + m_extExecutable.getName()
+                + " didn't produce any output" + " at the specified location ('" + m_outFile.getAbsolutePath() + "')");
         }
 
         // prepare the settings for the file analyzer
@@ -320,8 +301,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
         settings.addRowDelimiter("\n", true);
         settings.addQuotePattern("\"", "\"");
         settings.setCommentUserSet(true);
-        settings.setDataFileLocationAndUpdateTableName(m_outFile.toURI()
-                .toURL());
+        settings.setDataFileLocationAndUpdateTableName(m_outFile.toURI().toURL());
         settings.setDelimiterUserSet(true);
         settings.setFileHasColumnHeaders(m_hasColHdr);
         settings.setFileHasColumnHeadersUserSet(true);
@@ -336,8 +316,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
             throw new IllegalStateException(status.getErrorMessage(0));
         }
 
-        FileTable fTable =
-                new FileTable(settings.createDataTableSpec(), settings, null);
+        FileTable fTable = new FileTable(settings.createDataTableSpec(), settings, null);
         return exec.createBufferedDataTable(fTable, exec);
 
     }
@@ -346,9 +325,8 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
+        throws IOException, CanceledExecutionException {
         super.loadInternals(nodeInternDir, exec);
     }
 
@@ -356,8 +334,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         readSettings(settings, true);
     }
 
@@ -375,9 +352,8 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
+        throws IOException, CanceledExecutionException {
         super.saveInternals(nodeInternDir, exec);
     }
 
@@ -393,8 +369,7 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
             settings.addString(CFGKEY_OUTFILENAME, m_outFile.getAbsolutePath());
         }
         if (m_extExecutable != null) {
-            settings.addString(CFGKEY_EXTTOOLPATH, m_extExecutable
-                    .getAbsolutePath());
+            settings.addString(CFGKEY_EXTTOOLPATH, m_extExecutable.getAbsolutePath());
         }
         if (m_extCwd != null) {
             settings.addString(CFGKEY_EXTTOOLCWD, m_extCwd.getAbsolutePath());
@@ -418,126 +393,87 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         readSettings(settings, false);
     }
 
+    static void validatePaths(final Path exec, final Path execPWD, final Path in, final Path out)
+        throws InvalidSettingsException {
+        CheckUtils.checkSetting(Files.exists(exec), "The specified external executable ('%s') doesn't exist.", exec);
+        CheckUtils.checkSetting(!Files.isDirectory(exec),
+            "The specified external executable ('%s') must no be a directory.", exec);
+        CheckUtils.checkSetting(Files.isDirectory(execPWD),
+            "Specified working directory ('%s') isn't a directory or doesn't exist.", execPWD);
+
+        CheckUtils.checkSetting(!Files.isDirectory(in), "Input filename ('%s') must no be a directory.", in);
+        CheckUtils.checkSetting(!Files.isDirectory(out), "Output filename ('%s') must no be a directory.", out);
+    }
+
     /**
-     * Reads the settings from the settings object, validates them and if they
-     * are all valid - and the takeOver flag is set true - it assignes them to
-     * the internal variables.
+     * Reads the settings from the settings object, validates them and if they are all valid - and the takeOver flag is
+     * set true - it assignes them to the internal variables.
      *
      * @param settings the object with the settings.
-     * @param takeOver if true, and all settings are valid, the values will be
-     *            taken over into the internal variables, if false, the settings
-     *            are validated only.
-     * @throws InvalidSettingsException if the settings are invalid,
-     *             inconsistent, or in any way not acceptable.
+     * @param takeOver if true, and all settings are valid, the values will be taken over into the internal variables,
+     *            if false, the settings are validated only.
+     * @throws InvalidSettingsException if the settings are invalid, inconsistent, or in any way not acceptable.
      */
-    private void readSettings(final NodeSettingsRO settings,
-            final boolean takeOver) throws InvalidSettingsException {
-        String tmpExecFileName; // the external executable
+    private void readSettings(final NodeSettingsRO settings, final boolean takeOver) throws InvalidSettingsException {
+        final String tmpExecFileName; // the external executable
         try {
             tmpExecFileName = settings.getString(CFGKEY_EXTTOOLPATH);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("The path to the external"
-                    + " executable is not specified");
+            throw new InvalidSettingsException("The path to the external executable is not specified");
         }
-        if ((tmpExecFileName == null) || (tmpExecFileName.length() == 0)) {
-            throw new InvalidSettingsException("The path to the external "
-                    + "executable is not valid (empty).");
-        }
-        File tmpExecFile = new File(tmpExecFileName);
-        if (!tmpExecFile.exists()) {
-            throw new InvalidSettingsException("The specified external "
-                    + "executable ('" + tmpExecFileName + "') doesn't exist.");
-        }
-        if (tmpExecFile.isDirectory()) {
-            throw new InvalidSettingsException("The external exec ('"
-                    + tmpExecFileName + "') must not be a directory");
-        }
+        CheckUtils.checkSetting(tmpExecFileName != null && !tmpExecFileName.isEmpty(),
+            "The path to the external executable is not valid (empty).");
         // the working directory for the exec tool
         String tmpExecCwdString = settings.getString(CFGKEY_EXTTOOLCWD, "");
-        File tmpExecCwd;
-        if (tmpExecCwdString.length() > 0) {
-            tmpExecCwd = new File(tmpExecCwdString);
-            if (!tmpExecCwd.isDirectory()) {
-                throw new InvalidSettingsException(
-                        "Specified working directory" + "('" + tmpExecCwdString
-                                + "') isn't a directory or doesn't exist.");
-            }
-        } else {
+        if (tmpExecCwdString.isEmpty()) {
             // if no cwd was specified we use the executables dir
-            tmpExecCwd = tmpExecFile.getParentFile();
-            assert tmpExecCwd.isDirectory();
+            tmpExecCwdString = new File(tmpExecFileName).getParentFile().toString();
         }
         // the commandline arguments for the external executable
-        String tmpExecArgs = settings.getString(CFGKEY_EXTTOOLARGS, "");
+        final var tmpExecArgs = settings.getString(CFGKEY_EXTTOOLARGS, "");
         // the temporary input file
-        String tmpInFileName;
+        final String tmpInFileName;
         try {
             tmpInFileName = settings.getString(CFGKEY_INFILENAME);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Inputfilename is not "
-                    + "specified");
+            throw new InvalidSettingsException("Input filename is not specified");
         }
-        if ((tmpInFileName == null) || (tmpInFileName.length() == 0)) {
-            throw new InvalidSettingsException("Inputfilename is not "
-                    + "valid (empty).");
-        }
-        File tmpInFile = new File(tmpInFileName);
-        if (tmpInFile.isDirectory()) {
-            throw new InvalidSettingsException("Input filename must not be a"
-                    + " directory");
-        }
+        CheckUtils.checkSetting(tmpInFileName != null && !tmpInFileName.isEmpty(),
+            "Input filename is not valid (empty).");
         // temporary output file
-        String tmpOutFileName;
+        final String tmpOutFileName;
         try {
             tmpOutFileName = settings.getString(CFGKEY_OUTFILENAME);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Outputfilename is not "
-                    + "specified");
+            throw new InvalidSettingsException("Output filename is not specified");
         }
-        if ((tmpOutFileName == null) || (tmpOutFileName.length() == 0)) {
-            throw new InvalidSettingsException("Outputfilename is not "
-                    + "valid (empty).");
-        }
-        File tmpOutFile = new File(tmpOutFileName);
-        if (tmpOutFile.isDirectory()) {
-            throw new InvalidSettingsException("Output filename ('"
-                    + tmpOutFileName + "') must not be a directory");
-        }
+        CheckUtils.checkSetting(tmpOutFileName != null && !tmpOutFileName.isEmpty(),
+            "Output filename is not valid (empty).");
         // inSeparator
-        String tmpInSeparator;
+        final String tmpInSeparator;
         try {
             tmpInSeparator = settings.getString(CFGKEY_INSEPARATOR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("The separator for the input"
-                    + " file is not specified");
+            throw new InvalidSettingsException("The separator for the input file is not specified");
         }
-        if ((tmpInSeparator == null) || (tmpInSeparator.length() < 1)) {
-            throw new InvalidSettingsException("The separator for the input"
-                    + " file is invalid (empty)");
-        }
+        CheckUtils.checkSetting(tmpInSeparator != null && !tmpInSeparator.isEmpty(),
+            "The separator for the input file is invalid (empty)");
         // replace \t \\, etc.
-        String escInSep = TokenizerSettings.unescapeString(tmpInSeparator);
-        if (escInSep.length() > 1) {
-            throw new InvalidSettingsException("The separator for the input"
-                    + " file can only be one character.");
-        }
+        final var escInSep = TokenizerSettings.unescapeString(tmpInSeparator);
+        CheckUtils.checkSetting(escInSep.length() == 1, "The separator for the input file can only be one character.");
         // outSeparator
-        String tmpOutSeparator;
+        final String tmpOutSeparator;
         try {
             tmpOutSeparator = settings.getString(CFGKEY_OUTSEPARATOR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("The separator of the output"
-                    + " file is not specified");
+            throw new InvalidSettingsException("The separator of the output file is not specified");
         }
-        if ((tmpOutSeparator == null) || (tmpOutSeparator.length() < 1)) {
-            throw new InvalidSettingsException("The separator of the output"
-                    + " file is invalid (empty)");
-        }
+        CheckUtils.checkSetting(tmpOutSeparator != null && !tmpOutSeparator.isEmpty(),
+            "The separator of the output file is invalid (empty)");
         // the column/row header flags
         boolean tmpInclColHdr;
         boolean tmpInclRowHdr;
@@ -546,39 +482,36 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements
         try {
             tmpInclColHdr = settings.getBoolean(CFGKEY_INCLCOLHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp input"
-                    + " file not fully specified (incl. col headers).");
+            throw new InvalidSettingsException(
+                "Format of the temp input file not fully specified (incl. col headers).");
         }
         try {
             tmpInclRowHdr = settings.getBoolean(CFGKEY_INCLROWHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp input"
-                    + " file not fully specified (incl. row IDs).");
+            throw new InvalidSettingsException("Format of the temp input file not fully specified (incl. row IDs).");
         }
         try {
             tmpHasColHdr = settings.getBoolean(CFGKEY_HASCOLHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp output"
-                    + " file not fully specified (has col headers).");
+            throw new InvalidSettingsException("Format of the temp output file not fully specified (has col headers).");
         }
         try {
             tmpHasRowHdr = settings.getBoolean(CFGKEY_HASROWHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp output"
-                    + " file not fully specified (has row IDs).");
+            throw new InvalidSettingsException("Format of the temp output file not fully specified (has row IDs).");
         }
         // all settings are alright, so far.
         if (takeOver) {
-            m_inFile = tmpInFile;
+            m_inFile = new File(tmpInFileName);
             m_inSeparator = tmpInSeparator;
             m_includeColHdr = tmpInclColHdr;
             m_includeRowHdr = tmpInclRowHdr;
 
-            m_extExecutable = tmpExecFile;
-            m_extCwd = tmpExecCwd;
+            m_extExecutable = new File(tmpExecFileName);
+            m_extCwd = new File(tmpExecCwdString);
             m_extExecArgs = tmpExecArgs;
 
-            m_outFile = tmpOutFile;
+            m_outFile = new File(tmpOutFileName);
             m_outSeparator = tmpOutSeparator;
             m_hasColHdr = tmpHasColHdr;
             m_hasRowHdr = tmpHasRowHdr;
