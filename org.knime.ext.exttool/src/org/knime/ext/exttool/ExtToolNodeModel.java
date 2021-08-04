@@ -53,6 +53,7 @@ import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
 import org.knime.base.node.io.filereader.FileAnalyzer;
@@ -423,13 +424,13 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements Observer
         try {
             tmpExecFileName = settings.getString(CFGKEY_EXTTOOLPATH);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("The path to the external executable is not specified");
+            throw new InvalidSettingsException("The path to the external executable is not specified", ise);
         }
-        CheckUtils.checkSetting(tmpExecFileName != null && !tmpExecFileName.isEmpty(),
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(tmpExecFileName),
             "The path to the external executable is not valid (empty).");
         // the working directory for the exec tool
         String tmpExecCwdString = settings.getString(CFGKEY_EXTTOOLCWD, "");
-        if (tmpExecCwdString.isEmpty()) {
+        if (StringUtils.isEmpty(tmpExecCwdString)) {
             // if no cwd was specified we use the executables dir
             tmpExecCwdString = new File(tmpExecFileName).getParentFile().toString();
         }
@@ -440,27 +441,25 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements Observer
         try {
             tmpInFileName = settings.getString(CFGKEY_INFILENAME);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Input filename is not specified");
+            throw new InvalidSettingsException("Input filename is not specified", ise);
         }
-        CheckUtils.checkSetting(tmpInFileName != null && !tmpInFileName.isEmpty(),
-            "Input filename is not valid (empty).");
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(tmpInFileName), "Input filename is not valid (empty).");
         // temporary output file
         final String tmpOutFileName;
         try {
             tmpOutFileName = settings.getString(CFGKEY_OUTFILENAME);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Output filename is not specified");
+            throw new InvalidSettingsException("Output filename is not specified", ise);
         }
-        CheckUtils.checkSetting(tmpOutFileName != null && !tmpOutFileName.isEmpty(),
-            "Output filename is not valid (empty).");
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(tmpOutFileName), "Output filename is not valid (empty).");
         // inSeparator
         final String tmpInSeparator;
         try {
             tmpInSeparator = settings.getString(CFGKEY_INSEPARATOR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("The separator for the input file is not specified");
+            throw new InvalidSettingsException("The separator for the input file is not specified", ise);
         }
-        CheckUtils.checkSetting(tmpInSeparator != null && !tmpInSeparator.isEmpty(),
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(tmpInSeparator),
             "The separator for the input file is invalid (empty)");
         // replace \t \\, etc.
         final var escInSep = TokenizerSettings.unescapeString(tmpInSeparator);
@@ -470,9 +469,9 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements Observer
         try {
             tmpOutSeparator = settings.getString(CFGKEY_OUTSEPARATOR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("The separator of the output file is not specified");
+            throw new InvalidSettingsException("The separator of the output file is not specified", ise);
         }
-        CheckUtils.checkSetting(tmpOutSeparator != null && !tmpOutSeparator.isEmpty(),
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(tmpOutSeparator),
             "The separator of the output file is invalid (empty)");
         // the column/row header flags
         boolean tmpInclColHdr;
@@ -483,22 +482,25 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements Observer
             tmpInclColHdr = settings.getBoolean(CFGKEY_INCLCOLHDR);
         } catch (InvalidSettingsException ise) {
             throw new InvalidSettingsException(
-                "Format of the temp input file not fully specified (incl. col headers).");
+                "Format of the temp input file not fully specified (incl. col headers).", ise);
         }
         try {
             tmpInclRowHdr = settings.getBoolean(CFGKEY_INCLROWHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp input file not fully specified (incl. row IDs).");
+            throw new InvalidSettingsException(
+                "Format of the temp input file not fully specified (incl. row IDs).", ise);
         }
         try {
             tmpHasColHdr = settings.getBoolean(CFGKEY_HASCOLHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp output file not fully specified (has col headers).");
+            throw new InvalidSettingsException(
+                "Format of the temp output file not fully specified (has col headers).", ise);
         }
         try {
             tmpHasRowHdr = settings.getBoolean(CFGKEY_HASROWHDR);
         } catch (InvalidSettingsException ise) {
-            throw new InvalidSettingsException("Format of the temp output file not fully specified (has row IDs).");
+            throw new InvalidSettingsException(
+                "Format of the temp output file not fully specified (has row IDs).", ise);
         }
         // all settings are alright, so far.
         if (takeOver) {
