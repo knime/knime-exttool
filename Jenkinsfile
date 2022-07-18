@@ -32,6 +32,8 @@ try {
             repositories: [
                 'knime-exttool',
                 'knime-chemistry',
+                'knime-python',
+                'knime-conda',
                 'knime-streaming',
                 'knime-distance',
                 'knime-sas',
