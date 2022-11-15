@@ -13,7 +13,7 @@
 	file the tool has (hopefully) created.<br />
 	NOTE: Running an external executable takes the control out of our hands. 
 	There will be no progress, no failure message, exceptions will not be caught,
-	it may even cause the entire KNIME platform to fail and you loose any unsaved
+	it may even cause the entire KNIME platform to fail and you lose any unsaved
 	data, etc. Especially, if a shell script (or .bat file) creates sub processes (by
 	calling other programs), these sub processes will continue living even if 
 	the node gets canceled. Furthermore, their output will not be fetched,
