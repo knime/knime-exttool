@@ -7,7 +7,11 @@
     </shortDescription>
     
     <fullDescription>
-    <intro>Allows running an external program on another machine on the input data.
+    <intro>
+    <p><i><u>Deprecated:</u> Please use the SSH Command Executor instead.
+        It supports more cryptography algorithms through the SSH Connector and
+        has more features.</p>
+    Allows running an external program on another machine on the input data.
     The node creates an SSH connection to a remote host, transfers the input data
     via sftp (as comma separated values), executes the specified command and transfers
     back the result file, assuming that the command generated a file with comma separated values.

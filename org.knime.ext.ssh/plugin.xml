@@ -4,6 +4,7 @@
    <extension
          point="org.knime.workbench.repository.nodes">
       <node
+            deprecated="true"
             category-path="/toolintegration"
             factory-class="org.knime.ext.ssh.node.ExtSSHToolNodeFactory"/>
    </extension>
