@@ -8,7 +8,7 @@
     
     <fullDescription>
     <intro>
-    <p><i><u>Deprecated:</u> Please use the SSH Command Executor instead.
+    <p><u>Deprecated:</u> <i>Please use the SSH Command Executor instead.
         It supports more cryptography algorithms through the SSH Connector and
         has more features.</i></p>
     Allows running an external program on another machine on the input data.
