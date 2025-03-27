@@ -47,6 +47,7 @@ package org.knime.ext.exttool;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -247,10 +248,10 @@ public class ExtToolNodeModel extends ExtToolOutputNodeModel implements Observer
         settings.setWriteColumnHeader(m_includeColHdr);
         settings.setWriteRowID(m_includeRowHdr);
 
-        CSVWriter csvWriter = new CSVWriter(new FileWriter(m_inFile), settings);
-
-        csvWriter.write(inData[0], exec);
-        csvWriter.close();
+        try (FileWriter fileWriter = new FileWriter(m_inFile, StandardCharsets.UTF_8);
+                CSVWriter csvWriter = new CSVWriter(fileWriter, settings)) {
+            csvWriter.write(inData[0], exec);
+        }
 
         final String[] cmdandargs;
         if ((m_extExecArgs != null) && (m_extExecArgs.length() > 0)) {

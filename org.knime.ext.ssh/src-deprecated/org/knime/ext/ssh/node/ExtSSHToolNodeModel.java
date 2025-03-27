@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 
 import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
@@ -167,18 +168,11 @@ public class ExtSSHToolNodeModel extends NodeModel {
                     FileUtil.createTempFile("ExtSSHNodeInputTable", ".txt");
             exec.checkCanceled();
 
-            CSVWriter csvWriter = null;
-            try {
-                exec.setMessage("Writing input table to "
-                        + "(local) temp CSV file...");
-                FileWriterSettings fws = createFileWriterSettings();
-                FileWriter inTableWriter = new FileWriter(tmpInFile);
-                csvWriter = new CSVWriter(inTableWriter, fws);
+            exec.setMessage("Writing input table to (local) temp CSV file...");
+            FileWriterSettings fws = createFileWriterSettings();
+            try (FileWriter inTableWriter = new FileWriter(tmpInFile, StandardCharsets.UTF_8);
+                    CSVWriter csvWriter = new CSVWriter(inTableWriter, fws)) {
                 csvWriter.write(inData[0], exec.createSubProgress(0));
-            } finally {
-                if (csvWriter != null) {
-                    csvWriter.close();
-                }
             }
             LOGGER.debug("Wrote input table to " + tmpInFile.getAbsolutePath());
             exec.checkCanceled();
@@ -195,7 +189,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
             ftpChannel.put(tmpInFile.getAbsolutePath(), m_settings
                     .getRemoteInputFile());
             LOGGER.debug("ftp put done.");
-            tmpInFile.delete();
+            tmpInFile.delete(); // NOSONAR (we ignore the return type, legacy code)
             exec.checkCanceled();
 
             exec.setMessage("Preparing for execution...");
@@ -285,7 +279,7 @@ public class ExtSSHToolNodeModel extends NodeModel {
                                         exec);
 
             } finally {
-                outTableFile.delete();
+                outTableFile.delete(); // NOSONAR (we ignore the return type, legacy code)
             }
             return result;
 

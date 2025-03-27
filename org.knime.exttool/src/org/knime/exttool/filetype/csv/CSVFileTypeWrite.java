@@ -50,6 +50,7 @@ package org.knime.exttool.filetype.csv;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,11 +140,9 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
         fileWriterSettings.setQuoteBegin(m_csvConfig.getQuoteChar());
         fileWriterSettings.setQuoteEnd(m_csvConfig.getQuoteChar());
 
-        CSVWriter csvWriter = new CSVWriter(
-                new OutputStreamWriter(out), fileWriterSettings);
         DataTable table = new DataTable() {
             private boolean m_firstIteration = true;
-           /** {@inheritDoc} */
+            /** {@inheritDoc} */
             @Override
             public DataTableSpec getDataTableSpec() {
                 return spec;
@@ -153,7 +152,7 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
             public RowIterator iterator() {
                 if (!m_firstIteration) {
                     throw new IllegalStateException(
-                            "Iterator must not be called multiple times");
+                        "Iterator must not be called multiple times");
                 }
                 m_firstIteration = false;
                 return it;
@@ -172,8 +171,10 @@ class CSVFileTypeWrite extends AbstractFileTypeWrite {
             includeCols = m_csvConfig.getIncludeColumns();
         }
         table = new FilterColumnTable(table, includeCols);
-        csvWriter.write(table, exec);
-        csvWriter.close();
+        try (OutputStreamWriter outWriter = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+                CSVWriter csvWriter = new CSVWriter(outWriter, fileWriterSettings)) {
+            csvWriter.write(table, exec);
+        }
     }
 
 }
