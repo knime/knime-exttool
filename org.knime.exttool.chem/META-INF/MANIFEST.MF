@@ -12,7 +12,7 @@ Require-Bundle: org.knime.base;bundle-version="[5.6.0,6.0.0)",
   org.knime.chem.types;bundle-version="[5.6.0,6.0.0)",
   org.knime.chem.base;bundle-version="[5.6.0,6.0.0)",
   org.knime.exttool;bundle-version="[5.6.0,6.0.0)"
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Eclipse-RegisterBuddy: org.knime.base
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: org.knime.exttool.chem
